@@ -20,8 +20,8 @@ app.get('/', (req, res) => {
 });
 
 // backend/Server/server.js  — ajouter ces 2 lignes
-const predictionsRouter = require("./routes/predictions");
-app.use("/api/predictions", predictionsRouter);
+// const predictionsRouter = require("./routes/predictions");
+// app.use("/api/predictions", predictionsRouter);
 
 // app.listen(PORT, () => {
 //   console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
