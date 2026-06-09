@@ -4,10 +4,10 @@ const cors = require('cors');
 const stockRoutes = require('./routes/stock');
 
 const app = express();
-const PORT = 5001;
+const PORT = 5000;
 
 app.use(cors({
-  origin: 'http://localhost:3001',
+  origin: 'http://localhost:3000',
   methods: ['GET', 'POST','DELETE', 'PUT', 'OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
 }));
