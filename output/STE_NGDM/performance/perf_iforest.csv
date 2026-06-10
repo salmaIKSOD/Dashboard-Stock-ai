@@ -1,0 +1,2 @@
+model,contamination,nb_anomalies,pct_anomalies
+IsolationForest,0.05,6407,5.0

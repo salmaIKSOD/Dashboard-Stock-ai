@@ -21,10 +21,24 @@ function setCached(key, data) {
   cache.set(key, { data, ts: Date.now() });
 }
 
-// ── Préchargement au démarrage ────────────────────────────────
 async function warmupCache() {
   try {
     const pool = await getPool();
+
+    // ✅ Vérifie si le cache SQL est périmé (> 8h) et le rafraîchit si besoin
+    const refreshResult = await pool.request()
+      .input('HeuresMax', sql.Int, 8)
+      .execute('stock.SP_RefreshSiNecessaire');
+
+    const statut = refreshResult.recordset[0]?.Statut;
+    if (statut === 'REFRESHED') {
+      console.log('[warmup] Cache SQL rafraîchi automatiquement');
+    } else {
+      const age = refreshResult.recordset[0]?.AgeMinutes;
+      console.log(`[warmup] Cache SQL OK — âge: ${age} min`);
+    }
+
+    // Charger les bases en mémoire Node
     const bases = await pool.request().execute('stock.SP_GetBases');
     setCached('bases', bases.recordset);
     console.log(`[warmup] bases chargées (${bases.recordset.length})`);
@@ -44,7 +58,6 @@ async function warmupCache() {
     console.warn('[warmup] échec (non bloquant):', err.message);
   }
 }
-setTimeout(warmupCache, 2000);
 
 // ── GET /api/bases ────────────────────────────────────────────
 router.get('/bases', async (req, res) => {
@@ -269,6 +282,126 @@ router.delete('/cache', async (req, res) => {
   }
   setTimeout(warmupCache, 500);
   res.json({ message: `Cache vidé (${size} entrées) et rechargé` });
+});
+
+
+// ── GET /api/cache/status ─────────────────────────────────────
+router.get('/cache/status', async (req, res) => {
+  try {
+    const pool   = await getPool();
+    const result = await pool.request().query(`
+      SELECT
+        MAX(DateRefresh)                                  AS DernierRefresh,
+        DATEDIFF(MINUTE, MAX(DateRefresh), GETDATE())     AS AgeMinutes,
+        COUNT(*)                                          AS NbLignes
+      FROM stock.StockJournalierCache
+    `);
+    res.json(result.recordset[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/cache/refresh ───────────────────────────────────
+router.post('/cache/refresh', async (req, res) => {
+  try {
+    const pool = await getPool();
+    await pool.request().execute('stock.SP_RefreshCacheFiltres');
+    await pool.request().execute('stock.SP_RefreshStockCache');
+    cache.clear();
+    setTimeout(warmupCache, 500);
+    res.json({ message: 'Refresh complet lancé', date: new Date() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ── GET /api/stock/progressif — SSE tranche par tranche 
+// cette permet d'accelerer les resultats progressivement
+router.get('/stock/progressif', async (req, res) => {
+  const {
+    base, dateDebut, dateFin, depot, article,
+    fa_codefamille, cl_no1, cl_no2, cl_no3, cl_no4,
+  } = req.query;
+
+  if (!base || !dateDebut || !dateFin)
+    return res.status(400).json({ error: 'base, dateDebut et dateFin requis' });
+
+  // Découper en tranches de 3 mois
+  const tranches = [];
+  let current    = new Date(dateDebut);
+  const fin      = new Date(dateFin);
+
+  while (current <= fin) {
+    const debutT = new Date(current);
+    const finT   = new Date(current.getFullYear(), current.getMonth() + 3, 0);
+    tranches.push({
+      debut: debutT.toISOString().split('T')[0],
+      fin:   (finT > fin ? fin : finT).toISOString().split('T')[0],
+    });
+    current = new Date(current.getFullYear(), current.getMonth() + 3, 1);
+  }
+
+  // SSE headers
+  res.setHeader('Content-Type',  'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection',    'keep-alive');
+  res.flushHeaders();
+
+  const pool      = await getPool();
+  let totalLignes = 0;
+
+  // Info initiale : nombre de tranches
+  res.write(`data: ${JSON.stringify({
+    type: 'info', totalTranches: tranches.length, tranches
+  })}\n\n`);
+
+  for (let i = 0; i < tranches.length; i++) {
+    const t = tranches[i];
+    try {
+      const req2 = pool.request();
+      req2.timeout = 60000;
+      req2.input('Base',           sql.NVarChar(128), base);
+      req2.input('DateDebut',      sql.Date,          t.debut);
+      req2.input('DateFin',        sql.Date,          t.fin);
+      req2.input('Depot',          sql.Int,           depot          ? parseInt(depot)  : null);
+      req2.input('Article',        sql.NVarChar(50),  article        || null);
+      req2.input('FA_CodeFamille', sql.NVarChar(10),  fa_codefamille || null);
+      req2.input('CL_No1',         sql.Int,           cl_no1         ? parseInt(cl_no1) : null);
+      req2.input('CL_No2',         sql.Int,           cl_no2         ? parseInt(cl_no2) : null);
+      req2.input('CL_No3',         sql.Int,           cl_no3         ? parseInt(cl_no3) : null);
+      req2.input('CL_No4',         sql.Int,           cl_no4         ? parseInt(cl_no4) : null);
+
+      const result = await req2.execute('stock.SP_GetStockJournalier');
+      totalLignes += result.recordset.length;
+
+      res.write(`data: ${JSON.stringify({
+        type:      'tranche',
+        index:     i + 1,
+        total:     tranches.length,
+        dateDebut: t.debut,
+        dateFin:   t.fin,
+        lignes:    result.recordset,
+        nbLignes:  result.recordset.length,
+        progress:  Math.round(((i + 1) / tranches.length) * 100),
+      })}\n\n`);
+
+      console.log(`[/stock/progressif] tranche ${i+1}/${tranches.length} — ${result.recordset.length} lignes`);
+
+    } catch (err) {
+      res.write(`data: ${JSON.stringify({
+        type: 'erreur', index: i + 1, message: err.message
+      })}\n\n`);
+    }
+  }
+
+  res.write(`data: ${JSON.stringify({
+    type: 'fin', totalLignes,
+    message: `Terminé — ${totalLignes} lignes`
+  })}\n\n`);
+
+  res.end();
 });
 
 module.exports = router;

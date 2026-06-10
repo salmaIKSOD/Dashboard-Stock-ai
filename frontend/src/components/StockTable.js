@@ -19,12 +19,19 @@ const fmtDate = (d) => {
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
+// const fmtNum = (n) => {
+//   if (n === null || n === undefined || n === '') return '—';
+//   const num = Number(n);
+//   if (isNaN(num)) return '—';
+//   return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num);
+// };
 const fmtNum = (n) => {
   if (n === null || n === undefined || n === '') return '—';
   const num = Number(n);
   if (isNaN(num)) return '—';
-  return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num);
+  return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 4 }).format(num);
 };
+
 
 /* ══════════════════════════════════════════════════════════════
    DETECT COLUMNS

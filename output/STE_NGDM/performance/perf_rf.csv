@@ -1,0 +1,2 @@
+model,MAE,RMSE,nb_train,nb_test
+RandomForest,65.81,777.37,21787,5447

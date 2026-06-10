@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import SidebarP from './components/SidebarP';
@@ -6,7 +6,7 @@ import SidebarG from './components/SidebarG';
 import HeaderG from './components/HeaderG';
 import Filters from './components/Filters';
 import StockTable from './components/StockTable';
-import { fetchStock } from './api/stockApi';
+import { fetchStock, fetchStockProgressif } from './api/stockApi';
 import InnerSidebar from './components/InnerSidebar';
 
 import { DashboardProvider, useDashboard } from './context/DashboardContext';
@@ -108,7 +108,7 @@ function IconSorties() {
 
 // ── Helpers ───────────────────────────────────────────────────
 const fmtNum = (n) =>
-  new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n || 0);
+  new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 4 }).format(n || 0);
 
 function useBreakpoint() {
   const [width, setWidth] = useState(window.innerWidth);
@@ -186,20 +186,77 @@ function Dashboard({ sidebarOpen }) {
     registerReloadDashboard,
   } = useDashboard();
 
-  const loadData = useCallback(async (params) => {
+  // ✅ Nouveaux états pour le chargement progressif 3 mois par 3 mois
+  const [progress,       setProgress]       = useState(0);
+  const [progressStatus, setProgressStatus] = useState('');
+  const cancelSSE = useRef(null);
+
+   const loadData = useCallback(async (params) => {
+    // Annuler SSE précédent si en cours
+    if (cancelSSE.current) {
+      cancelSSE.current();
+      cancelSSE.current = null;
+    }
+
     setLoading(true);
     setError(null);
-    try {
-      const data = await fetchStock(params);
-      setTableData(data);
-    } catch (err) {
-      console.error(err);
-      setError(err.message);
-      setTableData(null);
-    } finally {
-      setLoading(false);
+    setTableData(null);
+    setProgress(0);
+
+    const debut = new Date(params.dateDebut);
+    const fin   = new Date(params.dateFin);
+    const jours = (fin - debut) / (1000 * 60 * 60 * 24);
+
+    // ✅ Période courte (≤ 92 jours) → appel direct, rapide
+    if (jours <= 92) {
+      setProgressStatus('');
+      try {
+        const data = await fetchStock(params);
+        setTableData(data);
+      } catch (err) {
+        setError(err.message);
+        setTableData(null);
+      } finally {
+        setLoading(false);
+      }
+      return;
     }
+
+    // ✅ Période longue → chargement progressif SSE
+    setProgressStatus('Démarrage du chargement...');
+    let allData = [];
+
+    cancelSSE.current = fetchStockProgressif(
+      params,
+      // onTranche — reçoit chaque tranche dès qu'elle est prête
+      (msg) => {
+        allData = [...allData, ...msg.lignes];
+        setTableData([...allData]);   // afficher au fur et à mesure
+        setProgress(msg.progress);
+        setProgressStatus(
+          `Tranche ${msg.index}/${msg.total} — ${msg.dateDebut} → ${msg.dateFin}`
+        );
+      },
+      // onFin
+      (msg) => {
+        setProgress(100);
+        setProgressStatus('');
+        setLoading(false);
+        cancelSSE.current = null;
+      },
+      // onErreur
+      (errMsg) => {
+        setError(errMsg);
+        setLoading(false);
+        cancelSSE.current = null;
+      }
+    );
   }, [setLoading, setError, setTableData]);
+
+  // Nettoyer SSE si le composant est démonté
+  useEffect(() => {
+    return () => { if (cancelSSE.current) cancelSSE.current(); };
+  }, []);
 
   useEffect(() => {
     registerReloadDashboard(loadData);
@@ -228,123 +285,98 @@ function Dashboard({ sidebarOpen }) {
 
   const kpis = useMemo(() => {
     if (!tableData || tableData.length === 0) return null;
- 
-    const keys = Object.keys(tableData[0]);
-    const find = (...variants) =>
-      keys.find(k =>
-        variants.some(v =>
-          k.toLowerCase().replace(/[\s_()]/g, '') === v.toLowerCase().replace(/[\s_()]/g, '')
-        )
-      ) || null;
- 
-    const kDate       = find('Date', 'DateJour', 'datejour');
-    const kArticle    = find('Article', 'AR_Ref', 'arref');
-    const kDepot      = find('Depot', 'DE_No', 'depot');
-    const kEntrees    = find('TotalEntrees', 'Total Entrees', 'TotalEntree', 'totalentree');
-    const kSorties    = find('TotalSorties', 'Total Sorties', 'TotalSortie', 'totalsortie');
-    const kStockFinal = find('StockFinal', 'Stock Final', 'stockfinal');
-    const kSolde      = find('ValeurFinalePermanente', 'Valeur Finale (Permanente)', 'ValeurFinale', 'valeurfinale', 'Solde');
- 
-    // ─────────────────────────────────────────────────────────
-    //  CORRECTION : dernier stock connu par (article, dépôt)
-    //  → les articles sans mouvement le dernier jour sont quand
-    //    même inclus via leur dernière valeur disponible
-    // ─────────────────────────────────────────────────────────
-    const lastStockMap  = {}; // "artCode|||depotKey" → { stockFinal, date, valeur }
-    const lastValeurMap = {}; // "artCode|||depotKey" → { valeur, date }
- 
+
+    const keys        = Object.keys(tableData[0]);
+    const kDate       = keys.find(k => ['Date', 'DateJour'].includes(k))          || null;
+    const kArticle    = keys.find(k => ['Article', 'AR_Ref'].includes(k))         || null;
+    const kDepot      = keys.find(k => ['Depot', 'DE_No'].includes(k))            || null;
+    const kEntrees    = keys.find(k => ['Total Entrees', 'TotalEntree', 'TotalEntrees'].includes(k)) || null;
+    const kSorties    = keys.find(k => ['Total Sorties', 'TotalSortie', 'TotalSorties'].includes(k)) || null;
+    const kStockFinal = keys.find(k => ['Stock Final', 'StockFinal'].includes(k)) || null;
+    const kSolde      = keys.find(k => ['Valeur Finale (Permanente)', 'ValeurFinalePermanente', 'ValeurFinale'].includes(k)) || null;
+
+    const lastStockMap  = {};
+    const lastValeurMap = {};
     const entreesParJour = {};
     const sortiesParJour = {};
     let totalEntrees = 0;
     let totalSorties = 0;
- 
+
+    const seen = new Set();
+
     for (const r of tableData) {
       const rawDate = r[kDate];
       if (!rawDate) continue;
- 
+
       const d = typeof rawDate === 'string'
         ? rawDate.slice(0, 10)
         : new Date(rawDate).toISOString().slice(0, 10);
- 
-      const rowDate  = new Date(d);
-      const artCode  = String(r[kArticle] ?? '(sans code)');
-      const depotKey = String(r[kDepot]   ?? '(sans dépôt)');
-      const key      = `${artCode}|||${depotKey}`;
- 
+
+      const artCode  = String(r[kArticle] ?? '');
+      const depotKey = String(r[kDepot]   ?? '');
+      const dedupKey = `${d}|||${artCode}|||${depotKey}`;
+
+      if (seen.has(dedupKey)) continue;
+      seen.add(dedupKey);
+
+      const rowDate = new Date(d);
+      const key     = `${artCode}|||${depotKey}`;
+
       const e  = Number(r[kEntrees]    ?? 0);
       const s  = Number(r[kSorties]    ?? 0);
       const sf = Number(r[kStockFinal] ?? 0);
       const v  = Number(r[kSolde]      ?? 0);
- 
+
       totalEntrees += e;
       totalSorties += s;
- 
+
       if (e > 0) entreesParJour[d] = (entreesParJour[d] || 0) + e;
       if (s > 0) sortiesParJour[d] = (sortiesParJour[d] || 0) + s;
- 
-      // ✅ Garder le DERNIER stock final connu par (article, dépôt)
+
       if (
-        r[kStockFinal] !== null &&
-        r[kStockFinal] !== undefined &&
+        r[kStockFinal] !== null && r[kStockFinal] !== undefined &&
         (!lastStockMap[key] || rowDate >= lastStockMap[key].date)
       ) {
         lastStockMap[key] = { stockFinal: sf, date: rowDate };
       }
- 
-      // ✅ Garder la DERNIÈRE valeur permanente connue par (article, dépôt)
+
       if (
-        r[kSolde] !== null &&
-        r[kSolde] !== undefined &&
+        r[kSolde] !== null && r[kSolde] !== undefined &&
         (!lastValeurMap[key] || rowDate >= lastValeurMap[key].date)
       ) {
         lastValeurMap[key] = { valeur: v, date: rowDate };
       }
     }
- 
-    // ✅ Stock total = somme des derniers stocks de chaque (article, dépôt)
-    const stockFinalTotal = Object.values(lastStockMap)
-      .reduce((sum, e) => sum + e.stockFinal, 0);
- 
-    // ✅ Valeur permanente totale = somme des dernières valeurs de chaque (article, dépôt)
-    const valeurPermanenteTotal = Object.values(lastValeurMap)
-      .reduce((sum, e) => sum + e.valeur, 0);
- 
-    // Date la plus récente trouvée dans les données
+
+    const stockFinalTotal       = Object.values(lastStockMap).reduce((sum, e) => sum + e.stockFinal, 0);
+    const valeurPermanenteTotal = Object.values(lastValeurMap).reduce((sum, e) => sum + e.valeur, 0);
+
     const allDates = Object.values(lastStockMap).map(e => e.date);
     const maxDate  = allDates.length > 0
       ? new Date(Math.max(...allDates.map(d => d.getTime())))
       : null;
- 
-    // Pic d'entrée / sortie
+
     let picEntreeDate = '', picEntreeVal = 0;
     let picSortieDate = '', picSortieVal = 0;
- 
+
     for (const [d, e] of Object.entries(entreesParJour)) {
       if (e > picEntreeVal) { picEntreeVal = e; picEntreeDate = d; }
     }
     for (const [d, s] of Object.entries(sortiesParJour)) {
       if (s > picSortieVal) { picSortieVal = s; picSortieDate = d; }
     }
- 
+
     const fmtISO = (iso) => {
       if (!iso) return '';
       const [y, m, dd] = iso.split('-');
       return `${dd}/${m}/${y}`;
     };
- 
+
     const fmtDate = (d) => {
       if (!d) return '';
       return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
- 
-    // Sparklines : basées sur les entrées/sorties journalières
-    const sortedDates = Object.keys({
-      ...entreesParJour,
-      ...sortiesParJour,
-    }).sort();
- 
-    // Pour le sparkline stock : reconstituer une série journalière
-    // en prenant la somme des stocks de toutes les lignes de ce jour
+
     const stockParJourSpark = {};
     for (const r of tableData) {
       const rawDate = r[kDate];
@@ -354,27 +386,23 @@ function Dashboard({ sidebarOpen }) {
       stockParJourSpark[d] = (stockParJourSpark[d] || 0) + sf;
     }
     const allSortedDates = Object.keys(stockParJourSpark).sort();
- 
+
     return {
-      // ✅ Stock et valeur corrects
       stockFinalDernierJour:       stockFinalTotal,
       valeurPermanenteDernierJour: valeurPermanenteTotal,
       dateFinalLabel:              fmtDate(maxDate),
- 
       totalEntrees,
       totalSorties,
- 
       picEntreeJour:    [fmtISO(picEntreeDate), picEntreeVal],
       picSortieJour:    [fmtISO(picSortieDate), picSortieVal],
       joursAvecEntrees: Object.keys(entreesParJour).length,
       joursAvecSorties: Object.keys(sortiesParJour).length,
- 
-      sparkStock:   allSortedDates.slice(-60).map(d => stockParJourSpark[d]  || 0),
-      sparkEntrees: allSortedDates.slice(-60).map(d => entreesParJour[d]     || 0),
-      sparkSorties: allSortedDates.slice(-60).map(d => sortiesParJour[d]     || 0),
+      sparkStock:   allSortedDates.slice(-60).map(d => stockParJourSpark[d] || 0),
+      sparkEntrees: allSortedDates.slice(-60).map(d => entreesParJour[d]    || 0),
+      sparkSorties: allSortedDates.slice(-60).map(d => sortiesParJour[d]    || 0),
     };
   }, [tableData]);
-
+  
   return (
     <>
       <Filters
@@ -387,6 +415,27 @@ function Dashboard({ sidebarOpen }) {
         initialCat1={currentFilters.cl_no1 || ''}
       />
 
+      {/* ✅ Barre de progression — visible uniquement sur longues périodes */}
+      {loading && progress > 0 && (
+        <div className="bg-white border border-[#e8f4fb] rounded-xl px-5 py-3 flex flex-col gap-2 shadow-[0_1px_6px_rgba(18,166,224,0.08)]">
+          <div className="flex items-center justify-between">
+            <span className="text-[#0b7db0] text-[12px] font-medium">{progressStatus}</span>
+            <span className="text-[#12a6e0] text-[12px] font-bold">{progress}%</span>
+          </div>
+          <div className="w-full h-1.5 bg-[#e8f4fb] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#12a6e0] rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          {tableData && tableData.length > 0 && (
+            <span className="text-[#aaaaaa] text-[11px]">
+              {tableData.length.toLocaleString('fr-FR')} lignes affichées — chargement en cours...
+            </span>
+          )}
+        </div>
+      )}
+
       {error && (
         <div className="bg-[rgba(229,57,53,0.06)] border border-[rgba(229,57,53,0.20)] rounded-xl px-5 py-4 text-[#c62828] text-sm flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-[#e53935] shrink-0" />
@@ -394,7 +443,8 @@ function Dashboard({ sidebarOpen }) {
         </div>
       )}
 
-      {kpis && !loading && (
+      {/* ✅ KPIs — visibles même pendant le chargement progressif si données partielles */}
+      {kpis && (
         <KpiGrid>
           <KpiCard
             title="Stock total" value={kpis.stockFinalDernierJour} unit="Unités"
@@ -440,8 +490,15 @@ function Dashboard({ sidebarOpen }) {
         </KpiGrid>
       )}
 
-      {/* {(loading || tableData !== null) && <StockTable data={tableData} loading={loading} dateDebut={filters.dateDebut} dateFin={filters.dateFin}  />} */}
-      {(loading || tableData !== null) && <StockTable data={tableData} loading={loading} dateDebut={currentFilters.dateDebut} dateFin={currentFilters.dateFin} />}
+      {/* ✅ Tableau — skeleton seulement si aucune donnée encore reçue */}
+      {(loading || tableData !== null) && (
+        <StockTable
+          data={tableData}
+          loading={loading && (!tableData || tableData.length === 0)}
+          dateDebut={currentFilters.dateDebut}
+          dateFin={currentFilters.dateFin}
+        />
+      )}
 
       {!loading && tableData !== null && tableData.length === 0 && !error && (
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
