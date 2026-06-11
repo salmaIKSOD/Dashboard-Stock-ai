@@ -191,69 +191,142 @@ function Dashboard({ sidebarOpen }) {
   const [progressStatus, setProgressStatus] = useState('');
   const cancelSSE = useRef(null);
 
-   const loadData = useCallback(async (params) => {
-    // Annuler SSE précédent si en cours
-    if (cancelSSE.current) {
-      cancelSSE.current();
-      cancelSSE.current = null;
-    }
+  //  const loadData = useCallback(async (params) => {
+  //   // Annuler SSE précédent si en cours
+  //   if (cancelSSE.current) {
+  //     cancelSSE.current();
+  //     cancelSSE.current = null;
+  //   }
 
-    setLoading(true);
-    setError(null);
-    setTableData(null);
-    setProgress(0);
+  //   setLoading(true);
+  //   setError(null);
+  //   setTableData(null);
+  //   setProgress(0);
 
-    const debut = new Date(params.dateDebut);
-    const fin   = new Date(params.dateFin);
-    const jours = (fin - debut) / (1000 * 60 * 60 * 24);
+  //   const debut = new Date(params.dateDebut);
+  //   const fin   = new Date(params.dateFin);
+  //   const jours = (fin - debut) / (1000 * 60 * 60 * 24);
 
-    // ✅ Période courte (≤ 92 jours) → appel direct, rapide
-    if (jours <= 92) {
-      setProgressStatus('');
-      try {
-        const data = await fetchStock(params);
-        setTableData(data);
-      } catch (err) {
-        setError(err.message);
-        setTableData(null);
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
+  //   // ✅ Période courte (≤ 92 jours) → appel direct, rapide
+  //   if (jours <= 92) {
+  //     setProgressStatus('');
+  //     try {
+  //       const data = await fetchStock(params);
+  //       setTableData(data);
+  //     } catch (err) {
+  //       setError(err.message);
+  //       setTableData(null);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //     return;
+  //   }
 
-    // ✅ Période longue → chargement progressif SSE
-    setProgressStatus('Démarrage du chargement...');
-    let allData = [];
+  //   // ✅ Période longue → chargement progressif SSE
+  //   setProgressStatus('Démarrage du chargement...');
+  //   let allData = [];
 
-    cancelSSE.current = fetchStockProgressif(
-      params,
-      // onTranche — reçoit chaque tranche dès qu'elle est prête
-      (msg) => {
-        allData = [...allData, ...msg.lignes];
-        setTableData([...allData]);   // afficher au fur et à mesure
-        setProgress(msg.progress);
-        setProgressStatus(
-          `Tranche ${msg.index}/${msg.total} — ${msg.dateDebut} → ${msg.dateFin}`
-        );
-      },
-      // onFin
-      (msg) => {
-        setProgress(100);
-        setProgressStatus('');
-        setLoading(false);
-        cancelSSE.current = null;
-      },
-      // onErreur
-      (errMsg) => {
-        setError(errMsg);
-        setLoading(false);
-        cancelSSE.current = null;
-      }
-    );
-  }, [setLoading, setError, setTableData]);
+  //   cancelSSE.current = fetchStockProgressif(
+  //     params,
+  //     // onTranche — reçoit chaque tranche dès qu'elle est prête
+  //     (msg) => {
+  //       allData = [...allData, ...msg.lignes];
+  //       setTableData([...allData]);   // afficher au fur et à mesure
+  //       setProgress(msg.progress);
+  //       setProgressStatus(
+  //         `Tranche ${msg.index}/${msg.total} — ${msg.dateDebut} → ${msg.dateFin}`
+  //       );
+  //     },
+  //     // onFin
+  //     (msg) => {
+  //       setProgress(100);
+  //       setProgressStatus('');
+  //       setLoading(false);
+  //       cancelSSE.current = null;
+  //     },
+  //     // onErreur
+  //     (errMsg) => {
+  //       setError(errMsg);
+  //       setLoading(false);
+  //       cancelSSE.current = null;
+  //     }
+  //   );
+  // }, [setLoading, setError, setTableData]);
 
   // Nettoyer SSE si le composant est démonté
+  
+  const loadData = useCallback(async (params) => {
+  if (cancelSSE.current) {
+    cancelSSE.current();
+    cancelSSE.current = null;
+  }
+
+  setLoading(true);
+  setError(null);
+  setTableData(null);
+  setProgress(0);
+
+  const debut = new Date(params.dateDebut);
+  const fin   = new Date(params.dateFin);
+  const jours = (fin - debut) / (1000 * 60 * 60 * 24);
+
+  if (jours <= 92) {
+    setProgressStatus('');
+    try {
+      const data = await fetchStock(params);
+      setTableData(data);
+    } catch (err) {
+      setError(err.message);
+      setTableData(null);
+    } finally {
+      setLoading(false);
+    }
+    return;
+  }
+
+  setProgressStatus('Démarrage du chargement...');
+  let allData = [];
+
+  cancelSSE.current = fetchStockProgressif(
+    params,
+    (msg) => {
+      allData = [...allData, ...msg.lignes];
+      setTableData([...allData]);
+      setProgress(msg.progress);
+      setProgressStatus(
+        `Tranche ${msg.index}/${msg.total} — ${msg.dateDebut} → ${msg.dateFin}`
+      );
+
+      // ✅ Log temporaire
+      const keys0 = Object.keys(msg.lignes[0] || {});
+      const kE = keys0.find(k => k.toLowerCase().includes('total') && k.toLowerCase().includes('entree'));
+      const kS = keys0.find(k => k.toLowerCase().includes('total') && k.toLowerCase().includes('sortie'));
+      const e = msg.lignes.reduce((sum, r) => sum + Number(r[kE] ?? 0), 0);
+      const s = msg.lignes.reduce((sum, r) => sum + Number(r[kS] ?? 0), 0);
+      console.log(`Tranche ${msg.index} — kE="${kE}" kS="${kS}" E=${e} S=${s} lignes=${msg.lignes.length}`);
+    },
+    (msg) => {
+      // ✅ Log temporaire
+      const keys0 = Object.keys(allData[0] || {});
+      const kE = keys0.find(k => k.toLowerCase().includes('total') && k.toLowerCase().includes('entree'));
+      const kS = keys0.find(k => k.toLowerCase().includes('total') && k.toLowerCase().includes('sortie'));
+      const totalE = allData.reduce((sum, r) => sum + Number(r[kE] ?? 0), 0);
+      const totalS = allData.reduce((sum, r) => sum + Number(r[kS] ?? 0), 0);
+      console.log(`FIN — kE="${kE}" kS="${kS}" Total E=${totalE} Total S=${totalS} allData=${allData.length} lignes`);
+      console.log('Colonnes reçues:', keys0);
+
+      setProgress(100);
+      setProgressStatus('');
+      setLoading(false);
+      cancelSSE.current = null;
+    },
+    (errMsg) => {
+      setError(errMsg);
+      setLoading(false);
+      cancelSSE.current = null;
+    }
+  );
+}, [setLoading, setError, setTableData]);
   useEffect(() => {
     return () => { if (cancelSSE.current) cancelSSE.current(); };
   }, []);
@@ -283,6 +356,127 @@ function Dashboard({ sidebarOpen }) {
   };
 
 
+  // const kpis = useMemo(() => {
+  //   if (!tableData || tableData.length === 0) return null;
+
+  //   const keys        = Object.keys(tableData[0]);
+  //   const kDate       = keys.find(k => ['Date', 'DateJour'].includes(k))          || null;
+  //   const kArticle    = keys.find(k => ['Article', 'AR_Ref'].includes(k))         || null;
+  //   const kDepot      = keys.find(k => ['Depot', 'DE_No'].includes(k))            || null;
+  //   const kEntrees    = keys.find(k => ['Total Entrees', 'TotalEntree', 'TotalEntrees'].includes(k)) || null;
+  //   const kSorties    = keys.find(k => ['Total Sorties', 'TotalSortie', 'TotalSorties'].includes(k)) || null;
+  //   const kStockFinal = keys.find(k => ['Stock Final', 'StockFinal'].includes(k)) || null;
+  //   const kSolde      = keys.find(k => ['Valeur Finale (Permanente)', 'ValeurFinalePermanente', 'ValeurFinale'].includes(k)) || null;
+
+  //   const lastStockMap  = {};
+  //   const lastValeurMap = {};
+  //   const entreesParJour = {};
+  //   const sortiesParJour = {};
+  //   let totalEntrees = 0;
+  //   let totalSorties = 0;
+
+  //   const seen = new Set();
+
+  //   for (const r of tableData) {
+  //     const rawDate = r[kDate];
+  //     if (!rawDate) continue;
+
+  //     const d = typeof rawDate === 'string'
+  //       ? rawDate.slice(0, 10)
+  //       : new Date(rawDate).toISOString().slice(0, 10);
+
+  //     const artCode  = String(r[kArticle] ?? '');
+  //     const depotKey = String(r[kDepot]   ?? '');
+  //     const dedupKey = `${d}|||${artCode}|||${depotKey}`;
+
+  //     if (seen.has(dedupKey)) continue;
+  //     seen.add(dedupKey);
+
+  //     const rowDate = new Date(d);
+  //     const key     = `${artCode}|||${depotKey}`;
+
+  //     const e  = Number(r[kEntrees]    ?? 0);
+  //     const s  = Number(r[kSorties]    ?? 0);
+  //     const sf = Number(r[kStockFinal] ?? 0);
+  //     const v  = Number(r[kSolde]      ?? 0);
+
+  //     totalEntrees += e;
+  //     totalSorties += s;
+
+  //     if (e > 0) entreesParJour[d] = (entreesParJour[d] || 0) + e;
+  //     if (s > 0) sortiesParJour[d] = (sortiesParJour[d] || 0) + s;
+
+  //     if (
+  //       r[kStockFinal] !== null && r[kStockFinal] !== undefined &&
+  //       (!lastStockMap[key] || rowDate >= lastStockMap[key].date)
+  //     ) {
+  //       lastStockMap[key] = { stockFinal: sf, date: rowDate };
+  //     }
+
+  //     if (
+  //       r[kSolde] !== null && r[kSolde] !== undefined &&
+  //       (!lastValeurMap[key] || rowDate >= lastValeurMap[key].date)
+  //     ) {
+  //       lastValeurMap[key] = { valeur: v, date: rowDate };
+  //     }
+  //   }
+
+  //   const stockFinalTotal       = Object.values(lastStockMap).reduce((sum, e) => sum + e.stockFinal, 0);
+  //   const valeurPermanenteTotal = Object.values(lastValeurMap).reduce((sum, e) => sum + e.valeur, 0);
+
+  //   const allDates = Object.values(lastStockMap).map(e => e.date);
+  //   const maxDate  = allDates.length > 0
+  //     ? new Date(Math.max(...allDates.map(d => d.getTime())))
+  //     : null;
+
+  //   let picEntreeDate = '', picEntreeVal = 0;
+  //   let picSortieDate = '', picSortieVal = 0;
+
+  //   for (const [d, e] of Object.entries(entreesParJour)) {
+  //     if (e > picEntreeVal) { picEntreeVal = e; picEntreeDate = d; }
+  //   }
+  //   for (const [d, s] of Object.entries(sortiesParJour)) {
+  //     if (s > picSortieVal) { picSortieVal = s; picSortieDate = d; }
+  //   }
+
+  //   const fmtISO = (iso) => {
+  //     if (!iso) return '';
+  //     const [y, m, dd] = iso.split('-');
+  //     return `${dd}/${m}/${y}`;
+  //   };
+
+  //   const fmtDate = (d) => {
+  //     if (!d) return '';
+  //     return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  //   };
+
+  //   const stockParJourSpark = {};
+  //   for (const r of tableData) {
+  //     const rawDate = r[kDate];
+  //     if (!rawDate) continue;
+  //     const d  = typeof rawDate === 'string' ? rawDate.slice(0, 10) : new Date(rawDate).toISOString().slice(0, 10);
+  //     const sf = Number(r[kStockFinal] ?? 0);
+  //     stockParJourSpark[d] = (stockParJourSpark[d] || 0) + sf;
+  //   }
+  //   const allSortedDates = Object.keys(stockParJourSpark).sort();
+
+  //   return {
+  //     stockFinalDernierJour:       stockFinalTotal,
+  //     valeurPermanenteDernierJour: valeurPermanenteTotal,
+  //     dateFinalLabel:              fmtDate(maxDate),
+  //     totalEntrees,
+  //     totalSorties,
+  //     picEntreeJour:    [fmtISO(picEntreeDate), picEntreeVal],
+  //     picSortieJour:    [fmtISO(picSortieDate), picSortieVal],
+  //     joursAvecEntrees: Object.keys(entreesParJour).length,
+  //     joursAvecSorties: Object.keys(sortiesParJour).length,
+  //     sparkStock:   allSortedDates.slice(-60).map(d => stockParJourSpark[d] || 0),
+  //     sparkEntrees: allSortedDates.slice(-60).map(d => entreesParJour[d]    || 0),
+  //     sparkSorties: allSortedDates.slice(-60).map(d => sortiesParJour[d]    || 0),
+  //   };
+  // }, [tableData]);
+  
+
   const kpis = useMemo(() => {
     if (!tableData || tableData.length === 0) return null;
 
@@ -290,19 +484,25 @@ function Dashboard({ sidebarOpen }) {
     const kDate       = keys.find(k => ['Date', 'DateJour'].includes(k))          || null;
     const kArticle    = keys.find(k => ['Article', 'AR_Ref'].includes(k))         || null;
     const kDepot      = keys.find(k => ['Depot', 'DE_No'].includes(k))            || null;
-    const kEntrees    = keys.find(k => ['Total Entrees', 'TotalEntree', 'TotalEntrees'].includes(k)) || null;
-    const kSorties    = keys.find(k => ['Total Sorties', 'TotalSortie', 'TotalSorties'].includes(k)) || null;
-    const kStockFinal = keys.find(k => ['Stock Final', 'StockFinal'].includes(k)) || null;
-    const kSolde      = keys.find(k => ['Valeur Finale (Permanente)', 'ValeurFinalePermanente', 'ValeurFinale'].includes(k)) || null;
+    const kEntrees    = keys.find(k =>
+       ['Total Entrees', 'TotalEntree', 'TotalEntrees'].includes(k)
+      ) || null;
+    const kSorties    = keys.find(k =>
+       ['Total Sorties', 'TotalSortie', 'TotalSorties'].includes(k)
+      ) || null;
+    const kStockFinal = keys.find(k =>
+       ['Stock Final', 'StockFinal'].includes(k)
+      ) || null;
+    const kSolde      = keys.find(k =>
+       ['Valeur Finale (Permanente)', 'ValeurFinalePermanente', 'ValeurFinale'].includes(k)
+      ) || null;
 
-    const lastStockMap  = {};
-    const lastValeurMap = {};
+    const lastStockMap   = {};
+    const lastValeurMap  = {};
     const entreesParJour = {};
     const sortiesParJour = {};
     let totalEntrees = 0;
     let totalSorties = 0;
-
-    const seen = new Set();
 
     for (const r of tableData) {
       const rawDate = r[kDate];
@@ -314,13 +514,7 @@ function Dashboard({ sidebarOpen }) {
 
       const artCode  = String(r[kArticle] ?? '');
       const depotKey = String(r[kDepot]   ?? '');
-      const dedupKey = `${d}|||${artCode}|||${depotKey}`;
-
-      if (seen.has(dedupKey)) continue;
-      seen.add(dedupKey);
-
-      const rowDate = new Date(d);
-      const key     = `${artCode}|||${depotKey}`;
+      const key      = `${artCode}|||${depotKey}`;
 
       const e  = Number(r[kEntrees]    ?? 0);
       const s  = Number(r[kSorties]    ?? 0);
@@ -332,6 +526,8 @@ function Dashboard({ sidebarOpen }) {
 
       if (e > 0) entreesParJour[d] = (entreesParJour[d] || 0) + e;
       if (s > 0) sortiesParJour[d] = (sortiesParJour[d] || 0) + s;
+
+      const rowDate = new Date(d);
 
       if (
         r[kStockFinal] !== null && r[kStockFinal] !== undefined &&
@@ -349,7 +545,7 @@ function Dashboard({ sidebarOpen }) {
     }
 
     const stockFinalTotal       = Object.values(lastStockMap).reduce((sum, e) => sum + e.stockFinal, 0);
-    const valeurPermanenteTotal = Object.values(lastValeurMap).reduce((sum, e) => sum + e.valeur, 0);
+    const valeurPermanenteTotal = Object.values(lastValeurMap).reduce((sum, e) => sum + e.valeur,     0);
 
     const allDates = Object.values(lastStockMap).map(e => e.date);
     const maxDate  = allDates.length > 0
@@ -402,7 +598,6 @@ function Dashboard({ sidebarOpen }) {
       sparkSorties: allSortedDates.slice(-60).map(d => sortiesParJour[d]    || 0),
     };
   }, [tableData]);
-  
   return (
     <>
       <Filters

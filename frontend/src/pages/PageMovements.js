@@ -494,38 +494,56 @@ export default function PageMovements() {
   // }, [sorted, cols]);
 
 
+  // const kpis = useMemo(() => {
+  //   if (!sorted.length || !cols.entrees) return null;
+
+  //   let totalE = 0, totalS = 0, valeurE = 0, valeurS = 0;
+
+  //   const seen = new Set();
+
+  //   for (const r of sorted) {
+  //     const rawDate  = r[cols.date];
+  //     if (!rawDate) continue;
+
+  //     const d        = typeof rawDate === 'string'
+  //       ? rawDate.slice(0, 10)
+  //       : new Date(rawDate).toISOString().slice(0, 10);
+  //     const artCode  = String(r[cols.article]  ?? '');
+  //     const depotKey = String(r[cols.nomDepot] ?? '');
+  //     const dedupKey = `${d}|||${artCode}|||${depotKey}`;
+
+  //     if (seen.has(dedupKey)) continue;
+  //     seen.add(dedupKey);
+
+  //     totalE  += Number(r[cols.entrees]   ?? 0);
+  //     totalS  += Number(r[cols.sorties]   ?? 0);
+  //     valeurE += Number(r[cols.pruEntree] ?? 0);
+  //     valeurS += Number(r[cols.pruSortie] ?? 0);
+  //   }
+
+  //   const articles = new Set(sorted.map(r => r[cols.article]).filter(Boolean));
+  //   const depots   = new Set(sorted.map(r => r[cols.nomDepot]).filter(Boolean));
+
+  //   return { totalE, totalS, valeurE, valeurS, nbArticles: articles.size, nbDepots: depots.size };
+  // }, [sorted, cols]);
+  
   const kpis = useMemo(() => {
-  if (!sorted.length || !cols.entrees) return null;
+    if (!sorted.length || !cols.entrees) return null;
 
-  let totalE = 0, totalS = 0, valeurE = 0, valeurS = 0;
+    let totalE = 0, totalS = 0, valeurE = 0, valeurS = 0;
 
-  const seen = new Set();
+    for (const r of sorted) {
+      totalE  += Number(r[cols.entrees]   ?? 0);
+      totalS  += Number(r[cols.sorties]   ?? 0);
+      valeurE += Number(r[cols.pruEntree] ?? 0);
+      valeurS += Number(r[cols.pruSortie] ?? 0);
+    }
 
-  for (const r of sorted) {
-    const rawDate  = r[cols.date];
-    if (!rawDate) continue;
+    const articles = new Set(sorted.map(r => r[cols.article]).filter(Boolean));
+    const depots   = new Set(sorted.map(r => r[cols.nomDepot]).filter(Boolean));
 
-    const d        = typeof rawDate === 'string'
-      ? rawDate.slice(0, 10)
-      : new Date(rawDate).toISOString().slice(0, 10);
-    const artCode  = String(r[cols.article]  ?? '');
-    const depotKey = String(r[cols.nomDepot] ?? '');
-    const dedupKey = `${d}|||${artCode}|||${depotKey}`;
-
-    if (seen.has(dedupKey)) continue;
-    seen.add(dedupKey);
-
-    totalE  += Number(r[cols.entrees]   ?? 0);
-    totalS  += Number(r[cols.sorties]   ?? 0);
-    valeurE += Number(r[cols.pruEntree] ?? 0);
-    valeurS += Number(r[cols.pruSortie] ?? 0);
-  }
-
-  const articles = new Set(sorted.map(r => r[cols.article]).filter(Boolean));
-  const depots   = new Set(sorted.map(r => r[cols.nomDepot]).filter(Boolean));
-
-  return { totalE, totalS, valeurE, valeurS, nbArticles: articles.size, nbDepots: depots.size };
-}, [sorted, cols]);
+    return { totalE, totalS, valeurE, valeurS, nbArticles: articles.size, nbDepots: depots.size };
+  }, [sorted, cols]);
   const gridCols = isMobile
     ? 'grid-cols-1'
     : isTablet
