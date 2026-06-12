@@ -22,29 +22,6 @@ function setCached(key, data) {
 }
 
 // ── Préchargement au démarrage ────────────────────────────────
-// async function warmupCache() {
-//   try {
-//     const pool = await getPool();
-//     const bases = await pool.request().execute('stock.SP_GetBases');
-//     setCached('bases', bases.recordset);
-//     console.log(`[warmup] bases chargées (${bases.recordset.length})`);
-
-//     for (const b of bases.recordset) {
-//       const cacheKey = `filtres:${b.BaseName}:null:null`;
-//       const req = pool.request();
-//       req.input('Base',           sql.NVarChar(128), b.BaseName);
-//       req.input('CL_No1',         sql.Int,           null);
-//       req.input('FA_CodeFamille', sql.NVarChar(10),  null);
-//       const result = await req.execute('stock.SP_GetFiltres');
-//       const [articles, depots, familles, cat1, cat2, cat3, cat4] = result.recordsets;
-//       setCached(cacheKey, { articles, depots, familles, cat1, cat2, cat3, cat4 });
-//       console.log(`[warmup] filtres ${b.BaseName} préchargés`);
-//     }
-//   } catch (err) {
-//     console.warn('[warmup] échec (non bloquant):', err.message);
-//   }
-// }
-// setTimeout(warmupCache, 2000);
 async function warmupCache() {
   try {
     const pool = await getPool();
@@ -105,6 +82,7 @@ router.get('/bases', async (req, res) => {
 router.post('/bases', async (req, res) => {
   const { baseName, baseLabel } = req.body;
   if (!baseName) return res.status(400).json({ error: 'Paramètre baseName requis' });
+
   try {
     const pool   = await getPool();
     const result = await pool.request()
@@ -112,12 +90,24 @@ router.post('/bases', async (req, res) => {
       .input('BaseLabel', sql.NVarChar(255), baseLabel || baseName)
       .execute('stock.SP_AddBase');
 
-    // ✅ Vider TOUT le cache (bases + tous les filtres)
     cache.clear();
-    // Relancer le warmup après que SP_AddBase ait fini
-    setTimeout(warmupCache, 3000);
 
+    // ✅ Répondre IMMÉDIATEMENT
     res.json(result.recordset[0]);
+
+    // ✅ Refresh lourd EN ARRIÈRE-PLAN (non bloquant)
+    setImmediate(async () => {
+      try {
+        const pool2 = await getPool();
+        await pool2.request().execute('stock.SP_RebuildUnifiedViews');
+        await pool2.request().execute('stock.SP_RefreshCacheFiltres');
+        await pool2.request().execute('stock.SP_RefreshStockCache');
+        console.log(`[POST /bases] Refresh arrière-plan terminé pour ${baseName}`);
+      } catch (err) {
+        console.error('[POST /bases] Refresh arrière-plan échoué:', err.message);
+      }
+    });
+
   } catch (err) {
     console.error('[POST /bases]', err.message);
     res.status(500).json({ error: err.message });

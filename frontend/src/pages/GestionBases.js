@@ -118,6 +118,7 @@ export default function GestionBases() {
     fetchBasesDisponibles();
   }, []);
 
+
   const handleAdd = async () => {
     if (!baseName) {
       return setMessage({ type: 'error', text: 'Veuillez entrer le nom de la base.' });
@@ -131,13 +132,20 @@ export default function GestionBases() {
       });
       setMessage({ type: 'success', text: res.data?.Message || 'Base ajoutée avec succès.' });
       setBaseName('');
-      setTimeout(() => { fetchBases(); fetchBasesDisponibles(); }, 4000);
+      fetchBases();
+      fetchBasesDisponibles();
+
+      // ✅ Message disparaît après 3 secondes
+      setTimeout(() => setMessage(null), 3000);
+
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.error || 'Erreur serveur.' });
+      setTimeout(() => setMessage(null), 3000);
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleRemoveConfirmed = async () => {
     const name = confirmBase;
@@ -146,14 +154,19 @@ export default function GestionBases() {
     try {
       const res = await axios.delete(`${API}/api/bases/${name}`);
       setMessage({ type: 'success', text: res.data?.Message || 'Base désactivée.' });
-      setTimeout(() => { fetchBases(); fetchBasesDisponibles(); }, 4000);
+      fetchBases();
+      fetchBasesDisponibles();
+
+      // ✅ Message disparaît après 3 secondes
+      setTimeout(() => setMessage(null), 3000);
+
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.error || 'Erreur serveur.' });
+      setTimeout(() => setMessage(null), 3000);
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <>
       <style>{`
