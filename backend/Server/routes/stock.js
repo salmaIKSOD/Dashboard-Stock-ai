@@ -88,25 +88,10 @@ router.post('/bases', async (req, res) => {
     const result = await pool.request()
       .input('BaseName',  sql.NVarChar(128), baseName)
       .input('BaseLabel', sql.NVarChar(255), baseLabel || baseName)
-      .execute('stock.SP_AddBase');
+      .execute('stock.SP_AddBase');  // ← attend que tout soit fini
 
     cache.clear();
-
-    // ✅ Répondre IMMÉDIATEMENT
-    res.json(result.recordset[0]);
-
-    // ✅ Refresh lourd EN ARRIÈRE-PLAN (non bloquant)
-    setImmediate(async () => {
-      try {
-        const pool2 = await getPool();
-        await pool2.request().execute('stock.SP_RebuildUnifiedViews');
-        await pool2.request().execute('stock.SP_RefreshCacheFiltres');
-        await pool2.request().execute('stock.SP_RefreshStockCache');
-        console.log(`[POST /bases] Refresh arrière-plan terminé pour ${baseName}`);
-      } catch (err) {
-        console.error('[POST /bases] Refresh arrière-plan échoué:', err.message);
-      }
-    });
+    res.json(result.recordset[0]);   // ← répond seulement quand c'est prêt
 
   } catch (err) {
     console.error('[POST /bases]', err.message);

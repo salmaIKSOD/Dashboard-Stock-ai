@@ -119,6 +119,8 @@ export default function GestionBases() {
   }, []);
 
 
+  const [syncing, setSyncing] = useState(false);
+
   const handleAdd = async () => {
     if (!baseName) {
       return setMessage({ type: 'error', text: 'Veuillez entrer le nom de la base.' });
@@ -126,16 +128,23 @@ export default function GestionBases() {
     setLoading(true);
     setMessage(null);
     try {
+      // ── Étape 1 : enregistrer la base (rapide)
       const res = await axios.post(`${API}/api/bases`, {
         baseName,
         baseLabel: baseName,
       });
-      setMessage({ type: 'success', text: res.data?.Message || 'Base ajoutée avec succès.' });
       setBaseName('');
       fetchBases();
       fetchBasesDisponibles();
 
-      // ✅ Message disparaît après 3 secondes
+      // ── Étape 2 : lancer le refresh et attendre
+      setSyncing(true);
+      setMessage({ type: 'info', text: 'Synchronisation des données en cours…' });
+
+      // await axios.post(`${API}/api/cache/refresh`);
+      await axios.post(`${API}/api/cache/refresh`, {}, { timeout: 600000 });
+
+      setMessage({ type: 'success', text: 'Base ajoutée et données synchronisées.' });
       setTimeout(() => setMessage(null), 3000);
 
     } catch (err) {
@@ -143,9 +152,9 @@ export default function GestionBases() {
       setTimeout(() => setMessage(null), 3000);
     } finally {
       setLoading(false);
+      setSyncing(false);
     }
   };
-
 
   const handleRemoveConfirmed = async () => {
     const name = confirmBase;
@@ -255,20 +264,25 @@ export default function GestionBases() {
                 <label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-transparent select-none">&nbsp;</label>
                 <button
                   onClick={handleAdd}
-                  disabled={loading}
+                  // disabled={loading}
+                  disabled={loading || syncing} 
                   className={`flex items-center justify-center gap-[0.45rem] px-[1.35rem] py-[0.6rem] rounded-lg text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
                     loading
                       ? 'bg-[#e8f6fd] text-[#92cfe8] cursor-not-allowed'
                       : 'bg-gradient-to-br from-[#12a6e0] to-[#0d8fc4] text-white shadow-md shadow-[rgba(18,166,224,0.35)] hover:shadow-lg cursor-pointer active:scale-[0.97]'
                   }`}
                 >
-                  {loading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                  {loading ? 'En cours…' : 'Ajouter'}
+                  {/* {loading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                  {loading ? 'En cours…' : 'Ajouter'} */}
+                    {syncing ? <Loader2 size={14} className="animate-spin" /> : 
+                  loading  ? <Loader2 size={14} className="animate-spin" /> : 
+                  <Plus size={14} />}
+                  {syncing ? 'Synchronisation…' : loading ? 'En cours…' : 'Ajouter'}
                 </button>
               </div>
             </div>
 
-            {message && (
+            {/* {message && (
               <div className={`mt-4 flex items-center gap-3 px-4 py-3 rounded-xl text-[13px] font-medium border ${
                 message.type === 'success'
                   ? 'bg-[rgba(1,214,58,0.05)] border-[rgba(1,168,46,0.20)] text-[#01773d]'
@@ -277,6 +291,22 @@ export default function GestionBases() {
                 {message.type === 'success'
                   ? <CheckCircle2 size={15} className="shrink-0 text-[#01a82e]" />
                   : <AlertCircle  size={15} className="shrink-0 text-[#e53935]" />}
+                {message.text}
+              </div>
+            )} */}
+            {message && (
+              <div className={`mt-4 flex items-center gap-3 px-4 py-3 rounded-xl text-[13px] font-medium border ${
+                message.type === 'success'
+                  ? 'bg-[rgba(1,214,58,0.05)] border-[rgba(1,168,46,0.20)] text-[#01773d]'
+                  : message.type === 'info'
+                  ? 'bg-[rgba(224,138,0,0.06)] border-[rgba(224,138,0,0.22)] text-[#b97a00]'
+                  : 'bg-[rgba(229,57,53,0.05)] border-[rgba(229,57,53,0.20)] text-[#c62828]'
+              }`}>
+                {message.type === 'success'
+                  ? <CheckCircle2 size={15} className="shrink-0 text-[#01a82e]" />
+                  : message.type === 'info'
+                  ? <Loader2 size={15} className="shrink-0 text-[#b97a00] animate-spin" />
+                  : <AlertCircle size={15} className="shrink-0 text-[#e53935]" />}
                 {message.text}
               </div>
             )}
