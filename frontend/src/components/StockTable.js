@@ -32,7 +32,6 @@ const fmtNum = (n) => {
   return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 4 }).format(num);
 };
 
-
 /* ══════════════════════════════════════════════════════════════
    DETECT COLUMNS
 ══════════════════════════════════════════════════════════════ */

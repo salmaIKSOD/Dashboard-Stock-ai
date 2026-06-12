@@ -321,9 +321,8 @@ export default function PageMovements() {
   const [page,    setPage]    = useState(1);
   const PAGE_SIZE = 50;
 
- // ✅ Recharge quand les filtres globaux changent (Dashboard → Mouvements)
-  const filtersKey    = `${currentFilters.base}|${currentFilters.dateDebut}|${currentFilters.dateFin}`;
-  const loadedForKey  = useRef('');
+  const didInit = useRef(false);
+
   /* ── Chargement bases ── */
   useEffect(() => {
     fetchBases()
@@ -331,6 +330,25 @@ export default function PageMovements() {
       .catch(console.error)
       .finally(() => setLoadingBases(false));
   }, []);
+
+  /* ── Sync filtres globaux → état local ── */
+  const prevBase  = useRef(currentFilters.base);
+  const prevDebut = useRef(currentFilters.dateDebut);
+  const prevFin   = useRef(currentFilters.dateFin);
+  useEffect(() => {
+    if (
+      currentFilters.base      !== prevBase.current  ||
+      currentFilters.dateDebut !== prevDebut.current ||
+      currentFilters.dateFin   !== prevFin.current
+    ) {
+      setBase(currentFilters.base      || '');
+      setDateDebut(currentFilters.dateDebut || '');
+      setDateFin(currentFilters.dateFin     || '');
+      prevBase.current  = currentFilters.base;
+      prevDebut.current = currentFilters.dateDebut;
+      prevFin.current   = currentFilters.dateFin;
+    }
+  }, [currentFilters.base, currentFilters.dateDebut, currentFilters.dateFin]);
 
   /* ── Chargement filtres (articles / dépôts) ── */
   const loadFiltres = useCallback(async (selectedBase) => {
@@ -343,7 +361,17 @@ export default function PageMovements() {
     } catch (e) { console.error(e); }
     finally { setLoadingFiltres(false); }
   }, []);
-  
+
+  useEffect(() => { if (base) loadFiltres(base); }, [base, loadFiltres]);
+
+  /* ── Init auto ── */
+  useEffect(() => {
+    if (didInit.current || !currentFilters.base) return;
+    didInit.current = true;
+    doLoadMouv({ base: currentFilters.base, dateDebut: currentFilters.dateDebut, dateFin: currentFilters.dateFin, depot: null, article: null });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentFilters.base]);
+
   /* ── Chargement mouvements ── */
   const doLoadMouv = useCallback(async (params) => {
     setLoading(true); setError(null);
@@ -354,65 +382,27 @@ export default function PageMovements() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { if (base) loadFiltres(base); }, [base, loadFiltres]);
-
-
-  useEffect(() => {
-    if (!currentFilters.base)                  return;
-    if (loadedForKey.current === filtersKey)   return;
-    loadedForKey.current = filtersKey;
-
-    setBase(currentFilters.base           || '');
-    setDateDebut(currentFilters.dateDebut || '');
-    setDateFin(currentFilters.dateFin     || '');
-
-    doLoadMouv({
-      base:      currentFilters.base,
-      dateDebut: currentFilters.dateDebut || null,
-      dateFin:   currentFilters.dateFin   || null,
-      depot:     null,
-      article:   null,
-    });
-  }, [filtersKey, currentFilters.base, currentFilters.dateDebut, currentFilters.dateFin, doLoadMouv]);
-
-
   /* ── Filtrer ── */
   const handleFilter = async () => {
     if (!base) return;
     setIsFiltering(true);
 
-    // ✅ Mettre à jour les filtres globaux (Mouvements → Dashboard)
-    const newFilters = {
-      base,
-      dateDebut:      dateDebut || null,
-      dateFin:        dateFin   || null,
-      depot:          null,
-      article:        null,
-      fa_codefamille: null,
-      cl_no1:         null,
-      cl_no2:         null,
-      cl_no3:         null,
-      cl_no4:         null,
-    };
-
-    setCurrentFilters(newFilters);
+    setCurrentFilters(prev => ({ ...prev, base, dateDebut: dateDebut || null, dateFin: dateFin || null, article: null }));
     setHasFiltered(true);
 
-    // ✅ Marquer cette clé comme déjà chargée pour éviter double rechargement
-    loadedForKey.current = `${base}|${dateDebut || ''}|${dateFin || ''}`;
-
-    // ✅ Recharger le Dashboard avec les mêmes filtres
-    triggerDashboardReload(newFilters);
-
-    // ✅ Charger les mouvements (avec dépôt/article locaux si sélectionnés)
-    await doLoadMouv({
+    triggerDashboardReload({
       base,
       dateDebut: dateDebut || null,
       dateFin:   dateFin   || null,
-      depot:     depot     || null,
-      article:   article   || null,
+      depot: null, article: null,
+      fa_codefamille: currentFilters.fa_codefamille || null,
+      cl_no1: currentFilters.cl_no1 || null,
+      cl_no2: currentFilters.cl_no2 || null,
+      cl_no3: currentFilters.cl_no3 || null,
+      cl_no4: currentFilters.cl_no4 || null,
     });
 
+    await doLoadMouv({ base, dateDebut: dateDebut || null, dateFin: dateFin || null, depot: depot || null, article: article || null });
     setIsFiltering(false);
   };
 
@@ -475,75 +465,18 @@ export default function PageMovements() {
     setPage(1);
   };
 
-  // const kpis = useMemo(() => {
-  //   if (!sorted.length || !cols.entrees) return null;
-
-  //   let totalE = 0, totalS = 0, valeurE = 0, valeurS = 0;
-
-  //   for (const r of sorted) {
-  //     totalE  += Number(r[cols.entrees]   ?? 0);
-  //     totalS  += Number(r[cols.sorties]   ?? 0);
-  //     valeurE += Number(r[cols.pruEntree] ?? 0);
-  //     valeurS += Number(r[cols.pruSortie] ?? 0);
-  //   }
-
-  //   const articles = new Set(sorted.map(r => r[cols.article]).filter(Boolean));
-  //   const depots   = new Set(sorted.map(r => r[cols.nomDepot]).filter(Boolean));
-
-  //   return { totalE, totalS, valeurE, valeurS, nbArticles: articles.size, nbDepots: depots.size };
-  // }, [sorted, cols]);
-
-
-  // const kpis = useMemo(() => {
-  //   if (!sorted.length || !cols.entrees) return null;
-
-  //   let totalE = 0, totalS = 0, valeurE = 0, valeurS = 0;
-
-  //   const seen = new Set();
-
-  //   for (const r of sorted) {
-  //     const rawDate  = r[cols.date];
-  //     if (!rawDate) continue;
-
-  //     const d        = typeof rawDate === 'string'
-  //       ? rawDate.slice(0, 10)
-  //       : new Date(rawDate).toISOString().slice(0, 10);
-  //     const artCode  = String(r[cols.article]  ?? '');
-  //     const depotKey = String(r[cols.nomDepot] ?? '');
-  //     const dedupKey = `${d}|||${artCode}|||${depotKey}`;
-
-  //     if (seen.has(dedupKey)) continue;
-  //     seen.add(dedupKey);
-
-  //     totalE  += Number(r[cols.entrees]   ?? 0);
-  //     totalS  += Number(r[cols.sorties]   ?? 0);
-  //     valeurE += Number(r[cols.pruEntree] ?? 0);
-  //     valeurS += Number(r[cols.pruSortie] ?? 0);
-  //   }
-
-  //   const articles = new Set(sorted.map(r => r[cols.article]).filter(Boolean));
-  //   const depots   = new Set(sorted.map(r => r[cols.nomDepot]).filter(Boolean));
-
-  //   return { totalE, totalS, valeurE, valeurS, nbArticles: articles.size, nbDepots: depots.size };
-  // }, [sorted, cols]);
-  
   const kpis = useMemo(() => {
     if (!sorted.length || !cols.entrees) return null;
-
-    let totalE = 0, totalS = 0, valeurE = 0, valeurS = 0;
-
+    let totalE = 0, totalS = 0;
     for (const r of sorted) {
-      totalE  += Number(r[cols.entrees]   ?? 0);
-      totalS  += Number(r[cols.sorties]   ?? 0);
-      valeurE += Number(r[cols.pruEntree] ?? 0);
-      valeurS += Number(r[cols.pruSortie] ?? 0);
+      totalE += Number(r[cols.entrees] ?? 0);
+      totalS += Number(r[cols.sorties] ?? 0);
     }
-
     const articles = new Set(sorted.map(r => r[cols.article]).filter(Boolean));
     const depots   = new Set(sorted.map(r => r[cols.nomDepot]).filter(Boolean));
-
-    return { totalE, totalS, valeurE, valeurS, nbArticles: articles.size, nbDepots: depots.size };
+    return { totalE, totalS, nbArticles: articles.size, nbDepots: depots.size };
   }, [sorted, cols]);
+
   const gridCols = isMobile
     ? 'grid-cols-1'
     : isTablet
@@ -663,38 +596,27 @@ export default function PageMovements() {
             KPIs
         ══════════════════════════════════════════════════ */}
         {kpis && !loading && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <KpiCard
-              label="Total Entrées (qté)"
+              label="Total Entrées"
               value={fmtNum(kpis.totalE)}
               sub="unités reçues sur la période"
-              color="#01a82e" bgColor="rgba(1,168,46,0.06)"
-              borderColor="rgba(1,168,46,0.18)" iconBg="rgba(1,168,46,0.08)"
+              color="#01a82e" bgColor="rgba(1,168,46,0.06)" borderColor="rgba(1,168,46,0.18)" iconBg="rgba(1,168,46,0.08)"
               icon={PackageCheck}
             />
             <KpiCard
-              label="Valeur Entrées"
-              value={fmtNum(kpis.valeurE)}
-              sub="MAD — valeur totale entrées"
-              color="#01a82e" bgColor="rgba(1,168,46,0.06)"
-              borderColor="rgba(1,168,46,0.18)" iconBg="rgba(1,168,46,0.08)"
-              icon={PackageCheck}
-            />
-            <KpiCard
-              label="Total Sorties (qté)"
+              label="Total Sorties"
               value={fmtNum(kpis.totalS)}
               sub="unités expédiées sur la période"
-              color="#e53935" bgColor="rgba(229,57,53,0.06)"
-              borderColor="rgba(229,57,53,0.18)" iconBg="rgba(229,57,53,0.08)"
+              color="#e53935" bgColor="rgba(229,57,53,0.06)" borderColor="rgba(229,57,53,0.18)" iconBg="rgba(229,57,53,0.08)"
               icon={PackageOpen}
             />
             <KpiCard
-              label="Valeur Sorties"
-              value={fmtNum(kpis.valeurS)}
-              sub="MAD — valeur totale sorties"
-              color="#e53935" bgColor="rgba(229,57,53,0.06)"
-              borderColor="rgba(229,57,53,0.18)" iconBg="rgba(229,57,53,0.08)"
-              icon={PackageOpen}
+              label="Articles uniques"
+              value={kpis.nbArticles}
+              sub={`sur ${kpis.nbDepots} dépôt${kpis.nbDepots > 1 ? 's' : ''}`}
+              color="#12a6e0" bgColor="rgba(18,166,224,0.06)" borderColor="rgba(18,166,224,0.18)" iconBg="rgba(18,166,224,0.08)"
+              icon={Boxes}
             />
           </div>
         )}
