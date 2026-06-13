@@ -197,6 +197,7 @@ function Dashboard({ sidebarOpen }) {
     try {
       const data = await fetchStock(params);
       setTableData(data);
+      // if (data && data.length > 0) console.log('Colonnes SP:', Object.keys(data[0]));
     } catch (err) {
       console.error(err);
       setError(err.message);
