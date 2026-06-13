@@ -42,3 +42,27 @@ export async function fetchMouvements(params) {
 export async function fetchStock(params) {
   return apiFetch('/stock', params);
 }
+
+
+//  
+export function splitPeriodJS(dateDebut, dateFin, monthsPerChunk = 3) {
+  const chunks  = [];
+  let   current = new Date(dateDebut);
+  const end     = new Date(dateFin);
+  const fmt     = d => d.toISOString().split('T')[0];
+
+  while (current <= end) {
+    const chunkStart = new Date(current);
+    const chunkEnd   = new Date(current);
+    chunkEnd.setMonth(chunkEnd.getMonth() + monthsPerChunk);
+    chunkEnd.setDate(chunkEnd.getDate() - 1);
+    if (chunkEnd > end) chunkEnd.setTime(end.getTime());
+    chunks.push({ dateDebut: fmt(chunkStart), dateFin: fmt(chunkEnd) });
+    current.setMonth(current.getMonth() + monthsPerChunk);
+  }
+  return chunks;
+}
+
+export async function fetchStockChunk(params, dateDebut, dateFin) {
+  return apiFetch('/stock/chunk', { ...params, dateDebut, dateFin });
+}
