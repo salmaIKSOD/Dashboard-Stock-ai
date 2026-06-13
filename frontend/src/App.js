@@ -306,49 +306,94 @@ function Dashboard({ sidebarOpen }) {
     let totalEntrees = 0;
     let totalSorties = 0;
  
+    // for (const r of tableData) {
+    //   const rawDate = r[kDate];
+    //   if (!rawDate) continue;
+ 
+    //   const d = typeof rawDate === 'string'
+    //     ? rawDate.slice(0, 10)
+    //     : new Date(rawDate).toISOString().slice(0, 10);
+ 
+    //   const rowDate  = new Date(d);
+    //   const artCode  = String(r[kArticle] ?? '(sans code)');
+    //   const depotKey = String(r[kDepot]   ?? '(sans dépôt)');
+    //   const key      = `${artCode}|||${depotKey}`;
+ 
+    //   const e  = Number(r[kEntrees]    ?? 0);
+    //   const s  = Number(r[kSorties]    ?? 0);
+    //   const sf = Number(r[kStockFinal] ?? 0);
+    //   const v  = Number(r[kSolde]      ?? 0);
+ 
+    //   totalEntrees += e;
+    //   totalSorties += s;
+ 
+    //   if (e > 0) entreesParJour[d] = (entreesParJour[d] || 0) + e;
+    //   if (s > 0) sortiesParJour[d] = (sortiesParJour[d] || 0) + s;
+ 
+    //   // ✅ Garder le DERNIER stock final connu par (article, dépôt)
+    //   if (
+    //     r[kStockFinal] !== null &&
+    //     r[kStockFinal] !== undefined &&
+    //     (!lastStockMap[key] || rowDate >= lastStockMap[key].date)
+    //   ) {
+    //     lastStockMap[key] = { stockFinal: sf, date: rowDate };
+    //   }
+ 
+    //   // ✅ Garder la DERNIÈRE valeur permanente connue par (article, dépôt)
+    //   if (
+    //     r[kSolde] !== null &&
+    //     r[kSolde] !== undefined &&
+    //     (!lastValeurMap[key] || rowDate >= lastValeurMap[key].date)
+    //   ) {
+    //     lastValeurMap[key] = { valeur: v, date: rowDate };
+    //   }
+    // }
+ 
+    // salma tu chnage
     for (const r of tableData) {
       const rawDate = r[kDate];
       if (!rawDate) continue;
- 
+
       const d = typeof rawDate === 'string'
-        ? rawDate.slice(0, 10)
-        : new Date(rawDate).toISOString().slice(0, 10);
- 
+          ? rawDate.slice(0, 10)
+          : new Date(rawDate).toISOString().slice(0, 10);
+
       const rowDate  = new Date(d);
       const artCode  = String(r[kArticle] ?? '(sans code)');
       const depotKey = String(r[kDepot]   ?? '(sans dépôt)');
       const key      = `${artCode}|||${depotKey}`;
- 
+
       const e  = Number(r[kEntrees]    ?? 0);
       const s  = Number(r[kSorties]    ?? 0);
       const sf = Number(r[kStockFinal] ?? 0);
       const v  = Number(r[kSolde]      ?? 0);
- 
+
       totalEntrees += e;
       totalSorties += s;
- 
+
       if (e > 0) entreesParJour[d] = (entreesParJour[d] || 0) + e;
       if (s > 0) sortiesParJour[d] = (sortiesParJour[d] || 0) + s;
- 
-      // ✅ Garder le DERNIER stock final connu par (article, dépôt)
+
+      // ✅ CORRECTION : seulement les lignes AVEC mouvement
+      // pour éviter les doublons des jours reportés
       if (
-        r[kStockFinal] !== null &&
-        r[kStockFinal] !== undefined &&
-        (!lastStockMap[key] || rowDate >= lastStockMap[key].date)
+          (e > 0 || s > 0) &&   // ← AJOUT : ignorer jours sans mouvement
+          r[kStockFinal] !== null &&
+          r[kStockFinal] !== undefined &&
+          (!lastStockMap[key] || rowDate >= lastStockMap[key].date)
       ) {
-        lastStockMap[key] = { stockFinal: sf, date: rowDate };
+          lastStockMap[key] = { stockFinal: sf, date: rowDate };
       }
- 
-      // ✅ Garder la DERNIÈRE valeur permanente connue par (article, dépôt)
+
       if (
-        r[kSolde] !== null &&
-        r[kSolde] !== undefined &&
-        (!lastValeurMap[key] || rowDate >= lastValeurMap[key].date)
+          (e > 0 || s > 0) &&   // ← AJOUT : ignorer jours sans mouvement
+          r[kSolde] !== null &&
+          r[kSolde] !== undefined &&
+          (!lastValeurMap[key] || rowDate >= lastValeurMap[key].date)
       ) {
-        lastValeurMap[key] = { valeur: v, date: rowDate };
+          lastValeurMap[key] = { valeur: v, date: rowDate };
       }
-    }
- 
+  }
     // ✅ Stock total = somme des derniers stocks de chaque (article, dépôt)
     const stockFinalTotal = Object.values(lastStockMap)
       .reduce((sum, e) => sum + e.stockFinal, 0);

@@ -465,18 +465,53 @@ export default function PageMovements() {
     setPage(1);
   };
 
+  // const kpis = useMemo(() => {
+  //   if (!sorted.length || !cols.entrees) return null;
+  //   let totalE = 0, totalS = 0;
+  //   for (const r of sorted) {
+  //     totalE += Number(r[cols.entrees] ?? 0);
+  //     totalS += Number(r[cols.sorties] ?? 0);
+  //   }
+  //   const articles = new Set(sorted.map(r => r[cols.article]).filter(Boolean));
+  //   const depots   = new Set(sorted.map(r => r[cols.nomDepot]).filter(Boolean));
+  //   return { totalE, totalS, nbArticles: articles.size, nbDepots: depots.size };
+  // }, [sorted, cols]);
+
+
+  // tu change
   const kpis = useMemo(() => {
     if (!sorted.length || !cols.entrees) return null;
+
     let totalE = 0, totalS = 0;
+    // Map pour garder la dernière ligne par article+dépôt
+    const dernierParArticleDepot = new Map();
+
     for (const r of sorted) {
-      totalE += Number(r[cols.entrees] ?? 0);
-      totalS += Number(r[cols.sorties] ?? 0);
+        totalE += Number(r[cols.entrees] ?? 0);
+        totalS += Number(r[cols.sorties] ?? 0);
+
+        // Clé unique article + dépôt
+        const key = `${r[cols.article]}_${r[cols.nomDepot]}`;
+        const dateActuelle = new Date(r[cols.date]);
+        const existant = dernierParArticleDepot.get(key);
+
+        if (!existant || dateActuelle >= new Date(existant[cols.date])) {
+            dernierParArticleDepot.set(key, r);
+        }
     }
+
+    // Sommer les dernières valeurs par article/dépôt
+    let totalStockFinal = 0, totalValeurPermanente = 0;
+    for (const r of dernierParArticleDepot.values()) {
+        totalStockFinal      += Number(r[cols.stockFinal] ?? 0);
+        totalValeurPermanente += Number(r[cols.solde]     ?? 0);
+    }
+
     const articles = new Set(sorted.map(r => r[cols.article]).filter(Boolean));
     const depots   = new Set(sorted.map(r => r[cols.nomDepot]).filter(Boolean));
-    return { totalE, totalS, nbArticles: articles.size, nbDepots: depots.size };
-  }, [sorted, cols]);
 
+    return { totalE, totalS, totalStockFinal, totalValeurPermanente, nbArticles: articles.size, nbDepots: depots.size };
+}, [sorted, cols]);
   const gridCols = isMobile
     ? 'grid-cols-1'
     : isTablet
@@ -597,6 +632,22 @@ export default function PageMovements() {
         ══════════════════════════════════════════════════ */}
         {kpis && !loading && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {/* tu chnage */}
+            <KpiCard
+                label="Stock Final Total"
+                value={fmtNum(kpis.totalStockFinal)}
+                sub="unités en stock à la fin de la période"
+                color="#c47a00" bgColor="rgba(224,138,0,0.06)" borderColor="rgba(224,138,0,0.18)" iconBg="rgba(224,138,0,0.08)"
+                icon={Boxes}
+            />
+            {/* tu change */}
+            <KpiCard
+                label="Valeur Permanente"
+                value={fmtNum(kpis.totalValeurPermanente)}
+                sub="valeur stock permanent"
+                color="#0b7db0" bgColor="rgba(18,166,224,0.06)" borderColor="rgba(18,166,224,0.18)" iconBg="rgba(18,166,224,0.08)"
+                icon={TrendingUp}
+            />
             <KpiCard
               label="Total Entrées"
               value={fmtNum(kpis.totalE)}
