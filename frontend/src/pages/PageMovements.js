@@ -321,7 +321,7 @@ export default function PageMovements() {
   const [page,    setPage]    = useState(1);
   const PAGE_SIZE = 50;
 
-  const didInit = useRef(false);
+  // const didInit = useRef(false);
 
   /* ── Chargement bases ── */
   useEffect(() => {
@@ -365,12 +365,12 @@ export default function PageMovements() {
   useEffect(() => { if (base) loadFiltres(base); }, [base, loadFiltres]);
 
   /* ── Init auto ── */
-  useEffect(() => {
-    if (didInit.current || !currentFilters.base) return;
-    didInit.current = true;
-    doLoadMouv({ base: currentFilters.base, dateDebut: currentFilters.dateDebut, dateFin: currentFilters.dateFin, depot: null, article: null });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFilters.base]);
+  // useEffect(() => {
+  //   if (didInit.current || !currentFilters.base) return;
+  //   didInit.current = true;
+  //   doLoadMouv({ base: currentFilters.base, dateDebut: currentFilters.dateDebut, dateFin: currentFilters.dateFin, depot: null, article: null });
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [currentFilters.base]);
 
   /* ── Chargement mouvements ── */
   const doLoadMouv = useCallback(async (params) => {
@@ -529,7 +529,7 @@ export default function PageMovements() {
         .animate-spin { animation: spin 1s linear infinite }
       `}</style>
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-3">
 
         {/* ══════════════════════════════════════════════════
             PANNEAU FILTRES
@@ -672,6 +672,24 @@ export default function PageMovements() {
           </div>
         )}
 
+        {/* MESSAGE GUIDE */}
+        {!loading && mouvData === null && (
+          <div className="bg-white border border-[#e8e8e8] rounded-2xl overflow-hidden shadow-[0_1px_6px_rgba(0,0,0,0.06)]">
+            <div className="flex items-center gap-3 px-5 py-3.5 border-b border-[#f0f0f0]">
+              <div className="w-2 h-2 rounded-full bg-[#01d63a]" />
+              <span className="text-[#0d0c0c] text-[0.75rem] font-semibold uppercase tracking-[0.06em]">Mouvements</span>
+              <span className="bg-[#f0f0f0] text-[#666666] text-[0.6875rem] font-mono px-2 py-0.5 rounded">0 lignes</span>
+            </div>
+            {/* <div className="p-16 text-center"> */}
+            <div className="min-h-[320px] flex flex-col items-center justify-center">
+              <PackageX size={36} className="text-[#e0e0e0] mx-auto mb-3" />
+              <p className="text-[#c5c5c5] text-sm">
+                Définissez vos filtres et cliquez sur <strong className="text-[#888]">Filtrer</strong> pour voir les mouvements.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ══════════════════════════════════════════════════
             TABLEAU
         ══════════════════════════════════════════════════ */}
@@ -727,8 +745,15 @@ export default function PageMovements() {
             )}
 
             {/* Vide */}
-            {!loading && sorted.length === 0 && (
+            {/* {!loading && sorted.length === 0 && (
               <div className="p-16 text-center">
+                <PackageX size={36} className="text-[#e0e0e0] mx-auto mb-3" />
+                <p className="text-[#c5c5c5] text-sm">Aucun mouvement pour ces filtres.</p>
+              </div>
+            )} */}
+            {!loading && sorted.length === 0 && (
+              // <div className="p-16 text-center">
+              <div className="min-h-[320px] flex flex-col items-center justify-center">
                 <PackageX size={36} className="text-[#e0e0e0] mx-auto mb-3" />
                 <p className="text-[#c5c5c5] text-sm">Aucun mouvement pour ces filtres.</p>
               </div>

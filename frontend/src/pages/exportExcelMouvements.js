@@ -243,16 +243,35 @@ function buildRecapMensuelSheet(wb, data, cols) {
   let grandStockFin  = 0;
 
   // ── Calcul du stock final global (dernier jour par article, tous mois) ──
-  const allByArticle = {};
+  // const allByArticle = {};
+  //   data.forEach(row => {
+  //   const code = row[cols.article] ?? '(sans code)';
+  //   if (!allByArticle[code]) allByArticle[code] = [];
+  //   allByArticle[code].push(row);
+  //   });
+  //   Object.values(allByArticle).forEach(artRows => {
+  //   const sorted = [...artRows].sort((a, b) => new Date(b[cols.date]) - new Date(a[cols.date]));
+  //   const sfRow  = sorted.find(r => r[cols.stockFinal] != null);
+  //   if (sfRow) grandStockFin += Number(sfRow[cols.stockFinal]);
+  // });
+  const allByArticleDepot = {};
     data.forEach(row => {
-    const code = row[cols.article] ?? '(sans code)';
-    if (!allByArticle[code]) allByArticle[code] = [];
-    allByArticle[code].push(row);
+      const key = `${row[cols.article] ?? '(sans code)'}___${row[cols.nomDepot] ?? '(sans dépôt)'}`;
+      if (!allByArticleDepot[key]) allByArticleDepot[key] = [];
+      allByArticleDepot[key].push(row);
     });
-    Object.values(allByArticle).forEach(artRows => {
-    const sorted = [...artRows].sort((a, b) => new Date(b[cols.date]) - new Date(a[cols.date]));
-    const sfRow  = sorted.find(r => r[cols.stockFinal] != null);
-    if (sfRow) grandStockFin += Number(sfRow[cols.stockFinal]);
+    Object.values(allByArticleDepot).forEach(dr => {
+      const avecMvt = dr.filter(r =>
+        Number(r[cols.entrees] ?? 0) > 0 || Number(r[cols.sorties] ?? 0) > 0
+      );
+      if (avecMvt.length === 0) return;
+      const sorted = [...avecMvt].sort((a, b) => new Date(b[cols.date]) - new Date(a[cols.date]));
+      for (const r of sorted) {
+        if (r[cols.stockFinal] != null) {
+          grandStockFin += Number(r[cols.stockFinal]);
+          break;
+        }
+      }
   });
 
   const monthKeys = Object.keys(byMonth).sort();
@@ -325,10 +344,19 @@ function buildRecapMensuelSheet(wb, data, cols) {
         });
 
         // Stock final = ligne avec la date la plus récente de ce dépôt ce mois
-        const sortedDR = [...depotRows].sort((a, b) => new Date(b[cols.date]) - new Date(a[cols.date]));
-        const sfRow    = sortedDR.find(r => r[cols.stockFinal] != null);
-        const depSF    = sfRow ? Number(sfRow[cols.stockFinal]) : null;
+        // const sortedDR = [...depotRows].sort((a, b) => new Date(b[cols.date]) - new Date(a[cols.date]));
+        // const sfRow    = sortedDR.find(r => r[cols.stockFinal] != null);
+        // const depSF    = sfRow ? Number(sfRow[cols.stockFinal]) : null;
 
+        const avecMvt = depotRows.filter(r =>
+          Number(r[cols.entrees] ?? 0) > 0 || Number(r[cols.sorties] ?? 0) > 0
+        );
+        let depSF = null;
+        if (avecMvt.length > 0) {
+          const sortedDR = [...avecMvt].sort((a, b) => new Date(b[cols.date]) - new Date(a[cols.date]));
+          const sfRow = sortedDR.find(r => r[cols.stockFinal] != null);
+          if (sfRow) depSF = Number(sfRow[cols.stockFinal]);
+        }
         artE    += depE;
         artValE += depValE;
         artS    += depS;
