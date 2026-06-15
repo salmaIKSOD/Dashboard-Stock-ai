@@ -20,6 +20,8 @@ export function DashboardProvider({ children }) {
   const [hasFiltered,    setHasFiltered] = useState(false);
   const [loading,        setLoading]     = useState(false);
   const [error,          setError]       = useState(null);
+  const [mouvData,    setMouvData]    = useState(null);
+  const [mouvFilters, setMouvFilters] = useState({ depot: '', article: '' });
 
   const [currentFilters, setCurrentFilters] = useState({
     base:           'BIJOU',
@@ -57,6 +59,8 @@ export function DashboardProvider({ children }) {
       registerReloadDashboard,
       triggerDashboardReload,
       defaultDebut,   defaultFin,
+      mouvData,    setMouvData,
+      mouvFilters, setMouvFilters,
     }}>
       {children}
     </DashboardContext.Provider>

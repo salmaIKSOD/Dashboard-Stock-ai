@@ -262,7 +262,7 @@ function LoginPage() {
               </p>
               <div className="grid grid-cols-1 gap-1.5">
                 {[
-                  { icon: TrendingUp, label: 'Analyse temps réel', color: '#12a6e0' },
+                  { icon: TrendingUp, label: 'Analyse des mouvements de stock', color: '#12a6e0' },
                   { icon: PackageSearch, label: 'Suivi des mouvements', color: '#01a82e' },
                   { icon: Database, label: 'Multi-bases SAGE', color: '#12a6e0' },
                   { icon: BrainCircuit, label: 'Prévisions IA (7j/14j/30j)', color: '#7c4dff' },

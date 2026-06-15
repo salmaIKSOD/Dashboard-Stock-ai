@@ -285,11 +285,19 @@ function KpiCard({ label, value, sub, color, bgColor, borderColor, icon: Icon, i
    COMPOSANT PRINCIPAL
 ══════════════════════════════════════════════════════════════ */
 export default function PageMovements() {
+  // const {
+  //   currentFilters,
+  //   setCurrentFilters,
+  //   triggerDashboardReload,
+  //   setHasFiltered,
+  // } = useDashboard();
   const {
     currentFilters,
     setCurrentFilters,
     triggerDashboardReload,
     setHasFiltered,
+    mouvData, setMouvData,
+    mouvFilters, setMouvFilters,
   } = useDashboard();
 
   const { isMobile, isTablet } = useBreakpoint();
@@ -298,11 +306,13 @@ export default function PageMovements() {
   const [base,      setBase]      = useState(currentFilters.base      || '');
   const [dateDebut, setDateDebut] = useState(currentFilters.dateDebut || '');
   const [dateFin,   setDateFin]   = useState(currentFilters.dateFin   || '');
-  const [depot,     setDepot]     = useState('');
-  const [article,   setArticle]   = useState('');
+  // const [depot,     setDepot]     = useState('');
+  // const [article,   setArticle]   = useState('');
+  const [depot,   setDepot]   = useState(mouvFilters?.depot   || '');
+  const [article, setArticle] = useState(mouvFilters?.article || '');
 
   /* ── États données ── */
-  const [mouvData,    setMouvData]    = useState(null);
+  // const [mouvData,    setMouvData]    = useState(null);
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState(null);
   const [isFiltering, setIsFiltering] = useState(false);
@@ -332,21 +342,35 @@ export default function PageMovements() {
   }, []);
 
   /* ── Sync filtres globaux → état local ── */
-  const prevBase  = useRef(currentFilters.base);
-  const prevDebut = useRef(currentFilters.dateDebut);
-  const prevFin   = useRef(currentFilters.dateFin);
+  // const prevBase  = useRef(currentFilters.base);
+  // const prevDebut = useRef(currentFilters.dateDebut);
+  // const prevFin   = useRef(currentFilters.dateFin);
+  // useEffect(() => {
+  //   if (
+  //     currentFilters.base      !== prevBase.current  ||
+  //     currentFilters.dateDebut !== prevDebut.current ||
+  //     currentFilters.dateFin   !== prevFin.current
+  //   ) {
+  //     setBase(currentFilters.base      || '');
+  //     setDateDebut(currentFilters.dateDebut || '');
+  //     setDateFin(currentFilters.dateFin     || '');
+  //     prevBase.current  = currentFilters.base;
+  //     prevDebut.current = currentFilters.dateDebut;
+  //     prevFin.current   = currentFilters.dateFin;
+  //   }
+  // }, [currentFilters.base, currentFilters.dateDebut, currentFilters.dateFin]);
   useEffect(() => {
-    if (
-      currentFilters.base      !== prevBase.current  ||
-      currentFilters.dateDebut !== prevDebut.current ||
-      currentFilters.dateFin   !== prevFin.current
-    ) {
-      setBase(currentFilters.base      || '');
-      setDateDebut(currentFilters.dateDebut || '');
-      setDateFin(currentFilters.dateFin     || '');
-      prevBase.current  = currentFilters.base;
-      prevDebut.current = currentFilters.dateDebut;
-      prevFin.current   = currentFilters.dateFin;
+    setBase(currentFilters.base      || '');
+    setDateDebut(currentFilters.dateDebut || '');
+    setDateFin(currentFilters.dateFin     || '');
+    if (currentFilters.base && currentFilters.dateDebut && currentFilters.dateFin) {
+      doLoadMouv({
+        base:      currentFilters.base,
+        dateDebut: currentFilters.dateDebut,
+        dateFin:   currentFilters.dateFin,
+        depot:     null,
+        article:   null,
+      });
     }
   }, [currentFilters.base, currentFilters.dateDebut, currentFilters.dateFin]);
 
@@ -402,7 +426,10 @@ export default function PageMovements() {
       cl_no4: currentFilters.cl_no4 || null,
     });
 
+    // await doLoadMouv({ base, dateDebut: dateDebut || null, dateFin: dateFin || null, depot: depot || null, article: article || null });
+    // setIsFiltering(false);
     await doLoadMouv({ base, dateDebut: dateDebut || null, dateFin: dateFin || null, depot: depot || null, article: article || null });
+    setMouvFilters({ depot: depot || '', article: article || '' });
     setIsFiltering(false);
   };
 
