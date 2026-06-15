@@ -1,4 +1,4 @@
-BASE_NAME = "STE_NGDM"   # ← changer ici uniquement
+BASE_NAME = "PHARMA"   # ← changer ici uniquement
 
 SQL_SERVER   = r"SALMAIKSOD\SAGE100"
 SQL_DATABASE = "Test"
