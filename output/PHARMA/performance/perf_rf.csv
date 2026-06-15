@@ -1,2 +1,0 @@
-model,MAE,RMSE,nb_train,nb_test
-RandomForest,0.18,0.93,102207,25552
