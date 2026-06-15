@@ -1,2 +1,4 @@
-models/STE_NGDM/rf_rupture.pkl
-models/STE_NGDM/rf_rupture.pkl
+*.pkl
+node_modules/
+output/
+.env
