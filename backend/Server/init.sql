@@ -696,7 +696,101 @@ BEGIN
 END
 GO
 
--- ── 15. SP_AddBase ────────────────────────────────────────────
+-- ── 15. SP_RefreshStockCacheBase ─────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_RefreshStockCacheBase
+    @BaseName NVARCHAR(128)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DELETE FROM stock.StockJournalierCache WHERE BaseName = @BaseName;
+    DELETE FROM stock.CacheFiltres          WHERE BaseName = @BaseName;
+
+    DECLARE @sql NVARCHAR(MAX);
+
+    SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle, CL_No1_Parent, FA_Code_Parent)
+    SELECT DISTINCT ''' + @BaseName + N''', ''article'', fa.AR_Ref, fa.AR_Design, fa.CL_No1, fa.FA_CodeFamille
+    FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+    INNER JOIN [' + @BaseName + N'].dbo.F_ARTICLE fa ON fa.AR_Ref = dl.AR_Ref
+    WHERE dl.DL_MvtStock IN (1, 3);';
+    EXEC sp_executesql @sql;
+
+    SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle)
+    SELECT DISTINCT ''' + @BaseName + N''', ''depot'', CAST(dp.DE_No AS NVARCHAR(255)), dp.DE_Intitule
+    FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+    INNER JOIN [' + @BaseName + N'].dbo.F_DEPOT dp ON dp.DE_No = dl.DE_No
+    WHERE dl.DL_MvtStock IN (1, 3);';
+    EXEC sp_executesql @sql;
+
+    SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle)
+    SELECT DISTINCT ''' + @BaseName + N''', ''famille'', fa.FA_CodeFamille, fam.FA_Intitule
+    FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+    INNER JOIN [' + @BaseName + N'].dbo.F_ARTICLE fa ON fa.AR_Ref = dl.AR_Ref
+    INNER JOIN [' + @BaseName + N'].dbo.F_FAMILLE fam ON fam.FA_CodeFamille = fa.FA_CodeFamille
+    WHERE dl.DL_MvtStock IN (1, 3) AND fa.FA_CodeFamille IS NOT NULL;';
+    EXEC sp_executesql @sql;
+
+    SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle)
+    SELECT DISTINCT ''' + @BaseName + N''', ''cat1'', CAST(fa.CL_No1 AS NVARCHAR(255)), cl1.CL_Intitule
+    FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+    INNER JOIN [' + @BaseName + N'].dbo.F_ARTICLE fa ON fa.AR_Ref = dl.AR_Ref
+    INNER JOIN [' + @BaseName + N'].dbo.F_CATALOGUE cl1 ON cl1.CL_No = fa.CL_No1
+    WHERE dl.DL_MvtStock IN (1, 3) AND fa.CL_No1 IS NOT NULL;';
+    EXEC sp_executesql @sql;
+
+    SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle, CL_No1_Parent)
+    SELECT DISTINCT ''' + @BaseName + N''', ''cat2'', CAST(fa.CL_No2 AS NVARCHAR(255)), cl2.CL_Intitule, fa.CL_No1
+    FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+    INNER JOIN [' + @BaseName + N'].dbo.F_ARTICLE fa ON fa.AR_Ref = dl.AR_Ref
+    INNER JOIN [' + @BaseName + N'].dbo.F_CATALOGUE cl2 ON cl2.CL_No = fa.CL_No2
+    WHERE dl.DL_MvtStock IN (1, 3) AND fa.CL_No2 IS NOT NULL;';
+    EXEC sp_executesql @sql;
+
+    SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle, CL_No1_Parent)
+    SELECT DISTINCT ''' + @BaseName + N''', ''cat3'', CAST(fa.CL_No3 AS NVARCHAR(255)), cl3.CL_Intitule, fa.CL_No1
+    FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+    INNER JOIN [' + @BaseName + N'].dbo.F_ARTICLE fa ON fa.AR_Ref = dl.AR_Ref
+    INNER JOIN [' + @BaseName + N'].dbo.F_CATALOGUE cl3 ON cl3.CL_No = fa.CL_No3
+    WHERE dl.DL_MvtStock IN (1, 3) AND fa.CL_No3 IS NOT NULL;';
+    EXEC sp_executesql @sql;
+
+    SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle, CL_No1_Parent)
+    SELECT DISTINCT ''' + @BaseName + N''', ''cat4'', CAST(fa.CL_No4 AS NVARCHAR(255)), cl4.CL_Intitule, fa.CL_No1
+    FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+    INNER JOIN [' + @BaseName + N'].dbo.F_ARTICLE fa ON fa.AR_Ref = dl.AR_Ref
+    INNER JOIN [' + @BaseName + N'].dbo.F_CATALOGUE cl4 ON cl4.CL_No = fa.CL_No4
+    WHERE dl.DL_MvtStock IN (1, 3) AND fa.CL_No4 IS NOT NULL;';
+    EXEC sp_executesql @sql;
+
+    SET @sql = N'
+    INSERT INTO Test.stock.StockJournalierCache
+    (BaseName, DateJour, AR_Ref, AR_Design,
+     FA_CodeFamille, FA_Intitule,
+     CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
+     CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
+     DE_No, DE_Intitule,
+     TotalEntree, TotalSortie,
+     ValeurEntree, ValeurSortie,
+     StockInitial, StockFinal,
+     ValeurInitiale, ValeurFinale)
+    SELECT ''' + @BaseName + N''',
+        DateJour, AR_Ref, AR_Design,
+        FA_CodeFamille, FA_Intitule,
+        CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
+        CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
+        DE_No, DE_Intitule,
+        TotalEntree, TotalSortie,
+        ValeurEntree, ValeurSortie,
+        StockInitial, StockFinal,
+        ValeurInitiale, ValeurFinale
+    FROM [' + @BaseName + N'].dbo.VW_StockJoursAvecMvt;';
+    EXEC sp_executesql @sql;
+
+    EXEC stock.SP_RebuildUnifiedViews;
+END
+GO
+
+-- ── 16. SP_AddBase ────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_AddBase
     @BaseName   NVARCHAR(128),
     @BaseLabel  NVARCHAR(255)
@@ -807,15 +901,16 @@ BEGIN
         CREATE INDEX IX_FAMILLE_COVER ON dbo.F_FAMILLE (FA_CodeFamille) INCLUDE (FA_Intitule) WITH (FILLFACTOR=90);';
     EXEC sp_executesql @sql;
 
+    -- EXEC stock.SP_RebuildUnifiedViews;
+    -- EXEC stock.SP_RefreshCacheFiltres;
+    -- EXEC stock.SP_RefreshStockCache;
     EXEC stock.SP_RebuildUnifiedViews;
-    EXEC stock.SP_RefreshCacheFiltres;
-    EXEC stock.SP_RefreshStockCache;
 
     SELECT 'OK' AS Statut, @BaseName AS Base, 'Base ajoutée avec succès' AS Message;
 END
 GO
 
--- ── 16. SP_RemoveBase ─────────────────────────────────────────
+-- ── 17. SP_RemoveBase ─────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_RemoveBase
     @BaseName NVARCHAR(128)
 AS
@@ -826,7 +921,7 @@ BEGIN
 END
 GO
 
--- ── 17. SP_RefreshSiNecessaire ────────────────────────────────
+-- ── 18. SP_RefreshSiNecessaire ────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_RefreshSiNecessaire
     @HeuresMax INT = 8
 AS
@@ -849,7 +944,7 @@ BEGIN
 END
 GO
 
--- ── 18. SP_VW_Dimensions ──────────────────────────────────────
+-- ── 19. SP_VW_Dimensions ──────────────────────────────────────
 CREATE OR ALTER VIEW stock.VW_Dimensions
 AS
 SELECT

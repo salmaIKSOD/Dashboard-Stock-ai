@@ -154,6 +154,26 @@ router.delete('/bases/:name', async (req, res) => {
   }
 });
 
+// ── POST /api/bases/refresh-one ───────────────────────────────
+router.post('/bases/refresh-one', async (req, res) => {
+  const { baseName } = req.body;
+  if (!baseName) return res.status(400).json({ error: 'Paramètre baseName requis' });
+  try {
+    const pool = await getPool();
+    const request = pool.request();
+    request.timeout = 600000;
+    await request
+      .input('BaseName', sql.NVarChar(128), baseName)
+      .execute('stock.SP_RefreshStockCacheBase');
+    cache.clear();
+    setTimeout(warmupCache, 500);
+    res.json({ ok: true, message: `Base ${baseName} synchronisée.` });
+  } catch (err) {
+    console.error('[POST /bases/refresh-one]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── GET /api/bases/disponibles — bases SQL non encore ajoutées ──
 // ── GET /api/bases/disponibles — bases SQL non encore ajoutées ──
 router.get('/bases/disponibles', async (req, res) => {
@@ -269,39 +289,6 @@ router.get('/mouvements', async (req, res) => {
 });
 
 // ── GET /api/stock ────────────────────────────────────────────
-// router.get('/stock', async (req, res) => {
-//   const {
-//     base, dateDebut, dateFin, depot, article,
-//     fa_codefamille, cl_no1, cl_no2, cl_no3, cl_no4,
-//   } = req.query;
-//   if (!base)      return res.status(400).json({ error: 'Paramètre base requis' });
-//   if (!dateDebut) return res.status(400).json({ error: 'Paramètre dateDebut requis' });
-//   if (!dateFin)   return res.status(400).json({ error: 'Paramètre dateFin requis' });
-
-//   try {
-//     const pool    = await getPool();
-//     const request = pool.request();
-//     request.timeout = 300000;
-//     request.input('Base',           sql.NVarChar(128), base);
-//     request.input('DateDebut',      sql.Date,          dateDebut);
-//     request.input('DateFin',        sql.Date,          dateFin);
-//     request.input('Depot',          sql.Int,           depot          ? parseInt(depot)  : null);
-//     request.input('Article',        sql.NVarChar(50),  article        || null);
-//     request.input('FA_CodeFamille', sql.NVarChar(10),  fa_codefamille || null);
-//     request.input('CL_No1',        sql.Int,            cl_no1         ? parseInt(cl_no1) : null);
-//     request.input('CL_No2',        sql.Int,            cl_no2         ? parseInt(cl_no2) : null);
-//     request.input('CL_No3',        sql.Int,            cl_no3         ? parseInt(cl_no3) : null);
-//     request.input('CL_No4',        sql.Int,            cl_no4         ? parseInt(cl_no4) : null);
-
-//     const t0     = Date.now();
-//     const result = await request.execute('stock.SP_GetStockJournalier');
-//     console.log(`[/stock] ${result.recordset.length} lignes en ${Date.now() - t0}ms`);
-//     res.json(result.recordset);
-//   } catch (err) {
-//     console.error('[/stock]', err.message);
-//     res.status(500).json({ error: err.message });
-//   }
-// });
 router.get('/stock', async (req, res) => {
   const {
     base, dateDebut, dateFin, depot, article,

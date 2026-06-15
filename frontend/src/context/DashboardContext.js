@@ -24,7 +24,7 @@ export function DashboardProvider({ children }) {
   const [mouvFilters, setMouvFilters] = useState({ depot: '', article: '' });
 
   const [currentFilters, setCurrentFilters] = useState({
-    base:           'BIJOU',
+    base:           '',
     dateDebut:      defaultDebut,
     dateFin:        defaultFin,
     depot:          null,
