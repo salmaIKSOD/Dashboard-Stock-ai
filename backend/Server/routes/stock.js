@@ -115,6 +115,59 @@ router.get('/bases', async (req, res) => {
 });
 
 // ── POST /api/bases — ajouter une base ────────────────────────
+// router.post('/bases', async (req, res) => {
+//   const { baseName, baseLabel } = req.body;
+//   if (!baseName) return res.status(400).json({ error: 'Paramètre baseName requis' });
+
+//   try {
+//     const pool   = await getPool();
+//     const result = await pool.request()
+//       .input('BaseName',  sql.NVarChar(128), baseName)
+//       .input('BaseLabel', sql.NVarChar(255), baseLabel || baseName)
+//       .execute('stock.SP_AddBase');  // ← attend que tout soit fini
+
+//     cache.clear();
+//     res.json(result.recordset[0]);   // ← répond seulement quand c'est prêt
+
+//   } catch (err) {
+//     console.error('[POST /bases]', err.message);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+// l'ajout d'une base avec pipeline 
+// router.post('/bases', async (req, res) => {
+//   const { baseName, baseLabel } = req.body;
+//   if (!baseName) return res.status(400).json({ error: 'Paramètre baseName requis' });
+
+//   try {
+//     const pool   = await getPool();
+//     const result = await pool.request()
+//       .input('BaseName',  sql.NVarChar(128), baseName)
+//       .input('BaseLabel', sql.NVarChar(255), baseLabel || baseName)
+//       .execute('stock.SP_AddBase');  // ← identique
+
+//     cache.clear();  // ← identique
+
+//     // ✅ NOUVEAU — juste ces 5 lignes ajoutées ici
+//     const { spawn } = require('child_process');
+//     const path = require('path');
+//     const scriptPath = path.join(__dirname, '..', '..', '..', 'ml', 'pipeline', 'run_pipeline.py');
+//     const python = spawn('python', [scriptPath, '--base', baseName], {
+//       cwd: path.join(__dirname, '..', '..', '..', 'ml'), shell: true,
+//       env  : { ...process.env, PYTHONIOENCODING: 'utf-8' } 
+//     });
+//     python.stdout.on('data', d => console.log(`[ML ${baseName}] ${d.toString().trim()}`));
+//     python.stderr.on('data', d => console.error(`[ML ERR] ${d.toString().trim()}`));
+//     python.on('close', code => console.log(`[ML ${baseName}] terminé code=${code}`));
+//     // ✅ FIN NOUVEAU
+
+//     res.json(result.recordset[0]);  // ← identique
+
+//   } catch (err) {
+//     console.error('[POST /bases]', err.message);
+//     res.status(500).json({ error: err.message });  // ← identique
+//   }
+// });
 router.post('/bases', async (req, res) => {
   const { baseName, baseLabel } = req.body;
   if (!baseName) return res.status(400).json({ error: 'Paramètre baseName requis' });
@@ -124,10 +177,39 @@ router.post('/bases', async (req, res) => {
     const result = await pool.request()
       .input('BaseName',  sql.NVarChar(128), baseName)
       .input('BaseLabel', sql.NVarChar(255), baseLabel || baseName)
-      .execute('stock.SP_AddBase');  // ← attend que tout soit fini
+      .execute('stock.SP_AddBase');
 
     cache.clear();
-    res.json(result.recordset[0]);   // ← répond seulement quand c'est prêt
+    res.json(result.recordset[0]);
+
+    // ── ÉTAPE 1 : Synchroniser le cache SQL d'abord ──────────
+    console.log(`[${baseName}] Synchronisation cache SQL...`);
+    try {
+      const reqRefresh = pool.request();
+      reqRefresh.timeout = 600000;
+      await reqRefresh
+        .input('BaseName', sql.NVarChar(128), baseName)
+        .execute('stock.SP_RefreshStockCacheBase');
+      console.log(`[${baseName}] ✅ Cache SQL synchronisé`);
+    } catch (e) {
+      console.error(`[${baseName}] ❌ Erreur sync cache :`, e.message);
+    }
+
+    // ── ÉTAPE 2 : Lancer le pipeline ML ──────────────────────
+    const { spawn } = require('child_process');
+    const path = require('path');
+    const scriptPath = path.join(__dirname, '..', '..', '..', 'ml', 'pipeline', 'run_pipeline.py');
+    const python = spawn('python', [scriptPath, '--base', baseName], {
+      cwd : path.join(__dirname, '..', '..', '..', 'ml'),
+      shell: true,
+      env : { ...process.env, PYTHONIOENCODING: 'utf-8' }
+    });
+    python.stdout.on('data', d => console.log(`[ML ${baseName}] ${d.toString().trim()}`));
+    python.stderr.on('data', d => console.error(`[ML ${baseName} ERR] ${d.toString().trim()}`));
+    python.on('close', code => {
+      if (code === 0) console.log(`✅ Pipeline ML terminé — ${baseName}`);
+      else            console.error(`❌ Pipeline ML échoué — ${baseName}`);
+    });
 
   } catch (err) {
     console.error('[POST /bases]', err.message);

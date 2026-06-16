@@ -22,6 +22,7 @@ import PageAnalyses from './pages/PageAnalyses';
 import PageAlertes from './pages/PageAlertes';
 import PageRapports from './pages/PageRapports';
 import PageParametres from './pages/PageParametres';
+import AIPrevisions from './pages/AIPrevisions';
 
 // Pages inner dashboard
 import PageCharts from './page/PageCharts';
@@ -214,7 +215,7 @@ function Dashboard({ sidebarOpen }) {
  const handleFilter = async (params) => {
     if (!params) {
       const d = {
-        base: 'BIJOU',
+        base: '',
         dateDebut: defaultDebut,
         dateFin:   defaultFin,
         depot: null, article: null,
@@ -768,6 +769,7 @@ export default function App() {
             <Route path="/depots"           element={<PageDepots />}          />
             <Route path="/analyses"         element={<PageAnalyses />}        />
             <Route path="/alertes"          element={<PageAlertes />}         />
+            <Route path="/previsions" element={<AIPrevisions />} />
             <Route path="/rapports"         element={<PageRapports />}        />
             <Route path="/parametres"       element={<PageParametres />}      />
           </Routes>

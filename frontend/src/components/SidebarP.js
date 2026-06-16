@@ -22,7 +22,7 @@ const PAGE_META = {
   '/depots':                 { title: 'Dépôts',           icon: Warehouse       },
   '/analyses':               { title: 'Analyses',         icon: BarChart3       },
   '/alertes':                { title: 'Alertes',          icon: BellRing        },
-  '/previsions':             { title: 'AI Prévisions',    icon: BrainCircuit    },
+  '/previsions':             { title: 'Analyse prédictive',    icon: BrainCircuit    },
   '/rapports':               { title: 'Rapports',         icon: FileText        },
   '/parametres':             { title: 'Paramètres',       icon: Settings        },
 };

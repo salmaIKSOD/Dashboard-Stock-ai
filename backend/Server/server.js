@@ -3,6 +3,8 @@ const cors    = require('cors');
 
 const { initDatabase } = require('../db');  // ← import initDatabase
 const stockRoutes      = require('./routes/stock');
+// pipeline prediction 
+const pipelineRoutes = require('./routes/pipeline');
 
 const app  = express();
 const PORT = 5000;
@@ -15,6 +17,8 @@ app.use(cors({
 app.use(express.json());
 
 app.use('/api', stockRoutes);
+// pipeline prediction 
+app.use('/api/pipeline', pipelineRoutes); 
 
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'StockAnalytics API en ligne' });
