@@ -28,7 +28,7 @@ import AIPrevisions from './pages/AIPrevisions';
 import PageCharts from './page/PageCharts';
 import PageTrends from './page/PageTrends';
 import PageDashboardReports from './page/PageDashboardReports';
-import PageFavorites from './page/PageFavorites';
+// import PageFavorites from './page/PageFavorites';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 
@@ -814,11 +814,11 @@ export default function App() {
                 <PageDashboardReports />
               </DashboardShell>
             } />
-            <Route path="/dashboard/favorites" element={
+            {/* <Route path="/dashboard/favorites" element={
               <DashboardShell sidebarOpen={sidebarOpen}>
                 <PageFavorites />
               </DashboardShell>
-            } />
+            } /> */}
 
             {/* ── Auth ── */}
             <Route path="/login"  element={<LoginPage  />} />

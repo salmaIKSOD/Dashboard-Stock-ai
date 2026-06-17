@@ -9,7 +9,7 @@ const INNER_ITEMS = [
   { key: 'charts',    path: '/dashboard/charts',    icon: BarChart3,       tooltip: 'Graphiques'      },
   { key: 'trends',    path: '/dashboard/trends',    icon: TrendingUp,      tooltip: 'Tendances'       },
   { key: 'reports',   path: '/dashboard/reports',   icon: FileText,        tooltip: 'Rapports'        },
-  { key: 'favorites', path: '/dashboard/favorites', icon: Star,            tooltip: 'Favoris'         },
+  // { key: 'favorites', path: '/dashboard/favorites', icon: Star,            tooltip: 'Favoris'         },
 ];
 
 const HEADER_HEIGHT = 53;
