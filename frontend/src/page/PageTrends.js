@@ -1091,50 +1091,126 @@ function Empty({ msg }) {
 }
 
 // ── Bandeau contexte ──────────────────────────────────────────
+// function ContextBanner({ filters }) {
+//   return (
+//     <div className="bg-white border border-[#e4e4e4] rounded-[1.1rem] shadow-[0_2px_12px_rgba(18,166,224,0.07)] overflow-hidden">
+//       <div className="flex items-center gap-3 px-5 py-3.5 bg-gradient-to-r from-[#f8fcff] to-[#f0f9ff] border-b border-[#e8f4fb]">
+//         <div className="w-6 h-6 rounded-[0.45rem] bg-gradient-to-br from-[#12a6e0] to-[#0d8fc4] flex items-center justify-center shadow-sm">
+//           <TrendingUp size={12} className="text-white" />
+//         </div>
+//         <span className="text-[#0d0c0c] text-[13px] font-semibold tracking-wide">Tendances</span>
+//         <span className="text-[#c5c5c5] text-[11px] ml-1">— Contexte du tableau de bord</span>
+//       </div>
+//       <div className="px-5 py-3.5">
+//         <div className="flex flex-wrap items-center gap-2">
+//           {filters?.base && (
+//             <div className="flex items-center gap-1.5 bg-[rgba(1,214,58,0.07)] border border-[rgba(1,214,58,0.22)] rounded-full px-3 py-1.5">
+//               <Database size={11} className="text-[#01a82e]" />
+//               <span className="text-[#01a82e] text-[11px] font-bold uppercase tracking-wide">{filters.base}</span>
+//             </div>
+//           )}
+//           {filters?.dateDebut && filters?.dateFin && (
+//             <div className="flex items-center gap-1.5 bg-[rgba(18,166,224,0.07)] border border-[rgba(18,166,224,0.22)] rounded-full px-3 py-1.5">
+//               <CalendarDays size={11} className="text-[#12a6e0]" />
+//               <span className="text-[#0b7db0] text-[11px] font-semibold">
+//                 {fmtShort(filters.dateDebut)} → {fmtShort(filters.dateFin)}
+//               </span>
+//             </div>
+//           )}
+//           {filters?.fa_codefamille && (
+//             <div className="flex items-center gap-1.5 bg-[rgba(124,77,255,0.07)] border border-[rgba(124,77,255,0.22)] rounded-full px-3 py-1.5">
+//               <Tag size={11} className="text-[#7c4dff]" />
+//               <span className="text-[#7c4dff] text-[11px] font-semibold">{filters.fa_codefamille}</span>
+//             </div>
+//           )}
+//           {filters?.cl_no1 && (
+//             <div className="flex items-center gap-1.5 bg-[rgba(224,138,0,0.07)] border border-[rgba(224,138,0,0.22)] rounded-full px-3 py-1.5">
+//               <Layers size={11} className="text-[#e08a00]" />
+//               <span className="text-[#e08a00] text-[11px] font-semibold">Cat N1 : {filters.cl_no1}</span>
+//             </div>
+//           )}
+//           {!filters?.base && (
+//             <span className="text-[#c5c5c5] text-[12px] italic">
+//               Filtrez depuis le tableau de bord pour afficher les tendances.
+//             </span>
+//           )}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 function ContextBanner({ filters }) {
+  const periodeLabel = () => {
+    if (!filters?.dateDebut || !filters?.dateFin) return null;
+    const fullShort = (d) => {
+      if (!d) return '';
+      const [y, m, dd] = d.split('-');
+      return `${dd}/${m}/${y}`;
+    };
+    return `${fullShort(filters.dateDebut)} → ${fullShort(filters.dateFin)}`;
+  };
+
   return (
-    <div className="bg-white border border-[#e4e4e4] rounded-[1.1rem] shadow-[0_2px_12px_rgba(18,166,224,0.07)] overflow-hidden">
-      <div className="flex items-center gap-3 px-5 py-3.5 bg-gradient-to-r from-[#f8fcff] to-[#f0f9ff] border-b border-[#e8f4fb]">
-        <div className="w-6 h-6 rounded-[0.45rem] bg-gradient-to-br from-[#12a6e0] to-[#0d8fc4] flex items-center justify-center shadow-sm">
-          <TrendingUp size={12} className="text-white" />
+    <div style={{
+      background: '#ffffff', border: '1px solid #e8eaed',
+      borderRadius: 14, overflow: 'hidden',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '12px 20px', borderBottom: '1px solid #f3f4f6',
+        background: 'linear-gradient(to right, #f8fcff, #f0f9ff)',
+      }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 8, background: '#12a6e0',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <TrendingUp size={14} color="#fff" />
         </div>
-        <span className="text-[#0d0c0c] text-[13px] font-semibold tracking-wide">Tendances</span>
-        <span className="text-[#c5c5c5] text-[11px] ml-1">— Contexte du tableau de bord</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>Tendances</span>
+        <span style={{ fontSize: 11, color: '#9ca3af' }}>— Contexte du tableau de bord</span>
       </div>
-      <div className="px-5 py-3.5">
-        <div className="flex flex-wrap items-center gap-2">
-          {filters?.base && (
-            <div className="flex items-center gap-1.5 bg-[rgba(1,214,58,0.07)] border border-[rgba(1,214,58,0.22)] rounded-full px-3 py-1.5">
-              <Database size={11} className="text-[#01a82e]" />
-              <span className="text-[#01a82e] text-[11px] font-bold uppercase tracking-wide">{filters.base}</span>
-            </div>
-          )}
-          {filters?.dateDebut && filters?.dateFin && (
-            <div className="flex items-center gap-1.5 bg-[rgba(18,166,224,0.07)] border border-[rgba(18,166,224,0.22)] rounded-full px-3 py-1.5">
-              <CalendarDays size={11} className="text-[#12a6e0]" />
-              <span className="text-[#0b7db0] text-[11px] font-semibold">
-                {fmtShort(filters.dateDebut)} → {fmtShort(filters.dateFin)}
-              </span>
-            </div>
-          )}
-          {filters?.fa_codefamille && (
-            <div className="flex items-center gap-1.5 bg-[rgba(124,77,255,0.07)] border border-[rgba(124,77,255,0.22)] rounded-full px-3 py-1.5">
-              <Tag size={11} className="text-[#7c4dff]" />
-              <span className="text-[#7c4dff] text-[11px] font-semibold">{filters.fa_codefamille}</span>
-            </div>
-          )}
-          {filters?.cl_no1 && (
-            <div className="flex items-center gap-1.5 bg-[rgba(224,138,0,0.07)] border border-[rgba(224,138,0,0.22)] rounded-full px-3 py-1.5">
-              <Layers size={11} className="text-[#e08a00]" />
-              <span className="text-[#e08a00] text-[11px] font-semibold">Cat N1 : {filters.cl_no1}</span>
-            </div>
-          )}
-          {!filters?.base && (
-            <span className="text-[#c5c5c5] text-[12px] italic">
-              Filtrez depuis le tableau de bord pour afficher les tendances.
-            </span>
-          )}
-        </div>
+      <div style={{ padding: '12px 20px', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        {filters?.base && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: 'rgba(1,168,46,0.08)', border: '1px solid rgba(1,168,46,0.20)',
+            borderRadius: 20, padding: '4px 10px', fontSize: 11, fontWeight: 600, color: '#01a82e',
+          }}>
+            <Database size={10} /> {filters.base}
+          </span>
+        )}
+        {periodeLabel() && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: 'rgba(18,166,224,0.08)', border: '1px solid rgba(18,166,224,0.20)',
+            borderRadius: 20, padding: '4px 10px', fontSize: 11, fontWeight: 600, color: '#12a6e0',
+          }}>
+            <CalendarDays size={10} /> {periodeLabel()}
+          </span>
+        )}
+        {filters?.fa_codefamille && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: 'rgba(124,77,255,0.08)', border: '1px solid rgba(124,77,255,0.20)',
+            borderRadius: 20, padding: '4px 10px', fontSize: 11, fontWeight: 600, color: '#7c4dff',
+          }}>
+            <Tag size={10} /> {filters.fa_codefamille}
+          </span>
+        )}
+        {filters?.cl_no1 && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: 'rgba(224,138,0,0.08)', border: '1px solid rgba(224,138,0,0.20)',
+            borderRadius: 20, padding: '4px 10px', fontSize: 11, fontWeight: 600, color: '#e08a00',
+          }}>
+            <Layers size={10} /> Cat N1 : {filters.cl_no1}
+          </span>
+        )}
+        {!filters?.base && (
+          <span style={{ fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>
+            Filtrez depuis le tableau de bord.
+          </span>
+        )}
       </div>
     </div>
   );
