@@ -697,6 +697,98 @@ END
 GO
 
 -- ── 15. SP_RefreshStockCacheBase ─────────────────────────────
+-- CREATE OR ALTER PROCEDURE stock.SP_RefreshStockCacheBase
+--     @BaseName NVARCHAR(128)
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     DELETE FROM stock.StockJournalierCache WHERE BaseName = @BaseName;
+--     DELETE FROM stock.CacheFiltres          WHERE BaseName = @BaseName;
+
+--     DECLARE @sql NVARCHAR(MAX);
+
+--     SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle, CL_No1_Parent, FA_Code_Parent)
+--     SELECT DISTINCT ''' + @BaseName + N''', ''article'', fa.AR_Ref, fa.AR_Design, fa.CL_No1, fa.FA_CodeFamille
+--     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+--     INNER JOIN [' + @BaseName + N'].dbo.F_ARTICLE fa ON fa.AR_Ref = dl.AR_Ref
+--     WHERE dl.DL_MvtStock IN (1, 3);';
+--     EXEC sp_executesql @sql;
+
+--     SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle)
+--     SELECT DISTINCT ''' + @BaseName + N''', ''depot'', CAST(dp.DE_No AS NVARCHAR(255)), dp.DE_Intitule
+--     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+--     INNER JOIN [' + @BaseName + N'].dbo.F_DEPOT dp ON dp.DE_No = dl.DE_No
+--     WHERE dl.DL_MvtStock IN (1, 3);';
+--     EXEC sp_executesql @sql;
+
+--     SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle)
+--     SELECT DISTINCT ''' + @BaseName + N''', ''famille'', fa.FA_CodeFamille, fam.FA_Intitule
+--     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+--     INNER JOIN [' + @BaseName + N'].dbo.F_ARTICLE fa ON fa.AR_Ref = dl.AR_Ref
+--     INNER JOIN [' + @BaseName + N'].dbo.F_FAMILLE fam ON fam.FA_CodeFamille = fa.FA_CodeFamille
+--     WHERE dl.DL_MvtStock IN (1, 3) AND fa.FA_CodeFamille IS NOT NULL;';
+--     EXEC sp_executesql @sql;
+
+--     SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle)
+--     SELECT DISTINCT ''' + @BaseName + N''', ''cat1'', CAST(fa.CL_No1 AS NVARCHAR(255)), cl1.CL_Intitule
+--     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+--     INNER JOIN [' + @BaseName + N'].dbo.F_ARTICLE fa ON fa.AR_Ref = dl.AR_Ref
+--     INNER JOIN [' + @BaseName + N'].dbo.F_CATALOGUE cl1 ON cl1.CL_No = fa.CL_No1
+--     WHERE dl.DL_MvtStock IN (1, 3) AND fa.CL_No1 IS NOT NULL;';
+--     EXEC sp_executesql @sql;
+
+--     SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle, CL_No1_Parent)
+--     SELECT DISTINCT ''' + @BaseName + N''', ''cat2'', CAST(fa.CL_No2 AS NVARCHAR(255)), cl2.CL_Intitule, fa.CL_No1
+--     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+--     INNER JOIN [' + @BaseName + N'].dbo.F_ARTICLE fa ON fa.AR_Ref = dl.AR_Ref
+--     INNER JOIN [' + @BaseName + N'].dbo.F_CATALOGUE cl2 ON cl2.CL_No = fa.CL_No2
+--     WHERE dl.DL_MvtStock IN (1, 3) AND fa.CL_No2 IS NOT NULL;';
+--     EXEC sp_executesql @sql;
+
+--     SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle, CL_No1_Parent)
+--     SELECT DISTINCT ''' + @BaseName + N''', ''cat3'', CAST(fa.CL_No3 AS NVARCHAR(255)), cl3.CL_Intitule, fa.CL_No1
+--     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+--     INNER JOIN [' + @BaseName + N'].dbo.F_ARTICLE fa ON fa.AR_Ref = dl.AR_Ref
+--     INNER JOIN [' + @BaseName + N'].dbo.F_CATALOGUE cl3 ON cl3.CL_No = fa.CL_No3
+--     WHERE dl.DL_MvtStock IN (1, 3) AND fa.CL_No3 IS NOT NULL;';
+--     EXEC sp_executesql @sql;
+
+--     SET @sql = N'INSERT INTO Test.stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle, CL_No1_Parent)
+--     SELECT DISTINCT ''' + @BaseName + N''', ''cat4'', CAST(fa.CL_No4 AS NVARCHAR(255)), cl4.CL_Intitule, fa.CL_No1
+--     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
+--     INNER JOIN [' + @BaseName + N'].dbo.F_ARTICLE fa ON fa.AR_Ref = dl.AR_Ref
+--     INNER JOIN [' + @BaseName + N'].dbo.F_CATALOGUE cl4 ON cl4.CL_No = fa.CL_No4
+--     WHERE dl.DL_MvtStock IN (1, 3) AND fa.CL_No4 IS NOT NULL;';
+--     EXEC sp_executesql @sql;
+
+--     SET @sql = N'
+--     INSERT INTO Test.stock.StockJournalierCache
+--     (BaseName, DateJour, AR_Ref, AR_Design,
+--      FA_CodeFamille, FA_Intitule,
+--      CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
+--      CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
+--      DE_No, DE_Intitule,
+--      TotalEntree, TotalSortie,
+--      ValeurEntree, ValeurSortie,
+--      StockInitial, StockFinal,
+--      ValeurInitiale, ValeurFinale)
+--     SELECT ''' + @BaseName + N''',
+--         DateJour, AR_Ref, AR_Design,
+--         FA_CodeFamille, FA_Intitule,
+--         CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
+--         CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
+--         DE_No, DE_Intitule,
+--         TotalEntree, TotalSortie,
+--         ValeurEntree, ValeurSortie,
+--         StockInitial, StockFinal,
+--         ValeurInitiale, ValeurFinale
+--     FROM [' + @BaseName + N'].dbo.VW_StockJoursAvecMvt;';
+--     EXEC sp_executesql @sql;
+
+--     EXEC stock.SP_RebuildUnifiedViews;
+-- END
+-- GO
 CREATE OR ALTER PROCEDURE stock.SP_RefreshStockCacheBase
     @BaseName NVARCHAR(128)
 AS
@@ -762,6 +854,7 @@ BEGIN
     WHERE dl.DL_MvtStock IN (1, 3) AND fa.CL_No4 IS NOT NULL;';
     EXEC sp_executesql @sql;
 
+    -- ── Jours AVEC mouvement ──────────────────────────────────
     SET @sql = N'
     INSERT INTO Test.stock.StockJournalierCache
     (BaseName, DateJour, AR_Ref, AR_Design,
@@ -769,28 +862,200 @@ BEGIN
      CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
      CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
      DE_No, DE_Intitule,
-     TotalEntree, TotalSortie,
-     ValeurEntree, ValeurSortie,
-     StockInitial, StockFinal,
-     ValeurInitiale, ValeurFinale)
+     TotalEntree, TotalSortie, ValeurEntree, ValeurSortie,
+     StockInitial, StockFinal, ValeurInitiale, ValeurFinale)
     SELECT ''' + @BaseName + N''',
         DateJour, AR_Ref, AR_Design,
         FA_CodeFamille, FA_Intitule,
         CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
         CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
         DE_No, DE_Intitule,
-        TotalEntree, TotalSortie,
-        ValeurEntree, ValeurSortie,
-        StockInitial, StockFinal,
-        ValeurInitiale, ValeurFinale
+        TotalEntree, TotalSortie, ValeurEntree, ValeurSortie,
+        StockInitial, StockFinal, ValeurInitiale, ValeurFinale
     FROM [' + @BaseName + N'].dbo.VW_StockJoursAvecMvt;';
     EXEC sp_executesql @sql;
 
+    -- ── Jours SANS mouvement (stock reporté) ──────────────────
+    INSERT INTO Test.stock.StockJournalierCache
+    (BaseName, DateJour, AR_Ref, AR_Design,
+     FA_CodeFamille, FA_Intitule,
+     CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
+     CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
+     DE_No, DE_Intitule,
+     TotalEntree, TotalSortie, ValeurEntree, ValeurSortie,
+     StockInitial, StockFinal, ValeurInitiale, ValeurFinale)
+    SELECT
+        @BaseName,
+        c.DateJour,
+        a.AR_Ref, a.AR_Design,
+        a.FA_CodeFamille, a.FA_Intitule,
+        a.CL_No1, a.CL_Intitule1,
+        a.CL_No2, a.CL_Intitule2,
+        a.CL_No3, a.CL_Intitule3,
+        a.CL_No4, a.CL_Intitule4,
+        a.DE_No, a.DE_Intitule,
+        0, 0, 0, 0,
+        ISNULL(prev.StockFinal,   0),
+        ISNULL(prev.StockFinal,   0),
+        ISNULL(prev.ValeurFinale, 0),
+        ISNULL(prev.ValeurFinale, 0)
+    FROM (
+        SELECT DISTINCT DateJour
+        FROM Test.stock.StockJournalierCache
+        WHERE BaseName = @BaseName
+    ) c
+    CROSS JOIN (
+        SELECT DISTINCT AR_Ref, AR_Design, FA_CodeFamille, FA_Intitule,
+               CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
+               CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
+               DE_No, DE_Intitule
+        FROM Test.stock.StockJournalierCache
+        WHERE BaseName = @BaseName
+    ) a
+    OUTER APPLY (
+        SELECT TOP 1 StockFinal, ValeurFinale
+        FROM Test.stock.StockJournalierCache prev
+        WHERE prev.BaseName = @BaseName
+          AND prev.AR_Ref   = a.AR_Ref
+          AND prev.DE_No    = a.DE_No
+          AND prev.DateJour < c.DateJour
+        ORDER BY prev.DateJour DESC
+    ) prev
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM Test.stock.StockJournalierCache ex
+        WHERE ex.BaseName = @BaseName
+          AND ex.AR_Ref   = a.AR_Ref
+          AND ex.DE_No    = a.DE_No
+          AND ex.DateJour = c.DateJour
+    );
+
     EXEC stock.SP_RebuildUnifiedViews;
+
+    PRINT CONCAT('✅ Cache complet — ', @BaseName);
 END
 GO
 
 -- ── 16. SP_AddBase ────────────────────────────────────────────
+-- CREATE OR ALTER PROCEDURE stock.SP_AddBase
+--     @BaseName   NVARCHAR(128),
+--     @BaseLabel  NVARCHAR(255)
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = @BaseName)
+--     BEGIN
+--         RAISERROR('Base %s introuvable sur le serveur SQL.', 16, 1, @BaseName);
+--         RETURN;
+--     END
+
+--     DECLARE @checkSql   NVARCHAR(MAX);
+--     DECLARE @hasDossier INT = 0;
+--     SET @checkSql = N'SELECT @res = COUNT(*) FROM [' + @BaseName
+--                   + N'].sys.tables WHERE name = ''P_DOSSIER''';
+--     EXEC sp_executesql @checkSql, N'@res INT OUTPUT', @res = @hasDossier OUTPUT;
+
+--     IF @hasDossier = 0
+--     BEGIN
+--         RAISERROR('La base %s ne contient pas la table P_DOSSIER. Ajout refusé.', 16, 1, @BaseName);
+--         RETURN;
+--     END
+
+--     IF NOT EXISTS (SELECT 1 FROM stock.SAGE_Bases WHERE BaseName = @BaseName)
+--         INSERT INTO stock.SAGE_Bases (BaseName, BaseLabel, IsActive)
+--         VALUES (@BaseName, @BaseLabel, 1);
+--     ELSE
+--         UPDATE stock.SAGE_Bases SET IsActive = 1, BaseLabel = @BaseLabel WHERE BaseName = @BaseName;
+
+--     -- Vue VW_StockJoursAvecMvt dans la base SAGE
+--     DECLARE @sql NVARCHAR(MAX);
+--     SET @sql = N'USE [' + @BaseName + N']; EXEC(''
+--     CREATE OR ALTER VIEW dbo.VW_StockJoursAvecMvt AS
+--     WITH
+--     StockInitialGlobal AS (
+--         SELECT dl.AR_Ref, dl.DE_No,
+--             SUM(CASE WHEN dl.DL_MvtStock=1 THEN ABS(dl.DL_Qte) WHEN dl.DL_MvtStock=3 THEN -ABS(dl.DL_Qte) ELSE 0 END) AS QteInitiale,
+--             SUM(CASE WHEN dl.DL_MvtStock=1 THEN ABS(dl.DL_Qte)*dl.DL_PrixRU WHEN dl.DL_MvtStock=3 THEN -ABS(dl.DL_Qte)*dl.DL_PrixRU ELSE 0 END) AS ValeurInitiale
+--         FROM dbo.F_DOCLIGNE dl
+--         WHERE dl.DL_MvtStock IN (1,3)
+--           AND CAST(dl.DO_Date AS DATE) < (SELECT MIN(CAST(DO_Date AS DATE)) FROM dbo.F_DOCLIGNE WHERE DL_MvtStock IN (1,3))
+--         GROUP BY dl.AR_Ref, dl.DE_No
+--     ),
+--     TousMouvements AS (
+--         SELECT dl.AR_Ref, fa.AR_Design, fa.FA_CodeFamille, fam.FA_Intitule,
+--             fa.CL_No1, cl1.CL_Intitule AS CL_Intitule1, fa.CL_No2, cl2.CL_Intitule AS CL_Intitule2,
+--             fa.CL_No3, cl3.CL_Intitule AS CL_Intitule3, fa.CL_No4, cl4.CL_Intitule AS CL_Intitule4,
+--             dl.DL_No, CAST(dl.DO_Date AS DATE) AS DateJour, dl.DE_No, dp.DE_Intitule, dl.DL_MvtStock,
+--             CASE WHEN dl.DL_MvtStock=1 THEN ABS(dl.DL_Qte) WHEN dl.DL_MvtStock=3 THEN -ABS(dl.DL_Qte) END AS QteSignee,
+--             CASE WHEN dl.DL_MvtStock=1 THEN ABS(dl.DL_Qte) ELSE 0 END AS QteEntree,
+--             CASE WHEN dl.DL_MvtStock=3 THEN ABS(dl.DL_Qte) ELSE 0 END AS QteSortie,
+--             CASE WHEN dl.DL_MvtStock=1 THEN dl.DL_PrixRU WHEN dl.DL_MvtStock=3 THEN dl.DL_PrixRU END AS PRU_Ligne,
+--             CASE WHEN dl.DL_MvtStock=1 THEN dl.DL_PrixRU ELSE 0 END AS PRU_Entree,
+--             CASE WHEN dl.DL_MvtStock=3 THEN dl.DL_PrixRU ELSE 0 END AS PRU_Sortie
+--         FROM dbo.F_DOCLIGNE dl
+--         INNER JOIN dbo.F_ARTICLE fa ON fa.AR_Ref=dl.AR_Ref
+--         INNER JOIN dbo.F_DEPOT dp ON dp.DE_No=dl.DE_No
+--         LEFT JOIN dbo.F_FAMILLE fam ON fam.FA_CodeFamille=fa.FA_CodeFamille
+--         LEFT JOIN dbo.F_CATALOGUE cl1 ON cl1.CL_No=fa.CL_No1
+--         LEFT JOIN dbo.F_CATALOGUE cl2 ON cl2.CL_No=fa.CL_No2
+--         LEFT JOIN dbo.F_CATALOGUE cl3 ON cl3.CL_No=fa.CL_No3
+--         LEFT JOIN dbo.F_CATALOGUE cl4 ON cl4.CL_No=fa.CL_No4
+--         WHERE dl.DL_MvtStock IN (1,3)
+--     ),
+--     CumulsGlissants AS (
+--         SELECT m.*,
+--             ISNULL(si.QteInitiale,0)+SUM(m.QteSignee) OVER (PARTITION BY m.AR_Ref,m.DE_No ORDER BY m.DateJour,m.DL_No ROWS UNBOUNDED PRECEDING) AS StockApres,
+--             ISNULL(si.QteInitiale,0)+ISNULL(SUM(m.QteSignee) OVER (PARTITION BY m.AR_Ref,m.DE_No ORDER BY m.DateJour,m.DL_No ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),0) AS StockAvant,
+--             ISNULL(si.ValeurInitiale,0)+SUM(m.QteSignee*m.PRU_Ligne) OVER (PARTITION BY m.AR_Ref,m.DE_No ORDER BY m.DateJour,m.DL_No ROWS UNBOUNDED PRECEDING) AS ValeurApres,
+--             ISNULL(si.ValeurInitiale,0)+ISNULL(SUM(m.QteSignee*m.PRU_Ligne) OVER (PARTITION BY m.AR_Ref,m.DE_No ORDER BY m.DateJour,m.DL_No ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),0) AS ValeurAvant,
+--             ROW_NUMBER() OVER (PARTITION BY m.AR_Ref,m.DE_No,m.DateJour ORDER BY m.DL_No ASC) AS PremierMvt,
+--             ROW_NUMBER() OVER (PARTITION BY m.AR_Ref,m.DE_No,m.DateJour ORDER BY m.DL_No DESC) AS DernierMvt
+--         FROM TousMouvements m
+--         LEFT JOIN StockInitialGlobal si ON si.AR_Ref=m.AR_Ref AND si.DE_No=m.DE_No
+--     )
+--     SELECT DateJour, AR_Ref, AR_Design, FA_CodeFamille, FA_Intitule,
+--         CL_No1, CL_Intitule1, CL_No2, CL_Intitule2, CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
+--         DE_No, DE_Intitule,
+--         SUM(QteEntree) AS TotalEntree, SUM(QteSortie) AS TotalSortie,
+--         SUM(QteEntree*PRU_Entree) AS ValeurEntree, SUM(QteSortie*PRU_Sortie) AS ValeurSortie,
+--         MAX(CASE WHEN PremierMvt=1 THEN StockAvant END) AS StockInitial,
+--         MAX(CASE WHEN DernierMvt=1 THEN StockApres END) AS StockFinal,
+--         MAX(CASE WHEN PremierMvt=1 THEN ValeurAvant END) AS ValeurInitiale,
+--         MAX(CASE WHEN DernierMvt=1 THEN ValeurApres END) AS ValeurFinale
+--     FROM CumulsGlissants
+--     GROUP BY DateJour, AR_Ref, AR_Design, FA_CodeFamille, FA_Intitule,
+--         CL_No1, CL_Intitule1, CL_No2, CL_Intitule2, CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
+--         DE_No, DE_Intitule;
+--     '')';
+--     EXEC sp_executesql @sql;
+
+--     -- Index dans la base SAGE
+--     SET @sql = N'USE [' + @BaseName + N'];
+--     IF EXISTS (SELECT 1 FROM sys.indexes WHERE name=''IX_DOCLIGNE_PERF'' AND object_id=OBJECT_ID(''dbo.F_DOCLIGNE''))
+--         DROP INDEX IX_DOCLIGNE_PERF ON dbo.F_DOCLIGNE;
+--     CREATE INDEX IX_DOCLIGNE_PERF ON dbo.F_DOCLIGNE (DL_MvtStock, DO_Date, AR_Ref, DE_No)
+--         INCLUDE (DL_Qte, DL_PrixRU, DL_No) WITH (FILLFACTOR=85, ONLINE=OFF);
+--     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name=''IX_ARTICLE_COVER'' AND object_id=OBJECT_ID(''dbo.F_ARTICLE''))
+--         CREATE INDEX IX_ARTICLE_COVER ON dbo.F_ARTICLE (AR_Ref)
+--         INCLUDE (AR_Design, FA_CodeFamille, CL_No1, CL_No2, CL_No3, CL_No4) WITH (FILLFACTOR=90);
+--     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name=''IX_DEPOT_COVER'' AND object_id=OBJECT_ID(''dbo.F_DEPOT''))
+--         CREATE INDEX IX_DEPOT_COVER ON dbo.F_DEPOT (DE_No) INCLUDE (DE_Intitule) WITH (FILLFACTOR=90);
+--     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name=''IX_CATALOGUE_COVER'' AND object_id=OBJECT_ID(''dbo.F_CATALOGUE''))
+--         CREATE INDEX IX_CATALOGUE_COVER ON dbo.F_CATALOGUE (CL_No) INCLUDE (CL_Intitule) WITH (FILLFACTOR=90);
+--     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name=''IX_FAMILLE_COVER'' AND object_id=OBJECT_ID(''dbo.F_FAMILLE''))
+--         CREATE INDEX IX_FAMILLE_COVER ON dbo.F_FAMILLE (FA_CodeFamille) INCLUDE (FA_Intitule) WITH (FILLFACTOR=90);';
+--     EXEC sp_executesql @sql;
+
+--     -- EXEC stock.SP_RebuildUnifiedViews;
+--     -- EXEC stock.SP_RefreshCacheFiltres;
+--     -- EXEC stock.SP_RefreshStockCache;
+--     EXEC stock.SP_RebuildUnifiedViews;
+--     -- EXEC stock.SP_RefreshStockCacheBase @BaseName = @BaseName;
+
+--     SELECT 'OK' AS Statut, @BaseName AS Base, 'Base ajoutée avec succès' AS Message;
+-- END
+-- GO
 CREATE OR ALTER PROCEDURE stock.SP_AddBase
     @BaseName   NVARCHAR(128),
     @BaseLabel  NVARCHAR(255)
@@ -822,7 +1087,6 @@ BEGIN
     ELSE
         UPDATE stock.SAGE_Bases SET IsActive = 1, BaseLabel = @BaseLabel WHERE BaseName = @BaseName;
 
-    -- Vue VW_StockJoursAvecMvt dans la base SAGE
     DECLARE @sql NVARCHAR(MAX);
     SET @sql = N'USE [' + @BaseName + N']; EXEC(''
     CREATE OR ALTER VIEW dbo.VW_StockJoursAvecMvt AS
@@ -884,7 +1148,6 @@ BEGIN
     '')';
     EXEC sp_executesql @sql;
 
-    -- Index dans la base SAGE
     SET @sql = N'USE [' + @BaseName + N'];
     IF EXISTS (SELECT 1 FROM sys.indexes WHERE name=''IX_DOCLIGNE_PERF'' AND object_id=OBJECT_ID(''dbo.F_DOCLIGNE''))
         DROP INDEX IX_DOCLIGNE_PERF ON dbo.F_DOCLIGNE;
@@ -901,9 +1164,7 @@ BEGIN
         CREATE INDEX IX_FAMILLE_COVER ON dbo.F_FAMILLE (FA_CodeFamille) INCLUDE (FA_Intitule) WITH (FILLFACTOR=90);';
     EXEC sp_executesql @sql;
 
-    -- EXEC stock.SP_RebuildUnifiedViews;
-    -- EXEC stock.SP_RefreshCacheFiltres;
-    -- EXEC stock.SP_RefreshStockCache;
+    -- ← SP_RefreshStockCacheBase supprimé — géré par le backend Node.js
     EXEC stock.SP_RebuildUnifiedViews;
 
     SELECT 'OK' AS Statut, @BaseName AS Base, 'Base ajoutée avec succès' AS Message;

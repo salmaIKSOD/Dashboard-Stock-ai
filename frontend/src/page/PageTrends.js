@@ -1,14 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell, ReferenceLine,
+  ResponsiveContainer, Cell, ReferenceLine, ComposedChart, Line,
 } from 'recharts';
 import {
   TrendingUp, TrendingDown, Minus,
   ArrowLeftRight, CalendarDays, Database,
-  Tag, Layers, Clock,
+  Tag, Layers, Moon, Award,
   PackageX, ChevronDown, ChevronUp,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Boxes,
 } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
 
@@ -34,6 +34,13 @@ const C = {
 const fmtNum = (n) =>
   new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n ?? 0);
 
+const fmtVal = (n) => {
+  const v = Number(n ?? 0);
+  if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(v) >= 1_000)     return `${(v / 1_000).toFixed(0)}k`;
+  return fmtNum(v);
+};
+
 const fmtPct = (n) => `${Number(n ?? 0).toFixed(1)}%`;
 
 const fmtShort = (d) => {
@@ -46,6 +53,13 @@ const fmtRatio = (r) => {
   if (r === Infinity) return '∞';
   if (r === 0)        return '0';
   return r.toFixed(2);
+};
+
+const toISO = (raw) => {
+  if (!raw) return '';
+  if (typeof raw === 'string') return raw.slice(0, 10);
+  if (raw instanceof Date)     return raw.toISOString().slice(0, 10);
+  return String(raw).slice(0, 10);
 };
 
 // ── Détecteur de colonnes ─────────────────────────────────────
@@ -67,6 +81,8 @@ function useCols(data) {
       nomDep:  find('Nom Depot', 'NomDepot', 'DE_Intitule'),
       entrees: find('TotalEntrees', 'Total Entrees', 'TotalEntree'),
       sorties: find('TotalSorties', 'Total Sorties', 'TotalSortie'),
+      valEnt:  find('Valeur Entree', 'ValeurEntree'),
+      valSor:  find('Valeur Sortie', 'ValeurSortie'),
       stock:   find('StockFinal', 'Stock Final', 'stockfinal'),
       valeur:  find('ValeurFinalePermanente', 'Valeur Finale (Permanente)', 'ValeurFinale', 'valeurfinale', 'Solde'),
       catN1:   find('CatN1', 'Cat N1', 'CL_Intitule1'),
@@ -172,63 +188,10 @@ function Empty({ msg }) {
 }
 
 // ── Bandeau contexte ──────────────────────────────────────────
-// function ContextBanner({ filters }) {
-//   return (
-//     <div className="bg-white border border-[#e4e4e4] rounded-[1.1rem] shadow-[0_2px_12px_rgba(18,166,224,0.07)] overflow-hidden">
-//       <div className="flex items-center gap-3 px-5 py-3.5 bg-gradient-to-r from-[#f8fcff] to-[#f0f9ff] border-b border-[#e8f4fb]">
-//         <div className="w-6 h-6 rounded-[0.45rem] bg-gradient-to-br from-[#12a6e0] to-[#0d8fc4] flex items-center justify-center shadow-sm">
-//           <TrendingUp size={12} className="text-white" />
-//         </div>
-//         <span className="text-[#0d0c0c] text-[13px] font-semibold tracking-wide">Tendances</span>
-//         <span className="text-[#c5c5c5] text-[11px] ml-1">— Contexte du tableau de bord</span>
-//       </div>
-//       <div className="px-5 py-3.5">
-//         <div className="flex flex-wrap items-center gap-2">
-//           {filters?.base && (
-//             <div className="flex items-center gap-1.5 bg-[rgba(1,214,58,0.07)] border border-[rgba(1,214,58,0.22)] rounded-full px-3 py-1.5">
-//               <Database size={11} className="text-[#01a82e]" />
-//               <span className="text-[#01a82e] text-[11px] font-bold uppercase tracking-wide">{filters.base}</span>
-//             </div>
-//           )}
-//           {filters?.dateDebut && filters?.dateFin && (
-//             <div className="flex items-center gap-1.5 bg-[rgba(18,166,224,0.07)] border border-[rgba(18,166,224,0.22)] rounded-full px-3 py-1.5">
-//               <CalendarDays size={11} className="text-[#12a6e0]" />
-//               <span className="text-[#0b7db0] text-[11px] font-semibold">
-//                 {fmtShort(filters.dateDebut)} → {fmtShort(filters.dateFin)}
-//               </span>
-//             </div>
-//           )}
-//           {filters?.fa_codefamille && (
-//             <div className="flex items-center gap-1.5 bg-[rgba(124,77,255,0.07)] border border-[rgba(124,77,255,0.22)] rounded-full px-3 py-1.5">
-//               <Tag size={11} className="text-[#7c4dff]" />
-//               <span className="text-[#7c4dff] text-[11px] font-semibold">{filters.fa_codefamille}</span>
-//             </div>
-//           )}
-//           {filters?.cl_no1 && (
-//             <div className="flex items-center gap-1.5 bg-[rgba(224,138,0,0.07)] border border-[rgba(224,138,0,0.22)] rounded-full px-3 py-1.5">
-//               <Layers size={11} className="text-[#e08a00]" />
-//               <span className="text-[#e08a00] text-[11px] font-semibold">Cat N1 : {filters.cl_no1}</span>
-//             </div>
-//           )}
-//           {!filters?.base && (
-//             <span className="text-[#c5c5c5] text-[12px] italic">
-//               Filtrez depuis le tableau de bord pour afficher les tendances.
-//             </span>
-//           )}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
 function ContextBanner({ filters }) {
   const periodeLabel = () => {
     if (!filters?.dateDebut || !filters?.dateFin) return null;
-    const fullShort = (d) => {
-      if (!d) return '';
-      const [y, m, dd] = d.split('-');
-      return `${dd}/${m}/${y}`;
-    };
-    return `${fullShort(filters.dateDebut)} → ${fullShort(filters.dateFin)}`;
+    return `${fmtShort(filters.dateDebut)} → ${fmtShort(filters.dateFin)}`;
   };
 
   return (
@@ -248,7 +211,7 @@ function ContextBanner({ filters }) {
           <TrendingUp size={14} color="#fff" />
         </div>
         <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>Tendances</span>
-        <span style={{ fontSize: 11, color: '#9ca3af' }}>— Contexte du tableau de bord</span>
+        <span style={{ fontSize: 11, color: '#9ca3af' }}>— Analyse descriptive du stock filtré</span>
       </div>
       <div style={{ padding: '12px 20px', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         {filters?.base && (
@@ -298,7 +261,8 @@ function ContextBanner({ filters }) {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  TENDANCE 1 — Taux de rotation par article
+//  T1 — Taux de rotation par article  (CONSERVÉ — descriptif)
+//  Sorties ÷ stock moyen. Identifie articles lents / rapides.
 // ════════════════════════════════════════════════════════════════
 function TauxRotation({ data, cols }) {
   const [sortBy,  setSortBy]  = useState('taux');
@@ -417,66 +381,65 @@ function TauxRotation({ data, cols }) {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  TENDANCE 2 — Comparaison mois par mois (N vs N-1)
+//  T2 — Analyse ABC / Pareto  (NOUVEAU — descriptif)
+//  Classe les articles selon leur part dans la valeur de sortie
+//  cumulée (règle 80/20). Source : ValeurSortie ou Sorties.
 // ════════════════════════════════════════════════════════════════
-function ComparaisonMois({ data, cols }) {
-  const [metric, setMetric] = useState('entrees');
+function AnalyseABC({ data, cols }) {
+  const [metric, setMetric] = useState('valeur'); // 'valeur' | 'qte'
 
-  const { chartData, hasPrevYear } = useMemo(() => {
-    if (!data?.length || !cols.date) return { chartData: [], hasPrevYear: false };
-    const byMonth = {};
+  const { rows, chartData, totals } = useMemo(() => {
+    const empty = { rows: [], chartData: [], totals: { A: 0, B: 0, C: 0, total: 0 } };
+    if (!data?.length || !cols.article) return empty;
+
+    const useVal = metric === 'valeur' && (cols.valSor || cols.valeur);
+    const byArt = {};
     for (const r of data) {
-      const raw = r[cols.date];
-      if (!raw) continue;
-      const iso = typeof raw === 'string' ? raw.slice(0, 10) : new Date(raw).toISOString().slice(0, 10);
-      const [y, m] = iso.split('-');
-      const key = `${y}-${m}`;
-      if (!byMonth[key]) byMonth[key] = { year: y, month: m, key, entrées: 0, sorties: 0, stock: 0, valeur: 0, n: 0 };
-      byMonth[key].entrées += Number(r[cols.entrees] ?? 0);
-      byMonth[key].sorties += Number(r[cols.sorties] ?? 0);
-      byMonth[key].stock   += Number(r[cols.stock]   ?? 0);
-      byMonth[key].valeur  += Number(r[cols.valeur]  ?? 0);
-      byMonth[key].n       += 1;
+      const code = r[cols.article] ?? '?';
+      if (!byArt[code]) byArt[code] = { code, name: r[cols.design] ?? code, valeur: 0 };
+      const v = useVal
+        ? Number(r[cols.valSor] ?? 0)
+        : Number(r[cols.sorties] ?? 0);
+      byArt[code].valeur += v;
     }
-    const months     = Object.values(byMonth).sort((a, b) => a.key.localeCompare(b.key));
-    const monthNames = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
-    const byYearMonth = {};
-    for (const m of months) {
-      if (!byYearMonth[m.month]) byYearMonth[m.month] = {};
-      byYearMonth[m.month][m.year] = m;
-    }
-    const years   = [...new Set(months.map(m => m.year))].sort();
-    const hasPrev = years.length >= 2;
-    const chartRows = Object.entries(byYearMonth).map(([mk, byY]) => {
-      const row = { mois: monthNames[parseInt(mk) - 1] };
-      for (const y of years) {
-        row[y] = byY[y]?.[metric === 'entrees' ? 'entrées' : metric === 'sorties' ? 'sorties' : metric === 'stock' ? 'stock' : 'valeur'] ?? 0;
-      }
-      if (hasPrev && years.length === 2) {
-        const vN  = row[years[1]] ?? 0;
-        const vN1 = row[years[0]] ?? 0;
-        row.variation = vN1 > 0 ? ((vN - vN1) / vN1) * 100 : null;
-      }
-      return row;
+
+    const sorted = Object.values(byArt)
+      .filter(a => a.valeur > 0)
+      .sort((a, b) => b.valeur - a.valeur);
+
+    const total = sorted.reduce((s, a) => s + a.valeur, 0);
+    if (total === 0) return empty;
+
+    let cumul = 0;
+    const classed = sorted.map((a, i) => {
+      cumul += a.valeur;
+      const cumulPct = (cumul / total) * 100;
+      const classe = cumulPct <= 80 ? 'A' : cumulPct <= 95 ? 'B' : 'C';
+      return { ...a, rang: i + 1, part: (a.valeur / total) * 100, cumulPct, classe };
     });
-    return { chartData: chartRows, years, hasPrevYear: hasPrev };
+
+    const tot = { A: 0, B: 0, C: 0, total: classed.length };
+    for (const a of classed) tot[a.classe] += 1;
+
+    // courbe Pareto réduite à ~50 points pour rester lisible
+    const step = Math.max(1, Math.floor(classed.length / 50));
+    const chart = classed
+      .filter((_, i) => i % step === 0 || i === classed.length - 1)
+      .map(a => ({ rang: a.rang, code: a.code, part: a.part, cumulPct: a.cumulPct, classe: a.classe }));
+
+    return { rows: classed, chartData: chart, totals: tot };
   }, [data, cols, metric]);
 
-  const years = useMemo(() => {
-    if (!data?.length || !cols.date) return [];
-    const ys = new Set();
-    for (const r of data) {
-      const raw = r[cols.date];
-      if (!raw) continue;
-      const iso = typeof raw === 'string' ? raw.slice(0, 10) : new Date(raw).toISOString().slice(0, 10);
-      ys.add(iso.slice(0, 4));
-    }
-    return [...ys].sort();
-  }, [data, cols]);
+  if (!rows.length) return <Empty msg="Aucune sortie sur la période pour classer les articles" />;
 
-  if (!chartData.length) return <Empty msg="Données insuffisantes pour la comparaison" />;
+  const classColor = { A: C.green, B: C.amber, C: C.red };
+  const classBg    = { A: C.greenLight, B: C.amberLight, C: C.redLight };
+  const classDesc  = {
+    A: 'Vital — ~80% de la valeur',
+    B: 'Important — ~15% suivant',
+    C: 'Marginal — le reste',
+  };
 
-  const YEAR_COLORS = [C.blue, C.green, C.amber, C.purple];
   const MetBtn = ({ id, label }) => (
     <button onClick={() => setMetric(id)}
       className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-all duration-150 ${metric === id ? 'bg-[#12a6e0] text-white shadow-sm' : 'text-[#888888] hover:bg-[#f0f0f0]'}`}>
@@ -488,200 +451,321 @@ function ComparaisonMois({ data, cols }) {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-1 bg-[#f8f8f8] border border-[#eeeeee] rounded-xl p-1">
-          <MetBtn id="entrees" label="Entrées" />
-          <MetBtn id="sorties" label="Sorties" />
-          <MetBtn id="stock"   label="Stock final" />
-          <MetBtn id="valeur"  label="Valeur" />
+          <MetBtn id="valeur" label="Par valeur sortie" />
+          <MetBtn id="qte"    label="Par quantité sortie" />
         </div>
-        {!hasPrevYear && (
-          <span className="text-[11px] text-[#aaaaaa] italic">Une seule année dans la période — étendez la plage pour comparer</span>
-        )}
+        <span className="text-[11px] text-[#aaaaaa] italic">
+          {rows.length} articles classés
+        </span>
       </div>
-      <ResponsiveContainer width="100%" height={240}>
-        <BarChart data={chartData} margin={{ top: 4, right: 8, left: -10, bottom: 0 }} barGap={4}>
-          <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
-          <XAxis dataKey="mois" tick={{ fontSize: 10, fill: C.muted }} tickLine={false} axisLine={{ stroke: C.border }} />
-          <YAxis tick={{ fontSize: 10, fill: C.muted }} tickLine={false} axisLine={false}
-            tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
-          <Tooltip cursor={{ fill: 'rgba(18,166,224,0.04)' }}
-            content={({ active, payload, label }) => {
-              if (!active || !payload?.length) return null;
-              return (
-                <div className="bg-white border border-[#e0e0e0] rounded-xl shadow-lg px-4 py-3 text-[12px]">
-                  <p className="text-[#888888] mb-1.5 font-medium">{label}</p>
-                  {payload.map((p, i) => (
-                    <div key={i} className="flex items-center gap-2 mb-0.5">
-                      <span className="w-2 h-2 rounded-full" style={{ background: p.fill }} />
-                      <span className="text-[#555555]">{p.dataKey} :</span>
-                      <span className="font-semibold text-[#0d0c0c]">{fmtNum(p.value)}</span>
-                    </div>
-                  ))}
-                </div>
-              );
-            }}
-          />
-          {years.map((y, i) => (
-            <Bar key={y} dataKey={y} name={y} fill={YEAR_COLORS[i % YEAR_COLORS.length]} radius={[3,3,0,0]} fillOpacity={0.85} />
-          ))}
-        </BarChart>
-      </ResponsiveContainer>
-      {hasPrevYear && years.length === 2 && (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {chartData.filter(r => r.variation !== null && r.variation !== undefined).slice(0, 4).map(r => (
-            <div key={r.mois} className="bg-[#f8f8f8] rounded-xl px-3 py-2.5 border border-[#eeeeee]">
-              <p className="text-[#aaaaaa] text-[10px] m-0 mb-0.5">{r.mois}</p>
-              <p className={`font-bold text-[0.95rem] m-0 flex items-center gap-1 ${r.variation > 0 ? 'text-[#01a82e]' : r.variation < 0 ? 'text-[#e53935]' : 'text-[#888888]'}`}>
-                {r.variation > 0 ? <TrendingUp size={12} /> : r.variation < 0 ? <TrendingDown size={12} /> : <Minus size={12} />}
-                {r.variation !== null ? `${r.variation > 0 ? '+' : ''}${r.variation.toFixed(1)}%` : '—'}
-              </p>
+
+      {/* Cartes A / B / C */}
+      <div className="grid grid-cols-3 gap-3">
+        {['A', 'B', 'C'].map(cl => (
+          <div key={cl} className="rounded-xl px-4 py-3 border flex flex-col gap-1"
+            style={{ background: classBg[cl], borderColor: `${classColor[cl]}33` }}>
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[12px] font-bold text-white"
+                style={{ background: classColor[cl] }}>{cl}</span>
+              <p className="text-[1.3rem] font-bold m-0" style={{ color: classColor[cl] }}>{totals[cl]}</p>
             </div>
-          ))}
-        </div>
-      )}
+            <p className="text-[10px] m-0" style={{ color: C.muted }}>{classDesc[cl]}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Courbe de Pareto : barres = part individuelle, ligne = cumul % */}
+      <div className="bg-[#f9f9f9] border border-[#eeeeee] rounded-xl p-4">
+        <p className="text-[11px] font-semibold text-[#888888] mb-3 uppercase tracking-wide">
+          Courbe de Pareto — part individuelle (barres) et cumul (ligne)
+        </p>
+        <ResponsiveContainer width="100%" height={240}>
+          <ComposedChart data={chartData} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
+            <XAxis dataKey="rang" tick={{ fontSize: 9, fill: C.muted }} tickLine={false}
+              axisLine={{ stroke: C.border }} />
+            <YAxis yAxisId="left" tick={{ fontSize: 9, fill: C.muted }} tickLine={false}
+              axisLine={false} tickFormatter={v => `${v.toFixed(0)}%`} />
+            <YAxis yAxisId="right" orientation="right" domain={[0, 100]}
+              tick={{ fontSize: 9, fill: C.muted }} tickLine={false} axisLine={false}
+              tickFormatter={v => `${v}%`} />
+            <Tooltip cursor={{ fill: 'rgba(18,166,224,0.04)' }}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const row = payload[0]?.payload;
+                if (!row) return null;
+                return (
+                  <div className="bg-white border border-[#e0e0e0] rounded-xl shadow-lg px-4 py-3 text-[12px]">
+                    <p className="font-semibold text-[#0d0c0c] mb-1">
+                      #{row.rang} · {row.code}
+                      <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded"
+                        style={{ background: classBg[row.classe], color: classColor[row.classe] }}>
+                        {row.classe}
+                      </span>
+                    </p>
+                    <p className="text-[#888888] m-0">Part : <b className="text-[#0d0c0c]">{fmtPct(row.part)}</b></p>
+                    <p className="text-[#888888] m-0">Cumul : <b className="text-[#0d0c0c]">{fmtPct(row.cumulPct)}</b></p>
+                  </div>
+                );
+              }}
+            />
+            <ReferenceLine yAxisId="right" y={80} stroke={C.green} strokeDasharray="6 3"
+              label={{ value: '80%', position: 'insideTopRight', fontSize: 9, fill: C.green }} />
+            <Bar yAxisId="left" dataKey="part" radius={[2, 2, 0, 0]}>
+              {chartData.map((r, i) => <Cell key={i} fill={classColor[r.classe]} fillOpacity={0.65} />)}
+            </Bar>
+            <Line yAxisId="right" type="monotone" dataKey="cumulPct" stroke={C.blue}
+              strokeWidth={2.5} dot={false} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
 
 // ════════════════════════════════════════════════════════════════
-//  TENDANCE 3 — Jours de stock restants  (PAGINATION)
+//  T3 — Articles dormants  (NOUVEAU — descriptif, pas prédictif)
+//  Stock final > 0 mais AUCUNE sortie sur toute la période.
+//  Constat de capital immobilisé. Source : StockFinal + Sorties.
 // ════════════════════════════════════════════════════════════════
-function JoursDeStock({ data, cols, filters }) {
+function ArticlesDormants({ data, cols, filters }) {
   const [page, setPage] = useState(0);
+  const [onlyVal, setOnlyVal] = useState(false); // trier par valeur immobilisée
 
-  const { rows, nbJours } = useMemo(() => {
-    if (!data?.length || !cols.article) return { rows: [], nbJours: 1 };
-    let nj = 30;
-    if (filters?.dateDebut && filters?.dateFin) {
-      const d1 = new Date(filters.dateDebut);
-      const d2 = new Date(filters.dateFin);
-      nj = Math.max(1, Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)) + 1);
-    }
-    const byArtDepot = {};
-    for (const r of data) {
-      const key = `${r[cols.article]}__${r[cols.depot]}`;
-      if (!byArtDepot[key]) byArtDepot[key] = {
-        article: r[cols.article] ?? '?', name: r[cols.design] ?? '',
-        depot: r[cols.depot] ?? '?', nomDep: r[cols.nomDep] ?? '',
-        catN1: r[cols.catN1] ?? '—', sorties: 0, stockFinal: 0,
-      };
-      byArtDepot[key].sorties    += Number(r[cols.sorties] ?? 0);
-      byArtDepot[key].stockFinal  = Number(r[cols.stock]   ?? 0);
-    }
-    const lastByKey  = {};
+  const { rows, totalValeur, totalUnites } = useMemo(() => {
+    const empty = { rows: [], totalValeur: 0, totalUnites: 0 };
+    if (!data?.length || !cols.article) return empty;
+
+    // dernier StockFinal/ValeurFinale par (article, dépôt) + somme sorties
+    const byKey = {};
     const sortedData = [...data].sort((a, b) =>
-      ((a[cols.date] ?? '').slice(0, 10)).localeCompare((b[cols.date] ?? '').slice(0, 10))
+      toISO(a[cols.date]).localeCompare(toISO(b[cols.date]))
     );
     for (const r of sortedData) {
-      const key = `${r[cols.article]}__${r[cols.depot]}`;
-      const sf  = Number(r[cols.stock] ?? 0);
-      if (sf >= 0) lastByKey[key] = sf;
+      const art = r[cols.article] ?? '?';
+      const dep = r[cols.depot] ?? '?';
+      const key = `${art}__${dep}`;
+      if (!byKey[key]) byKey[key] = {
+        article: art, name: r[cols.design] ?? '', depot: dep,
+        nomDep: r[cols.nomDep] ?? '', catN1: r[cols.catN1] ?? '—',
+        sorties: 0, stockFinal: 0, valeurFinale: 0, lastDate: '',
+      };
+      byKey[key].sorties     += Number(r[cols.sorties] ?? 0);
+      byKey[key].stockFinal   = Number(r[cols.stock]  ?? 0);   // dernier (data triée)
+      byKey[key].valeurFinale = Number(r[cols.valeur] ?? 0);
+      byKey[key].lastDate     = toISO(r[cols.date]);
     }
-    for (const key of Object.keys(byArtDepot)) {
-      if (lastByKey[key] !== undefined) byArtDepot[key].stockFinal = lastByKey[key];
-    }
-    const result = Object.values(byArtDepot)
-      .filter(a => a.stockFinal > 0 || a.sorties > 0)
-      .map(a => {
-        const sortieJour    = nj > 0 ? a.sorties / nj : 0;
-        const joursRestants = sortieJour > 0 ? Math.round(a.stockFinal / sortieJour) : Infinity;
-        return { ...a, sortieJour, joursRestants };
-      })
-      .filter(a => a.sorties > 0)
-      .sort((a, b) => a.joursRestants - b.joursRestants);
-    return { rows: result, nbJours: nj };
-  }, [data, cols, filters]);
 
-  const prevRowsLen = React.useRef(rows.length);
-  if (prevRowsLen.current !== rows.length) { prevRowsLen.current = rows.length; if (page !== 0) setPage(0); }
+    const dormants = Object.values(byKey)
+      .filter(a => a.sorties === 0 && a.stockFinal > 0)
+      .sort((a, b) => onlyVal
+        ? b.valeurFinale - a.valeurFinale
+        : b.stockFinal - a.stockFinal);
 
-  if (!rows.length) return <Empty msg="Aucun article avec sorties sur la période" />;
+    return {
+      rows: dormants,
+      totalValeur: dormants.reduce((s, a) => s + a.valeurFinale, 0),
+      totalUnites: dormants.reduce((s, a) => s + a.stockFinal, 0),
+    };
+  }, [data, cols, onlyVal]);
+
+  const prevLen = React.useRef(rows.length);
+  if (prevLen.current !== rows.length) { prevLen.current = rows.length; if (page !== 0) setPage(0); }
+
+  if (!rows.length) return <Empty msg="Aucun article dormant — tout le stock a bougé sur la période 👍" />;
 
   const displayed = rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
-  const urgenceBadge = (j) => {
-    if (j === Infinity || j > 90) return { label: '> 90 j', color: C.green, bg: C.greenLight };
-    if (j > 30)                   return { label: `${j} j`, color: C.blue,  bg: C.blueLight  };
-    if (j > 15)                   return { label: `${j} j`, color: C.amber, bg: C.amberLight };
-    if (j > 7)                    return { label: `${j} j`, color: C.red,   bg: C.redLight   };
-    return                               { label: `${j} j`, color: '#ffffff',bg: C.red        };
-  };
-
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-[11px] text-[#888888]">Basé sur {nbJours} jour(s) ·</span>
-        {[
-          { label: '> 90 j (OK)',      color: C.green },
-          { label: '31–90 j',          color: C.blue  },
-          { label: '16–30 j (Alerte)', color: C.amber },
-          { label: '≤ 15 j (Urgent)',  color: C.red   },
-        ].map(l => (
-          <div key={l.label} className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full" style={{ background: l.color }} />
-            <span className="text-[10px] text-[#888888]">{l.label}</span>
-          </div>
-        ))}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-xl px-4 py-3 border flex flex-col gap-1"
+          style={{ background: C.purpleLight, borderColor: `${C.purple}33` }}>
+          <p className="text-[10px] font-medium m-0 uppercase tracking-wide" style={{ color: C.muted }}>Articles dormants</p>
+          <p className="text-[1.35rem] font-bold m-0" style={{ color: C.purple }}>{rows.length}</p>
+        </div>
+        <div className="rounded-xl px-4 py-3 border flex flex-col gap-1"
+          style={{ background: C.amberLight, borderColor: `${C.amber}33` }}>
+          <p className="text-[10px] font-medium m-0 uppercase tracking-wide" style={{ color: C.muted }}>Valeur immobilisée</p>
+          <p className="text-[1.35rem] font-bold m-0" style={{ color: C.amber }}>{fmtVal(totalValeur)} <span className="text-[11px] font-normal">MAD</span></p>
+        </div>
+        <div className="rounded-xl px-4 py-3 border flex flex-col gap-1"
+          style={{ background: C.blueLight, borderColor: `${C.blue}33` }}>
+          <p className="text-[10px] font-medium m-0 uppercase tracking-wide" style={{ color: C.muted }}>Unités bloquées</p>
+          <p className="text-[1.35rem] font-bold m-0" style={{ color: C.blue }}>{fmtNum(totalUnites)}</p>
+        </div>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {[
-          { label: 'Rupture ≤ 7 j', count: rows.filter(r => r.joursRestants !== Infinity && r.joursRestants <= 7).length,  color: C.red,   bg: C.redLight   },
-          { label: 'Urgent ≤ 15 j', count: rows.filter(r => r.joursRestants !== Infinity && r.joursRestants <= 15).length, color: C.amber, bg: C.amberLight },
-          { label: 'Alerte ≤ 30 j', count: rows.filter(r => r.joursRestants !== Infinity && r.joursRestants <= 30).length, color: C.blue,  bg: C.blueLight  },
-          { label: 'OK > 30 j',     count: rows.filter(r => r.joursRestants === Infinity || r.joursRestants > 30).length,  color: C.green, bg: C.greenLight },
-        ].map(k => (
-          <div key={k.label} className="rounded-xl px-3 py-2.5 border" style={{ background: k.bg, borderColor: `${k.color}33` }}>
-            <p className="text-[10px] font-medium m-0 mb-0.5" style={{ color: k.color }}>{k.label}</p>
-            <p className="text-[1.3rem] font-bold m-0" style={{ color: k.color }}>{k.count}</p>
-          </div>
-        ))}
+
+      <div className="flex items-center gap-2">
+        <span className="text-[11px] text-[#888888]">Trier :</span>
+        <button onClick={() => setOnlyVal(false)}
+          className="px-3 py-1 rounded-lg text-[11px] font-semibold transition-all"
+          style={{ background: !onlyVal ? C.blue : 'transparent', color: !onlyVal ? '#fff' : C.muted, border: !onlyVal ? 'none' : '1px solid #eeeeee' }}>
+          Par stock
+        </button>
+        <button onClick={() => setOnlyVal(true)}
+          className="px-3 py-1 rounded-lg text-[11px] font-semibold transition-all"
+          style={{ background: onlyVal ? C.blue : 'transparent', color: onlyVal ? '#fff' : C.muted, border: onlyVal ? 'none' : '1px solid #eeeeee' }}>
+          Par valeur
+        </button>
       </div>
+
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[12px]">
           <thead>
             <tr className="border-b border-[#f0f0f0]">
-              {['Article','Désignation','Dépôt','Stock final','Sortie/jour','Jours restants'].map((h, i) => (
+              {['Article','Désignation','Dépôt','Stock bloqué','Valeur immobilisée'].map((h, i) => (
                 <th key={i} className={`px-3 py-2 bg-[#f8f8f8] text-[10px] font-semibold uppercase tracking-[0.06em] text-[#888888] ${i >= 3 ? 'text-right' : 'text-left'}`}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {displayed.map((row, idx) => {
-              const urg      = urgenceBadge(row.joursRestants === Infinity ? Infinity : row.joursRestants);
-              const isUrgent = row.joursRestants !== Infinity && row.joursRestants <= 15;
-              return (
-                <tr key={idx} className={`border-b border-[#f8f8f8] transition-colors ${isUrgent ? 'bg-[rgba(229,57,53,0.02)]' : 'hover:bg-[rgba(18,166,224,0.02)]'}`}>
-                  <td className="px-3 py-2.5">
-                    <span className="inline-block font-mono text-[0.7rem] text-[#0b7db0] bg-[rgba(18,166,224,0.07)] border border-[rgba(18,166,224,0.15)] rounded-md px-2 py-0.5">{row.article}</span>
-                  </td>
-                  <td className="px-3 py-2.5 text-[#444444] max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap" title={row.name}>{row.name || '—'}</td>
-                  <td className="px-3 py-2.5">
-                    <span className="inline-block font-mono text-[0.7rem] text-[#666666] bg-[#f4f4f4] border border-[#e8e8e8] rounded-md px-2 py-0.5">{row.depot}</span>
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-semibold text-[#0d0c0c]">{fmtNum(row.stockFinal)}</td>
-                  <td className="px-3 py-2.5 text-right text-[#888888]">{row.sortieJour.toFixed(1)}/j</td>
-                  <td className="px-3 py-2.5 text-right">
-                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg" style={{ background: urg.bg, color: urg.color }}>
-                      {row.joursRestants === Infinity ? '∞' : urg.label}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
+            {displayed.map((row, idx) => (
+              <tr key={idx} className="border-b border-[#f8f8f8] hover:bg-[rgba(124,77,255,0.03)] transition-colors">
+                <td className="px-3 py-2.5">
+                  <span className="inline-block font-mono text-[0.7rem] text-[#0b7db0] bg-[rgba(18,166,224,0.07)] border border-[rgba(18,166,224,0.15)] rounded-md px-2 py-0.5">{row.article}</span>
+                </td>
+                <td className="px-3 py-2.5 text-[#444444] max-w-[170px] overflow-hidden text-ellipsis whitespace-nowrap" title={row.name}>{row.name || '—'}</td>
+                <td className="px-3 py-2.5">
+                  <span className="inline-block font-mono text-[0.7rem] text-[#666666] bg-[#f4f4f4] border border-[#e8e8e8] rounded-md px-2 py-0.5">{row.depot}</span>
+                </td>
+                <td className="px-3 py-2.5 text-right font-semibold text-[#0d0c0c]">{fmtNum(row.stockFinal)}</td>
+                <td className="px-3 py-2.5 text-right font-semibold" style={{ color: C.amber }}>{fmtVal(row.valeurFinale)} MAD</td>
+              </tr>
+            ))}
             {Array.from({ length: PAGE_SIZE - displayed.length }).map((_, i) => (
               <tr key={`ph-${i}`} style={{ height: 41 }}>
-                {Array.from({ length: 6 }).map((__, j) => <td key={j} className="px-3 border-b border-[#f8f8f8]" />)}
+                {Array.from({ length: 5 }).map((__, j) => <td key={j} className="px-3 border-b border-[#f8f8f8]" />)}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
       <Pagination page={page} total={rows.length} pageSize={PAGE_SIZE} onChange={setPage} />
     </div>
   );
 }
 
 // ════════════════════════════════════════════════════════════════
-//  TENDANCE 4 — Déséquilibre entrées / sorties  (PAGINATION)
+//  T4 — Évolution de la valeur par famille  (NOUVEAU — descriptif)
+//  Valeur au 1er jour vs dernier jour de la période, par famille.
+//  Comparatif début → fin (pas de projection).
+// ════════════════════════════════════════════════════════════════
+function EvolutionParFamille({ data, cols }) {
+  const [groupBy, setGroupBy] = useState('famille'); // 'famille' | 'cat'
+
+  const rows = useMemo(() => {
+    if (!data?.length || !cols.article) return [];
+    const keyCol = groupBy === 'famille' ? (cols.famille || cols.catN1) : (cols.catN1 || cols.famille);
+    if (!keyCol) return [];
+
+    // 1) dernier jour connu par (article, dépôt) AVANT la fin → valeur fin
+    //    et premier jour connu → valeur début
+    const byKey = {};
+    for (const r of data) {
+      const art = r[cols.article] ?? '?';
+      const dep = r[cols.depot] ?? '?';
+      const key = `${art}__${dep}`;
+      const d   = toISO(r[cols.date]);
+      if (!d) continue;
+      const grp = r[keyCol] || 'Sans groupe';
+      const val = Number(r[cols.valeur] ?? 0);
+      if (!byKey[key]) byKey[key] = { grp, first: { d, val }, last: { d, val } };
+      if (d < byKey[key].first.d) byKey[key].first = { d, val };
+      if (d > byKey[key].last.d)  byKey[key].last  = { d, val };
+      byKey[key].grp = grp;
+    }
+
+    // 2) agréger par groupe
+    const byGrp = {};
+    for (const entry of Object.values(byKey)) {
+      const g = entry.grp;
+      if (!byGrp[g]) byGrp[g] = { name: g, debut: 0, fin: 0 };
+      byGrp[g].debut += entry.first.val;
+      byGrp[g].fin   += entry.last.val;
+    }
+
+    return Object.values(byGrp)
+      .map(g => {
+        const diff = g.fin - g.debut;
+        const pct  = g.debut > 0 ? (diff / g.debut) * 100 : (g.fin > 0 ? 100 : 0);
+        return { ...g, diff, pct };
+      })
+      .filter(g => g.debut > 0 || g.fin > 0)
+      .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff))
+      .slice(0, 12);
+  }, [data, cols, groupBy]);
+
+  if (!rows.length) return <Empty msg="Pas de données de valeur par groupe sur la période" />;
+
+  const GrpBtn = ({ id, label }) => (
+    <button onClick={() => setGroupBy(id)}
+      className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-all duration-150 ${groupBy === id ? 'bg-[#12a6e0] text-white shadow-sm' : 'text-[#888888] hover:bg-[#f0f0f0]'}`}>
+      {label}
+    </button>
+  );
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-1 bg-[#f8f8f8] border border-[#eeeeee] rounded-xl p-1">
+          <GrpBtn id="famille" label="Par famille" />
+          <GrpBtn id="cat"     label="Par catalogue N1" />
+        </div>
+        <span className="text-[11px] text-[#aaaaaa] italic">Valeur stock : début → fin de période</span>
+      </div>
+
+      {/* Barres groupées début vs fin */}
+      <ResponsiveContainer width="100%" height={Math.max(200, rows.length * 38)}>
+        <BarChart data={rows} layout="vertical" margin={{ top: 0, right: 50, left: 8, bottom: 0 }} barCategoryGap="22%">
+          <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false} />
+          <XAxis type="number" tick={{ fontSize: 9, fill: C.muted }} tickLine={false} axisLine={false}
+            tickFormatter={v => fmtVal(v)} />
+          <YAxis type="category" dataKey="name" width={120}
+            tick={{ fontSize: 10, fill: C.text }} tickLine={false} axisLine={false} />
+          <Tooltip cursor={{ fill: 'rgba(18,166,224,0.04)' }}
+            content={({ active, payload, label }) => {
+              if (!active || !payload?.length) return null;
+              const row = rows.find(r => r.name === label);
+              if (!row) return null;
+              return (
+                <div className="bg-white border border-[#e0e0e0] rounded-xl shadow-lg px-4 py-3 text-[12px]">
+                  <p className="font-semibold text-[#0d0c0c] mb-1.5">{label}</p>
+                  <p className="text-[#888888] m-0">Début : <b className="text-[#0d0c0c]">{fmtVal(row.debut)} MAD</b></p>
+                  <p className="text-[#888888] m-0">Fin : <b className="text-[#0d0c0c]">{fmtVal(row.fin)} MAD</b></p>
+                  <p className="m-0 mt-1 font-semibold" style={{ color: row.diff >= 0 ? C.green : C.red }}>
+                    {row.diff >= 0 ? '+' : ''}{fmtVal(row.diff)} MAD ({row.pct >= 0 ? '+' : ''}{row.pct.toFixed(1)}%)
+                  </p>
+                </div>
+              );
+            }}
+          />
+          <Bar dataKey="debut" name="Début" fill={C.light} radius={[0, 3, 3, 0]} fillOpacity={0.7} />
+          <Bar dataKey="fin"   name="Fin"   radius={[0, 3, 3, 0]}>
+            {rows.map((r, i) => <Cell key={i} fill={r.diff >= 0 ? C.green : C.red} fillOpacity={0.85} />)}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+
+      {/* Liste compacte des variations */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {rows.slice(0, 6).map(r => (
+          <div key={r.name} className="bg-[#f8f8f8] rounded-xl px-3 py-2.5 border border-[#eeeeee]">
+            <p className="text-[#888888] text-[10px] m-0 mb-0.5 overflow-hidden text-ellipsis whitespace-nowrap" title={r.name}>{r.name}</p>
+            <p className={`font-bold text-[0.95rem] m-0 flex items-center gap-1 ${r.diff > 0 ? 'text-[#01a82e]' : r.diff < 0 ? 'text-[#e53935]' : 'text-[#888888]'}`}>
+              {r.diff > 0 ? <TrendingUp size={12} /> : r.diff < 0 ? <TrendingDown size={12} /> : <Minus size={12} />}
+              {r.pct > 0 ? '+' : ''}{r.pct.toFixed(1)}%
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+//  T5 — Déséquilibre entrées / sorties  (CONSERVÉ — descriptif)
 // ════════════════════════════════════════════════════════════════
 function getDesequilibreCat(ratio, entrees, sorties) {
   if (sorties === 0 && entrees > 0) return { label: 'Accumulation',   color: C.purple, bg: C.purpleLight, dir: 'in'  };
@@ -893,6 +977,41 @@ function DesequilibreEntreesSorties({ data, cols }) {
   );
 }
 
+// ── Barre d'onglets ───────────────────────────────────────────
+function TrendTabs({ tabs, active, onChange }) {
+  return (
+    <div className="bg-white border border-[#e8e8e8] rounded-2xl shadow-[0_1px_6px_rgba(0,0,0,0.05)] p-1.5
+                    flex flex-wrap gap-1 overflow-x-auto">
+      {tabs.map(t => {
+        const on = active === t.id;
+        const Icon = t.icon;
+        return (
+          <button key={t.id} onClick={() => onChange(t.id)}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-[12px] font-semibold
+                       transition-all duration-150 whitespace-nowrap shrink-0"
+            style={{
+              background: on ? t.color : 'transparent',
+              color:      on ? '#fff'  : C.muted,
+              boxShadow:  on ? `0 2px 8px ${t.color}40` : 'none',
+            }}>
+            <Icon size={15} />
+            <span>{t.label}</span>
+            {t.badge != null && t.badge > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none"
+                style={{
+                  background: on ? 'rgba(255,255,255,0.25)' : `${t.color}1a`,
+                  color:      on ? '#fff' : t.color,
+                }}>
+                {t.badge}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ════════════════════════════════════════════════════════════════
 //  PAGE PRINCIPALE
 // ════════════════════════════════════════════════════════════════
@@ -902,34 +1021,72 @@ export default function PageTrends() {
   const cols    = useCols(tableData);
   const hasData = hasFiltered && tableData && tableData.length > 0;
 
+  const [active, setActive] = useState('rotation');
+
+  // Badges d'onglet : nb dormants + nb déséquilibrés (descriptifs)
   const badges = useMemo(() => {
     if (!hasData || !cols.article) return {};
+    const byKey = {};
     const byArt = {};
     for (const r of tableData) {
-      const key = `${r[cols.article]}__${r[cols.depot] ?? ''}`;
-      if (!byArt[key]) byArt[key] = { e: 0, s: 0, sf: 0 };
-      byArt[key].e  += Number(r[cols.entrees] ?? 0);
-      byArt[key].s  += Number(r[cols.sorties] ?? 0);
-      byArt[key].sf  = Number(r[cols.stock]   ?? 0);
+      const art = r[cols.article] ?? '?';
+      const dep = r[cols.depot] ?? '';
+      const k1  = `${art}__${dep}`;
+      if (!byKey[k1]) byKey[k1] = { s: 0, sf: 0 };
+      byKey[k1].s  += Number(r[cols.sorties] ?? 0);
+      byKey[k1].sf  = Number(r[cols.stock]   ?? 0);
+
+      if (!byArt[art]) byArt[art] = { e: 0, s: 0 };
+      byArt[art].e += Number(r[cols.entrees] ?? 0);
+      byArt[art].s += Number(r[cols.sorties] ?? 0);
     }
-    let nj = 30;
-    if (currentFilters?.dateDebut && currentFilters?.dateFin) {
-      const d1 = new Date(currentFilters.dateDebut);
-      const d2 = new Date(currentFilters.dateFin);
-      nj = Math.max(1, Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)) + 1);
-    }
-    const critiques = Object.values(byArt).filter(a => {
-      const sjour = nj > 0 ? a.s / nj : 0;
-      const jr    = sjour > 0 ? a.sf / sjour : Infinity;
-      return jr !== Infinity && jr <= 15;
-    }).length;
+    const dormants = Object.values(byKey).filter(a => a.s === 0 && a.sf > 0).length;
     const desequilibres = Object.values(byArt).filter(a => {
       if (a.e === 0 && a.s === 0) return false;
       const ratio = a.s > 0 ? a.e / a.s : a.e > 0 ? Infinity : 1;
       return ratio >= 2 || ratio <= 0.5 || ratio === Infinity || (a.s > 0 && a.e === 0);
     }).length;
-    return { critiques, desequilibres };
-  }, [hasData, tableData, cols, currentFilters]);
+    return { dormants, desequilibres };
+  }, [hasData, tableData, cols]);
+
+  // Définition des onglets (label, icône, couleur, sous-titre, badge)
+  const TABS = [
+    { id: 'rotation',     label: 'Rotation',      icon: ArrowLeftRight, color: C.blue,
+      title: 'Taux de rotation des articles',
+      subtitle: 'Sorties ÷ stock moyen sur la période — identifie les articles lents et rapides',
+      desc: "Cet onglet mesure la vitesse à laquelle chaque article s'écoule : on divise les sorties par le stock moyen sur la période. Un taux élevé veut dire que l'article tourne vite (il se vend et se réapprovisionne souvent) ; un taux faible signale un article qui stagne. Utile pour repérer les références à dynamiser ou à ne plus sur-commander." },
+    { id: 'abc',          label: 'ABC / Pareto',  icon: Award,          color: C.green,
+      title: 'Analyse ABC (Pareto)',
+      subtitle: 'Classement 80/20 des articles selon leur poids dans la valeur de sortie',
+      desc: "Cet onglet applique la règle 80/20 : il classe les articles en A, B et C selon leur poids cumulé dans la valeur des sorties. La classe A regroupe le petit nombre d'articles qui représentent l'essentiel de la valeur, à surveiller en priorité ; la classe C, le grand nombre d'articles à faible impact. La courbe de Pareto montre cette concentration." },
+    { id: 'dormants',     label: 'Dormants',      icon: Moon,           color: C.purple,
+      title: 'Articles dormants',
+      subtitle: 'En stock mais sans aucune sortie sur la période — capital immobilisé',
+      desc: "Cet onglet liste les articles qui ont du stock mais qui n'ont enregistré aucune sortie sur la période : c'est du capital immobilisé qui dort en rayon. On y voit le nombre d'articles concernés, la valeur totale bloquée en MAD et les unités immobilisées, pour cibler les déstockages ou promotions à lancer.",
+      badge: badges.dormants },
+    { id: 'valeurFamille',label: 'Valeur famille',icon: Boxes,          color: C.amber,
+      title: 'Évolution de la valeur par famille',
+      subtitle: 'Valeur du stock au début vs à la fin de la période, par famille ou catalogue',
+      desc: "Cet onglet compare la valeur du stock au début et à la fin de la période, regroupée par famille ou par catalogue N1. Les barres montrent l'écart début → fin et le pourcentage de variation : on voit immédiatement quelles familles se sont valorisées (accumulation) et lesquelles ont fondu (déstockage)." },
+    { id: 'desequilibre', label: 'Déséquilibre',  icon: ArrowLeftRight, color: C.red,
+      title: 'Déséquilibre entrées / sorties',
+      subtitle: 'Ratio E÷S — identifie les sur-approvisionnements et déstockages',
+      desc: "Cet onglet compare les entrées et les sorties de chaque article via leur ratio E÷S. Un ratio bien supérieur à 1 indique un sur-approvisionnement (on rentre plus qu'on ne sort) ; un ratio bien inférieur à 1, un déstockage. Les articles équilibrés sont sains. Pratique pour ajuster les commandes et éviter l'accumulation.",
+      badge: badges.desequilibres },
+  ];
+
+  const activeTab = TABS.find(t => t.id === active) ?? TABS[0];
+
+  const renderActive = () => {
+    switch (active) {
+      case 'rotation':      return <TauxRotation data={tableData} cols={cols} />;
+      case 'abc':           return <AnalyseABC data={tableData} cols={cols} />;
+      case 'dormants':      return <ArticlesDormants data={tableData} cols={cols} filters={currentFilters} />;
+      case 'valeurFamille': return <EvolutionParFamille data={tableData} cols={cols} />;
+      case 'desequilibre':  return <DesequilibreEntreesSorties data={tableData} cols={cols} />;
+      default:              return null;
+    }
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -947,34 +1104,35 @@ export default function PageTrends() {
 
       {hasData && (
         <>
-          <TrendCard icon={ArrowLeftRight} iconColor={C.blue} iconBg={C.blueLight}
-            title="Taux de rotation des articles"
-            subtitle="Sorties ÷ stock moyen sur la période — identifie les articles lents et rapides">
-            <TauxRotation data={tableData} cols={cols} />
-          </TrendCard>
+          <TrendTabs tabs={TABS} active={active} onChange={setActive} />
 
-          <TrendCard icon={CalendarDays} iconColor={C.purple} iconBg={C.purpleLight}
-            title="Comparaison mois par mois"
-            subtitle="Entrées, sorties et stock par mois — comparaison N vs N-1 si la période couvre 2 années">
-            <ComparaisonMois data={tableData} cols={cols} />
-          </TrendCard>
-
-          {/* ↓ CORRECTION : flex flex-col au lieu de grid xl:grid-cols-2 */}
-          <div className="flex flex-col gap-5">
-            <TrendCard icon={Clock} iconColor={C.amber} iconBg={C.amberLight}
-              title="Jours de stock restants"
-              subtitle="Stock final ÷ (sorties / nb jours) — articles les plus critiques en premier"
-              badge={badges.critiques > 0 ? `${badges.critiques} urgent${badges.critiques > 1 ? 's' : ''}` : undefined}>
-              <JoursDeStock data={tableData} cols={cols} filters={currentFilters} />
-            </TrendCard>
-
-            <TrendCard icon={ArrowLeftRight} iconColor={C.red} iconBg={C.redLight}
-              title="Déséquilibre entrées / sorties"
-              subtitle="Ratio E÷S — identifie les sur-approvisionnements et déstockages rapides"
-              badge={badges.desequilibres > 0 ? `${badges.desequilibres} déséquilibré${badges.desequilibres > 1 ? 's' : ''}` : undefined}>
-              <DesequilibreEntreesSorties data={tableData} cols={cols} />
-            </TrendCard>
+          {/* Description de l'onglet actif */}
+          <div className="flex items-start gap-3 rounded-2xl px-5 py-3.5 border"
+            style={{ background: `${activeTab.color}0a`, borderColor: `${activeTab.color}26` }}>
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+              style={{ background: `${activeTab.color}1f`, color: activeTab.color }}>
+              <activeTab.icon size={15} />
+            </span>
+            <p className="text-[12px] text-[#555555] m-0 leading-relaxed">
+              {activeTab.desc}
+            </p>
           </div>
+
+          <TrendCard
+            icon={activeTab.icon}
+            iconColor={activeTab.color}
+            iconBg={`${activeTab.color}14`}
+            title={activeTab.title}
+            subtitle={activeTab.subtitle}
+            badge={
+              active === 'dormants' && badges.dormants > 0
+                ? `${badges.dormants} dormant${badges.dormants > 1 ? 's' : ''}`
+                : active === 'desequilibre' && badges.desequilibres > 0
+                ? `${badges.desequilibres} déséquilibré${badges.desequilibres > 1 ? 's' : ''}`
+                : undefined
+            }>
+            {renderActive()}
+          </TrendCard>
         </>
       )}
     </div>
