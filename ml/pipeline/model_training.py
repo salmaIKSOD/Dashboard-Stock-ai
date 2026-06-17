@@ -37,12 +37,19 @@ def run(base_name=None):
     """
     global BASE_NAME, DATA_DIR, MODEL_DIR, PERF_DIR, PLOT_DIR
 
+    # if base_name:
+    #     BASE_NAME = base_name
+    #     DATA_DIR  = f"../../output/{BASE_NAME}/data_clean/"
+    #     MODEL_DIR = f"../../models/{BASE_NAME}/"
+    #     PERF_DIR  = f"../../output/{BASE_NAME}/performance/"
+    #     PLOT_DIR  = f"../../output/{BASE_NAME}/plots/"
     if base_name:
         BASE_NAME = base_name
-        DATA_DIR  = f"../../output/{BASE_NAME}/data_clean/"
-        MODEL_DIR = f"../../models/{BASE_NAME}/"
-        PERF_DIR  = f"../../output/{BASE_NAME}/performance/"
-        PLOT_DIR  = f"../../output/{BASE_NAME}/plots/"
+        _ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
+        DATA_DIR  = os.path.normpath(os.path.join(_ROOT, 'output', BASE_NAME, 'data_clean')) + os.sep
+        MODEL_DIR = os.path.normpath(os.path.join(_ROOT, 'models', BASE_NAME)) + os.sep
+        PERF_DIR  = os.path.normpath(os.path.join(_ROOT, 'output', BASE_NAME, 'performance')) + os.sep
+        PLOT_DIR  = os.path.normpath(os.path.join(_ROOT, 'output', BASE_NAME, 'plots')) + os.sep
 
     os.makedirs(MODEL_DIR, exist_ok=True)
     os.makedirs(PERF_DIR,  exist_ok=True)

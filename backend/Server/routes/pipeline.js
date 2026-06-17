@@ -18,6 +18,7 @@ const PIPELINE_SCRIPT = path.join(
 const OUTPUT_DIR = path.join(
   __dirname, '..', '..', '..', 'output'
 );
+console.log('📁📁📁📁 OUTPUT_DIR =', OUTPUT_DIR);
 
 // ── POST /api/pipeline/run ────────────────────────────────────
 // Lance le pipeline pour une base donnée

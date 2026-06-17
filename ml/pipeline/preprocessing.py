@@ -35,10 +35,15 @@ def run(base_name=None):
     """
     global BASE_NAME, OUTPUT_DIR, EXPLORE_DIR
 
+    # if base_name:
+    #     BASE_NAME   = base_name
+    #     OUTPUT_DIR  = f"../../output/{BASE_NAME}/data_clean/"
+    #     EXPLORE_DIR = f"../../output/{BASE_NAME}/exploration/"
     if base_name:
         BASE_NAME   = base_name
-        OUTPUT_DIR  = f"../../output/{BASE_NAME}/data_clean/"
-        EXPLORE_DIR = f"../../output/{BASE_NAME}/exploration/"
+        _ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
+        OUTPUT_DIR  = os.path.normpath(os.path.join(_ROOT, 'output', BASE_NAME, 'data_clean')) + os.sep
+        EXPLORE_DIR = os.path.normpath(os.path.join(_ROOT, 'output', BASE_NAME, 'exploration')) + os.sep
 
     os.makedirs(OUTPUT_DIR,  exist_ok=True)
     os.makedirs(EXPLORE_DIR, exist_ok=True)
