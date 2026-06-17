@@ -342,23 +342,6 @@ export default function PageMovements() {
   }, []);
 
   /* ── Sync filtres globaux → état local ── */
-  // const prevBase  = useRef(currentFilters.base);
-  // const prevDebut = useRef(currentFilters.dateDebut);
-  // const prevFin   = useRef(currentFilters.dateFin);
-  // useEffect(() => {
-  //   if (
-  //     currentFilters.base      !== prevBase.current  ||
-  //     currentFilters.dateDebut !== prevDebut.current ||
-  //     currentFilters.dateFin   !== prevFin.current
-  //   ) {
-  //     setBase(currentFilters.base      || '');
-  //     setDateDebut(currentFilters.dateDebut || '');
-  //     setDateFin(currentFilters.dateFin     || '');
-  //     prevBase.current  = currentFilters.base;
-  //     prevDebut.current = currentFilters.dateDebut;
-  //     prevFin.current   = currentFilters.dateFin;
-  //   }
-  // }, [currentFilters.base, currentFilters.dateDebut, currentFilters.dateFin]);
   useEffect(() => {
     setBase(currentFilters.base      || '');
     setDateDebut(currentFilters.dateDebut || '');
@@ -455,13 +438,34 @@ export default function PageMovements() {
   //   setArticle(''); setDepot('');
   //   setMouvData(null); setError(null); setPage(1);
   // };
+  // const handleReset = () => {
+  //   const today = new Date();
+  //   const yyyy  = today.getFullYear();
+  //   const mm    = String(today.getMonth() + 1).padStart(2, '0');
+  //   const dd    = String(today.getDate()).padStart(2, '0');
+
+  //   setBase('');                          // ← vide la base immédiatement
+  //   setDateDebut(`${yyyy}-${mm}-01`);
+  //   setDateFin(`${yyyy}-${mm}-${dd}`);
+  //   setArticle('');
+  //   setDepot('');
+  //   setArticleOptions([]);
+  //   setDepotOptions([]);
+  //   setMouvData(null);
+  //   setMouvFilters({ depot: '', article: '' });  // ← sync contexte filtres mouv
+  //   setError(null);
+  //   setPage(1);
+
+  //   setCurrentFilters(prev => ({ ...prev, base: null }));  // ← sync contexte global
+  // };
+
   const handleReset = () => {
     const today = new Date();
     const yyyy  = today.getFullYear();
     const mm    = String(today.getMonth() + 1).padStart(2, '0');
     const dd    = String(today.getDate()).padStart(2, '0');
 
-    setBase('');                          // ← vide la base immédiatement
+    setBase('');
     setDateDebut(`${yyyy}-${mm}-01`);
     setDateFin(`${yyyy}-${mm}-${dd}`);
     setArticle('');
@@ -469,11 +473,9 @@ export default function PageMovements() {
     setArticleOptions([]);
     setDepotOptions([]);
     setMouvData(null);
-    setMouvFilters({ depot: '', article: '' });  // ← sync contexte filtres mouv
+    setMouvFilters({ depot: '', article: '' });
     setError(null);
     setPage(1);
-
-    setCurrentFilters(prev => ({ ...prev, base: null }));  // ← sync contexte global
   };
 
   /* ── Export Excel ── */

@@ -188,6 +188,8 @@ function Dashboard({ sidebarOpen }) {
     currentFilters, setCurrentFilters,
     defaultDebut, defaultFin,
     registerReloadDashboard,
+     setMouvData,        // ✅ ajouter
+  setMouvFilters, 
   } = useDashboard();
 
   const [loadingChunks, setLoadingChunks] = useState(null);
@@ -212,69 +214,129 @@ function Dashboard({ sidebarOpen }) {
     registerReloadDashboard(loadData);
   }, [registerReloadDashboard, loadData]);
 
- const handleFilter = async (params) => {
-    if (!params) {
-      const d = {
-        base: '',
-        dateDebut: defaultDebut,
-        dateFin:   defaultFin,
-        depot: null, article: null,
-        cl_no1: null, cl_no2: null, cl_no3: null, cl_no4: null,
-        fa_codefamille: null,
-      };
-      setCurrentFilters(d);
-      setHasFiltered(false);
-      setTableData(null);
-      setLoadingChunks(null);
-      return;
-      saveToHistory(params);
-    }
+//  const handleFilter = async (params) => {
+//     if (!params) {
+//       const d = {
+//         base: '',
+//         dateDebut: defaultDebut,
+//         dateFin:   defaultFin,
+//         depot: null, article: null,
+//         cl_no1: null, cl_no2: null, cl_no3: null, cl_no4: null,
+//         fa_codefamille: null,
+//       };
+//       setCurrentFilters(d);
+//       setHasFiltered(false);
+//       setTableData(null);
+//       setLoadingChunks(null);
+//       return;
+//       saveToHistory(params);
+//     }
 
-    setHasFiltered(true);
-    setCurrentFilters(params);
+//     setHasFiltered(true);
+//     setCurrentFilters(params);
+//     setTableData(null);
+//     setError(null);
+//     setLoadingChunks(null);
+
+//     const { dateDebut, dateFin, ...rest } = params;
+
+//     // Période ≤ 3 mois → appel direct comme avant
+//     const debut    = new Date(dateDebut);
+//     const fin      = new Date(dateFin);
+//     const diffMois = (fin.getFullYear() - debut.getFullYear()) * 12
+//                   + (fin.getMonth()    - debut.getMonth());
+
+//     if (diffMois <= 3) {
+//       await loadData(params);
+//       return;
+//     }
+
+//     // Période > 3 mois → chargement progressif tranche par tranche
+//     const chunks = splitPeriodJS(dateDebut, dateFin, 3);
+//     setLoadingChunks({ total: chunks.length, done: 0 });
+//     setLoading(false); // pas de spinner principal, on utilise la barre de progression
+
+//     let accumulated = [];
+
+//     for (let i = 0; i < chunks.length; i++) {
+//       const chunk = chunks[i];
+//       try {
+//         const rows = await fetchStockChunk(rest, chunk.dateDebut, chunk.dateFin);
+//         accumulated = accumulated.concat(rows);
+
+//         // ✅ Affichage progressif après chaque tranche
+//         setTableData([...accumulated]);
+//         setLoadingChunks({ total: chunks.length, done: i + 1 });
+
+//       } catch (err) {
+//         console.error(`Tranche ${chunk.dateDebut}→${chunk.dateFin} échouée:`, err);
+//         setError(err.message);
+//       }
+//     }
+
+//     setLoadingChunks(null);
+//   };
+
+const handleFilter = async (params) => {
+  if (!params) {
+    const d = {
+      base: '',
+      dateDebut: defaultDebut,
+      dateFin:   defaultFin,
+      depot: null, article: null,
+      cl_no1: null, cl_no2: null, cl_no3: null, cl_no4: null,
+      fa_codefamille: null,
+    };
+    setCurrentFilters(d);
+    setHasFiltered(false);
     setTableData(null);
-    setError(null);
     setLoadingChunks(null);
+    setMouvData(null);                          // ✅ vide les données mouvements
+    setMouvFilters({ depot: '', article: '' }); // ✅ reset filtres mouvements
+    return;
+  }
 
-    const { dateDebut, dateFin, ...rest } = params;
+  setHasFiltered(true);
+  setCurrentFilters(params);
+  setTableData(null);
+  setError(null);
+  setLoadingChunks(null);
 
-    // Période ≤ 3 mois → appel direct comme avant
-    const debut    = new Date(dateDebut);
-    const fin      = new Date(dateFin);
-    const diffMois = (fin.getFullYear() - debut.getFullYear()) * 12
-                  + (fin.getMonth()    - debut.getMonth());
+  const { dateDebut, dateFin, ...rest } = params;
 
-    if (diffMois <= 3) {
-      await loadData(params);
-      return;
+  // Période ≤ 3 mois → appel direct
+  const debut    = new Date(dateDebut);
+  const fin      = new Date(dateFin);
+  const diffMois = (fin.getFullYear() - debut.getFullYear()) * 12
+                + (fin.getMonth()    - debut.getMonth());
+
+  if (diffMois <= 3) {
+    await loadData(params);
+    return;
+  }
+
+  // Période > 3 mois → chargement progressif tranche par tranche
+  const chunks = splitPeriodJS(dateDebut, dateFin, 3);
+  setLoadingChunks({ total: chunks.length, done: 0 });
+  setLoading(false);
+
+  let accumulated = [];
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    try {
+      const rows = await fetchStockChunk(rest, chunk.dateDebut, chunk.dateFin);
+      accumulated = accumulated.concat(rows);
+      setTableData([...accumulated]);
+      setLoadingChunks({ total: chunks.length, done: i + 1 });
+    } catch (err) {
+      console.error(`Tranche ${chunk.dateDebut}→${chunk.dateFin} échouée:`, err);
+      setError(err.message);
     }
+  }
 
-    // Période > 3 mois → chargement progressif tranche par tranche
-    const chunks = splitPeriodJS(dateDebut, dateFin, 3);
-    setLoadingChunks({ total: chunks.length, done: 0 });
-    setLoading(false); // pas de spinner principal, on utilise la barre de progression
-
-    let accumulated = [];
-
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      try {
-        const rows = await fetchStockChunk(rest, chunk.dateDebut, chunk.dateFin);
-        accumulated = accumulated.concat(rows);
-
-        // ✅ Affichage progressif après chaque tranche
-        setTableData([...accumulated]);
-        setLoadingChunks({ total: chunks.length, done: i + 1 });
-
-      } catch (err) {
-        console.error(`Tranche ${chunk.dateDebut}→${chunk.dateFin} échouée:`, err);
-        setError(err.message);
-      }
-    }
-
-    setLoadingChunks(null);
-  };
-
+  setLoadingChunks(null);
+};
 
   const kpis = useMemo(() => {
     if (!tableData || tableData.length === 0) return null;

@@ -317,26 +317,6 @@ export default function Filters({ onFilter, initialBase = '', initialDateDebut =
     }
   };
 
-  // const handleReset = () => {
-  //   // Dates du mois courant
-  //   const today = new Date();
-  //   const yyyy = today.getFullYear();
-  //   const mm = String(today.getMonth() + 1).padStart(2, '0');
-  //   const dd = String(today.getDate()).padStart(2, '0');
-  //   const newDebut = `${yyyy}-${mm}-01`;
-  //   const newFin   = `${yyyy}-${mm}-${dd}`;
-
-  //   setBase(initialBase);
-  //   setArticle(''); setDepot(''); setFamille('');
-  //   setCat1(''); setCat2(''); setCat3(''); setCat4('');
-  //   setDateDebut(newDebut);   // ← dates fraîches du mois courant
-  //   setDateFin(newFin);
-  //   setArticles([]); setDepots([]); setFamilles([]);
-  //   setCat1List([]); setCat2List([]); setCat3List([]); setCat4List([]);
-  //   if (initialBase) loadFiltres(initialBase);
-  //   onFilter(null);   // ← vide KPIs + tableau comme avant
-  // };
-
   const handleReset = () => {
     const today = new Date();
     const yyyy = today.getFullYear();
