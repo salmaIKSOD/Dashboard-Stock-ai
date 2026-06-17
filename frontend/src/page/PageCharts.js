@@ -983,7 +983,7 @@ export default function PageCharts() {
       <Banner filters={currentFilters} />
 
       {/* Message d'invite */}
-      {!hasFiltered && (
+      {/* {!hasFiltered && (
         <div style={{
           background:C.blueA, border:`1px solid ${C.blueB}`,
           borderLeft:`3px solid ${C.blue}`,
@@ -992,6 +992,15 @@ export default function PageCharts() {
           display:'flex', alignItems:'center', gap:10,
         }}>
           <div style={{ width:7, height:7, borderRadius:'50%', background:C.blue, flexShrink:0 }} />
+          <span>
+            Rendez-vous sur le <strong>Tableau de bord</strong> pour sélectionner une base et une
+            période, puis cliquez sur <strong>Filtrer</strong> pour afficher les graphes.
+          </span>
+        </div>
+      )} */}
+      {!hasFiltered && (
+        <div className="bg-[rgba(18,166,224,0.04)] border border-[rgba(18,166,224,0.15)] rounded-xl px-5 py-4 text-[#0b7db0] text-sm flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-[#12a6e0] shrink-0 animate-pulse" />
           <span>
             Rendez-vous sur le <strong>Tableau de bord</strong> pour sélectionner une base et une
             période, puis cliquez sur <strong>Filtrer</strong> pour afficher les graphes.
