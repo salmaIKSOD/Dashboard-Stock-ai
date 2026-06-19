@@ -14,8 +14,8 @@ const NAV_ITEMS = [
   // { label: 'Articles',         path: '/articles',         icon: Boxes           },
   // { label: 'Dépôts',           path: '/depots',           icon: Warehouse       },
   // { label: 'Analyses',         path: '/analyses',         icon: BarChart3       },
-  // { label: 'agent AI',          path: '/alertes',          icon: BrainCircuit        },
   { label: 'Prédictions',    path: '/previsions',       icon: BrainCircuit    },
+  { label: 'Actions à faire',          path: '/alertes',          icon: BrainCircuit        },
   { label: 'Rapports',         path: '/rapports',         icon: FileText        },
   // { label: 'Paramètres',       path: '/parametres',       icon: Settings        },
 ];
