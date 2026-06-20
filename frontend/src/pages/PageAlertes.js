@@ -2,6 +2,7 @@
 //  PageAlertes.js — Actions à faire
 //  Design en onglets — cohérent avec AIPrevisions.js et StockTable.js
 //  + Résumé visuel en haut (pastilles + phrase auto + jauges)
+//  + Affichage du nom (désignation) des articles
 // ══════════════════════════════════════════════════════════════
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -36,6 +37,9 @@ const fmtDate = (d) => {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
+
+// Récupère le nom de l'article quel que soit le format renvoyé par le backend
+const getDesign = (r) => r.AR_Design || r.ar_design || r.Design || '—';
 
 function exportCSV(rows, filename, headers, getRow) {
   const lines = [headers.join(',')];
@@ -139,8 +143,8 @@ function StockGauge({ pct, color }) {
   );
 }
 
-// ── Card article urgent (avec jauge) ────────────────────────────
-function ArticleCard({ article, jours, stock, rythme, urgence }) {
+// ── Card article urgent (avec nom + jauge) ──────────────────────
+function ArticleCard({ article, design, jours, stock, rythme, urgence }) {
   const cfg = urgence === 'critique'
     ? { bg: '#FFF5F5', border: '#FCA5A5', dot: '#EF4444', badge: { bg: '#FEE2E2', text: '#991B1B' }, label: 'Commander maintenant' }
     : urgence === 'alerte'
@@ -153,12 +157,15 @@ function ArticleCard({ article, jours, stock, rythme, urgence }) {
   return (
     <div className="rounded-xl border p-4 flex flex-col gap-2" style={{ background: cfg.bg, borderColor: cfg.border }}>
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
-          <span className="font-mono text-[0.75rem] font-semibold text-[#0b7db0] bg-white border border-[#B5D4F4] rounded px-2 py-0.5">{article}</span>
+          <span className="font-mono text-[0.75rem] font-semibold text-[#0b7db0] bg-white border border-[#B5D4F4] rounded px-2 py-0.5 flex-shrink-0">{article}</span>
         </div>
-        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: cfg.badge.bg, color: cfg.badge.text }}>{cfg.label}</span>
+        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: cfg.badge.bg, color: cfg.badge.text }}>{cfg.label}</span>
       </div>
+
+      {/* Nom de l'article */}
+      <p className="text-[0.8rem] text-[#444] m-0 font-medium truncate" title={design}>{design}</p>
 
       {/* Jauge stock restant — visuel simple, pas un graphique */}
       <div className="mt-1">
@@ -309,8 +316,8 @@ function TabCommandes({ ruptures, baseName }) {
           </div>
           {critiques.length > 0 && (
             <ExportButton onClick={() => exportCSV(critiques, `commander_maintenant_${baseName}.csv`,
-              ['Article', 'Temps restant', 'Stock actuel', 'Ventes/jour'],
-              r => [r.AR_Ref, fmtJoursHeures(r.jours_estimes), Number(r.StockFinal).toFixed(0), Number(r.rolling_mean_7).toFixed(1)])} />
+              ['Article', 'Désignation', 'Temps restant', 'Stock actuel', 'Ventes/jour'],
+              r => [r.AR_Ref, getDesign(r), fmtJoursHeures(r.jours_estimes), Number(r.StockFinal).toFixed(0), Number(r.rolling_mean_7).toFixed(1)])} />
           )}
         </div>
         <div className="p-4">
@@ -318,7 +325,7 @@ function TabCommandes({ ruptures, baseName }) {
             <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {critiques.slice((pageCrit - 1) * PAGE_SIZE, pageCrit * PAGE_SIZE).map((r, i) => (
-                  <ArticleCard key={i} article={r.AR_Ref} jours={r.jours_estimes} stock={r.StockFinal} rythme={r.rolling_mean_7} urgence="critique" />
+                  <ArticleCard key={i} article={r.AR_Ref} design={getDesign(r)} jours={r.jours_estimes} stock={r.StockFinal} rythme={r.rolling_mean_7} urgence="critique" />
                 ))}
               </div>
               <Pagination page={pageCrit} total={critiques.length} pageSize={PAGE_SIZE} onChange={setPageCrit} />
@@ -337,8 +344,8 @@ function TabCommandes({ ruptures, baseName }) {
           </div>
           {alertes.length > 0 && (
             <ExportButton onClick={() => exportCSV(alertes, `planifier_${baseName}.csv`,
-              ['Article', 'Temps restant', 'Stock actuel', 'Ventes/jour'],
-              r => [r.AR_Ref, fmtJoursHeures(r.jours_estimes), Number(r.StockFinal).toFixed(0), Number(r.rolling_mean_7).toFixed(1)])} />
+              ['Article', 'Désignation', 'Temps restant', 'Stock actuel', 'Ventes/jour'],
+              r => [r.AR_Ref, getDesign(r), fmtJoursHeures(r.jours_estimes), Number(r.StockFinal).toFixed(0), Number(r.rolling_mean_7).toFixed(1)])} />
           )}
         </div>
         <div className="p-4">
@@ -346,7 +353,7 @@ function TabCommandes({ ruptures, baseName }) {
             <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {alertes.slice((pageAlert - 1) * PAGE_SIZE, pageAlert * PAGE_SIZE).map((r, i) => (
-                  <ArticleCard key={i} article={r.AR_Ref} jours={r.jours_estimes} stock={r.StockFinal} rythme={r.rolling_mean_7} urgence="alerte" />
+                  <ArticleCard key={i} article={r.AR_Ref} design={getDesign(r)} jours={r.jours_estimes} stock={r.StockFinal} rythme={r.rolling_mean_7} urgence="alerte" />
                 ))}
               </div>
               <Pagination page={pageAlert} total={alertes.length} pageSize={PAGE_SIZE} onChange={setPageAlert} />
@@ -365,18 +372,21 @@ function TabCommandes({ ruptures, baseName }) {
           </div>
           {ok.length > 0 && (
             <ExportButton onClick={() => exportCSV(ok, `stock_ok_${baseName}.csv`,
-              ['Article', 'Temps restant', 'Stock actuel', 'Ventes/jour'],
-              r => [r.AR_Ref, fmtJoursHeures(r.jours_estimes), Number(r.StockFinal).toFixed(0), Number(r.rolling_mean_7).toFixed(1)])} />
+              ['Article', 'Désignation', 'Temps restant', 'Stock actuel', 'Ventes/jour'],
+              r => [r.AR_Ref, getDesign(r), fmtJoursHeures(r.jours_estimes), Number(r.StockFinal).toFixed(0), Number(r.rolling_mean_7).toFixed(1)])} />
           )}
         </div>
         <div className="p-4">
           {ok.length === 0 ? <EmptyState msg="Aucun article avec stock suffisant." /> : (
             <>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {ok.slice((pageOk - 1) * PAGE_SIZE, pageOk * PAGE_SIZE).map((r, i) => (
-                  <div key={i} className="bg-[#F0FDF4] rounded-lg border border-[#BBF7D0] px-3 py-2 flex items-center justify-between gap-2">
-                    <span className="font-mono text-[0.72rem] text-[#0b7db0]">{r.AR_Ref}</span>
-                    <span className="text-[11px] font-semibold text-[#16A34A]">{fmtJoursHeures(r.jours_estimes)}</span>
+                  <div key={i} className="bg-[#F0FDF4] rounded-lg border border-[#BBF7D0] px-3 py-2 flex items-center justify-between gap-2 min-w-0">
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-mono text-[0.72rem] text-[#0b7db0]">{r.AR_Ref}</span>
+                      <span className="text-[10px] text-[#555] truncate" title={getDesign(r)}>{getDesign(r)}</span>
+                    </div>
+                    <span className="text-[11px] font-semibold text-[#16A34A] flex-shrink-0">{fmtJoursHeures(r.jours_estimes)}</span>
                   </div>
                 ))}
               </div>
@@ -447,12 +457,12 @@ function TabPrevisions({ prophet, baseName }) {
             <span className="bg-[#f0f0f0] text-[#666666] text-[0.6875rem] font-mono px-2 py-0.5 rounded">{filtres.length} articles</span>
           </div>
           <ExportButton onClick={() => exportCSV(filtres, `previsions_${baseName}.csv`,
-            ['Article', 'Erreur moyenne/jour', 'Fiabilité', 'Conseil'],
+            ['Article', 'Désignation', 'Erreur moyenne/jour', 'Fiabilité', 'Conseil'],
             r => {
               const mape = Number(r.MAPE);
               const fiable = isNaN(mape) ? 'N/A' : mape < 30 ? 'Très fiable' : mape < 60 ? 'Fiable' : 'Peu fiable';
               const conseil = isNaN(mape) ? 'Vérifier les données' : mape < 30 ? 'Utiliser cette prévision' : mape < 60 ? 'Prévision indicative' : 'Commander selon expérience';
-              return [r.AR_Ref, Number(r.MAE).toFixed(1), fiable, conseil];
+              return [r.AR_Ref, getDesign(r), Number(r.MAE).toFixed(1), fiable, conseil];
             })} />
         </div>
 
@@ -477,6 +487,7 @@ function TabPrevisions({ prophet, baseName }) {
             <thead>
               <tr className="border-b border-[#f0f0f0]">
                 <th className="px-4 py-3 bg-[#f8f8f8] text-left text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#888]">Article</th>
+                <th className="px-4 py-3 bg-[#f8f8f8] text-left text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#888]">Désignation</th>
                 <th className="px-4 py-3 bg-[#f8f8f8] text-right text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#888]">Erreur moy./jour</th>
                 <th className="px-4 py-3 bg-[#f8f8f8] text-left text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#888]">Fiabilité</th>
                 <th className="px-4 py-3 bg-[#f8f8f8] text-left text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#888]">Conseil</th>
@@ -484,7 +495,7 @@ function TabPrevisions({ prophet, baseName }) {
             </thead>
             <tbody>
               {paginated.length === 0 ? (
-                <tr><td colSpan={4} className="px-4 py-8 text-center text-[#aaa] text-sm">Aucun article dans cette catégorie</td></tr>
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-[#aaa] text-sm">Aucun article dans cette catégorie</td></tr>
               ) : paginated.map((r, i) => {
                 const mape = Number(r.MAPE);
                 const fiable = isNaN(mape) ? null : mape < 30 ? 'Très fiable' : mape < 60 ? 'Fiable' : 'Peu fiable';
@@ -495,6 +506,7 @@ function TabPrevisions({ prophet, baseName }) {
                     <td className="px-4 py-3">
                       <span className="inline-block font-mono text-[0.72rem] text-[#0b7db0] bg-[rgba(18,166,224,0.07)] border border-[rgba(18,166,224,0.15)] rounded-md px-2 py-0.5">{r.AR_Ref}</span>
                     </td>
+                    <td className="px-4 py-3 text-[0.78rem] text-[#444] max-w-[220px] truncate" title={getDesign(r)}>{getDesign(r)}</td>
                     <td className="px-4 py-3 text-right text-[0.8rem] text-[#444]">{fmtNum(r.MAE)} unités</td>
                     <td className="px-4 py-3">
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: fiableColor + '18', color: fiableColor }}>{fiable || 'N/A'}</span>
@@ -573,8 +585,8 @@ function TabAnomalies({ anomalies, baseName }) {
           </div>
           {severes.length > 0 && (
             <ExportButton onClick={() => exportCSV(filtres, `anomalies_${baseName}.csv`,
-              ['Date', 'Article', 'Qté sortie', 'Stock restant', 'Sévérité'],
-              r => [r.DateJour, r.AR_Ref, Number(r.TotalSortie).toFixed(1), Number(r.StockFinal).toFixed(1),
+              ['Date', 'Article', 'Désignation', 'Qté sortie', 'Stock restant', 'Sévérité'],
+              r => [r.DateJour, r.AR_Ref, getDesign(r), Number(r.TotalSortie).toFixed(1), Number(r.StockFinal).toFixed(1),
                 Math.abs(r.anomaly_score) > 0.2 ? 'Très suspect' : Math.abs(r.anomaly_score) > 0.1 ? 'Suspect' : 'À vérifier'])} />
           )}
         </div>
@@ -606,6 +618,7 @@ function TabAnomalies({ anomalies, baseName }) {
                   <tr className="border-b border-[#f0f0f0]">
                     <th className="px-4 py-3 bg-[#f8f8f8] text-left text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#888]">Date</th>
                     <th className="px-4 py-3 bg-[#f8f8f8] text-left text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#888]">Article</th>
+                    <th className="px-4 py-3 bg-[#f8f8f8] text-left text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#888]">Désignation</th>
                     <th className="px-4 py-3 bg-[#f8f8f8] text-right text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#888]">Qté sortie</th>
                     <th className="px-4 py-3 bg-[#f8f8f8] text-right text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#888]">Stock restant</th>
                     <th className="px-4 py-3 bg-[#f8f8f8] text-left text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#888]">Sévérité</th>
@@ -613,7 +626,7 @@ function TabAnomalies({ anomalies, baseName }) {
                 </thead>
                 <tbody>
                   {paginated.length === 0 ? (
-                    <tr><td colSpan={5} className="px-4 py-8 text-center text-[#aaa] text-sm">Aucun mouvement dans cette catégorie</td></tr>
+                    <tr><td colSpan={6} className="px-4 py-8 text-center text-[#aaa] text-sm">Aucun mouvement dans cette catégorie</td></tr>
                   ) : paginated.map((r, i) => {
                     const sev = Math.abs(r.anomaly_score) > 0.2 ? 'Très suspect' : Math.abs(r.anomaly_score) > 0.1 ? 'Suspect' : 'À vérifier';
                     const color = Math.abs(r.anomaly_score) > 0.2 ? '#A32D2D' : Math.abs(r.anomaly_score) > 0.1 ? '#854F0B' : '#666';
@@ -623,6 +636,7 @@ function TabAnomalies({ anomalies, baseName }) {
                         <td className="px-4 py-3">
                           <span className="inline-block font-mono text-[0.72rem] text-[#0b7db0] bg-[rgba(18,166,224,0.07)] border border-[rgba(18,166,224,0.15)] rounded-md px-2 py-0.5">{r.AR_Ref}</span>
                         </td>
+                        <td className="px-4 py-3 text-[0.78rem] text-[#444] max-w-[200px] truncate" title={getDesign(r)}>{getDesign(r)}</td>
                         <td className="px-4 py-3 text-right">
                           <span className="inline-block text-[#b71c1c] font-semibold text-[0.8rem] bg-[rgba(229,57,53,0.07)] border border-[rgba(229,57,53,0.18)] rounded-md px-2 py-0.5">{fmtNum(r.TotalSortie)}</span>
                         </td>
@@ -662,7 +676,6 @@ function TabPrioritaires({ kmeans, segments, baseName }) {
     'quasi-immobile'   : 'Éviter de sur-stocker. Envisager de réduire ou arrêter ces références.',
   };
 
-  // const prioritaires = segments.filter(s => s.segment?.toLowerCase().includes('forte'));
   const prioritaires = segments.filter(s => String(s.segment ?? '').toLowerCase().includes('forte'));
 
   return (
@@ -700,18 +713,19 @@ function TabPrioritaires({ kmeans, segments, baseName }) {
           </div>
           {prioritaires.length > 0 && (
             <ExportButton onClick={() => exportCSV(prioritaires, `articles_prioritaires_${baseName}.csv`,
-              ['Article', 'Segment', 'Conseil'],
-              r => [r.AR_Ref, r.segment, 'Commander souvent et en grande quantité'])} />
+              ['Article', 'Désignation', 'Segment', 'Conseil'],
+              r => [r.AR_Ref, getDesign(r), r.segment, 'Commander souvent et en grande quantité'])} />
           )}
         </div>
         {prioritaires.length === 0 ? (
           <div className="p-4"><EmptyState msg="Aucun article à forte rotation détecté." /></div>
         ) : (
-          <div className="p-4 flex flex-wrap gap-2 max-h-[420px] overflow-y-auto">
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[420px] overflow-y-auto">
             {prioritaires.map((s, i) => (
-              <span key={i} className="font-mono text-[0.75rem] font-semibold text-[#0b7db0] bg-[rgba(18,166,224,0.07)] border border-[rgba(18,166,224,0.15)] rounded-lg px-3 py-1.5">
-                {s.AR_Ref}
-              </span>
+              <div key={i} className="flex items-center justify-between gap-3 bg-[rgba(18,166,224,0.05)] border border-[rgba(18,166,224,0.15)] rounded-lg px-3 py-2">
+                <span className="font-mono text-[0.72rem] font-semibold text-[#0b7db0] flex-shrink-0">{s.AR_Ref}</span>
+                <span className="text-[0.78rem] text-[#444] truncate text-right" title={getDesign(s)}>{getDesign(s)}</span>
+              </div>
             ))}
           </div>
         )}
@@ -776,7 +790,6 @@ export default function PageAlertes() {
     const critiques = rupturesSorted.filter(r => Number(r.jours_estimes) < 7).length;
     const alertesCount = rupturesSorted.filter(r => Number(r.jours_estimes) >= 7 && Number(r.jours_estimes) < 30).length;
     const suspects = anomalies.filter(r => r.is_anomalie === 1).length;
-    // const prioritairesCount = segments.filter(s => s.segment?.toLowerCase().includes('forte')).length;
     const prioritairesCount = segments.filter(s => String(s.segment ?? '').toLowerCase().includes('forte')).length;
     return { critiques, alertes: alertesCount, suspects, prioritaires: prioritairesCount };
   }, [ruptures, anomalies, segments]);
