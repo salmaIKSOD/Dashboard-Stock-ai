@@ -940,7 +940,7 @@ export default function AIPrevisions() {
 
   useEffect(() => {
     fetchBases()
-      .then(data => { setBases(data); if (data.length > 0) setBaseName(data[0].BaseName); })
+      .then(data => { setBases(data); })
       .catch(e => setError(e.message))
       .finally(() => setLoadingBase(false));
   }, []);

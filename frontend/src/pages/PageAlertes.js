@@ -799,7 +799,7 @@ export default function PageAlertes() {
 
   useEffect(() => {
     fetchBases()
-      .then(data => { setBases(data); if (data.length > 0) setBaseName(data[0].BaseName); })
+      .then(data => { setBases(data); })
       .catch(e => setError(e.message))
       .finally(() => setLoadingBase(false));
   }, []);
@@ -836,76 +836,159 @@ export default function PageAlertes() {
     return { critiques, alertes: alertesCount, suspects, prioritaires: prioritairesCount };
   }, [ruptures, anomalies, segments]);
 
-  return (
-    <div className="flex flex-col gap-4">
-      {/* En-tête */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-[1.1rem] font-semibold text-[#0d0c0c] m-0">Actions à faire</h1>
-          <p className="text-[0.8rem] text-[#aaaaaa] m-0 mt-0.5">Ce que vous devez faire aujourd'hui — en langage simple</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <BaseSelector bases={bases} value={baseName} onChange={setBaseName} loading={loadingBase} />
-          <button onClick={() => loadData(baseName)} disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-all"
-            style={{ background: loading ? '#f5f5f5' : 'white', borderColor: '#e0e0e0', color: loading ? '#aaa' : '#555', cursor: loading ? 'not-allowed' : 'pointer' }}>
-            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-            {loading ? 'Chargement…' : 'Actualiser'}
-          </button>
-        </div>
+  // return (
+  //   <div className="flex flex-col gap-4">
+  //     {/* En-tête */}
+  //     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  //       <div>
+  //         <h1 className="text-[1.1rem] font-semibold text-[#0d0c0c] m-0">Actions à faire</h1>
+  //         <p className="text-[0.8rem] text-[#aaaaaa] m-0 mt-0.5">Ce que vous devez faire aujourd'hui — en langage simple</p>
+  //       </div>
+  //       <div className="flex items-center gap-2">
+  //         <BaseSelector bases={bases} value={baseName} onChange={setBaseName} loading={loadingBase} />
+  //         <button onClick={() => loadData(baseName)} disabled={loading}
+  //           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-all"
+  //           style={{ background: loading ? '#f5f5f5' : 'white', borderColor: '#e0e0e0', color: loading ? '#aaa' : '#555', cursor: loading ? 'not-allowed' : 'pointer' }}>
+  //           <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+  //           {loading ? 'Chargement…' : 'Actualiser'}
+  //         </button>
+  //       </div>
+  //     </div>
+
+  //     {status?.status === 'failed' && (
+  //       <div className="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm bg-[#FCEBEB] border-[#F7C1C1] text-[#791F1F]">
+  //         <XCircle size={15} /><span>Le calcul a échoué. Allez dans Prédictions puis Relancer.</span>
+  //       </div>
+  //     )}
+  //     {status?.status === 'not_started' && (
+  //       <div className="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm bg-[#FAEEDA] border-[#FAC775] text-[#633806]">
+  //         <Clock size={15} /><span>Aucune analyse pour <strong>{baseName}</strong>. Allez dans Prédictions pour lancer le calcul.</span>
+  //       </div>
+  //     )}
+  //     {error && (
+  //       <div className="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm bg-[#FCEBEB] border-[#F7C1C1] text-[#791F1F]">
+  //         <XCircle size={15} /><span>{error}</span>
+  //       </div>
+  //     )}
+
+  //     {/* Bandeau résumé — phrase auto + pastilles — visible avant les onglets */}
+  //     {status?.status === 'success' && (
+  //       <ResumeBandeau
+  //         critiques={resumeData.critiques}
+  //         alertes={resumeData.alertes}
+  //         suspects={resumeData.suspects}
+  //         prioritaires={resumeData.prioritaires}
+  //         baseName={baseName}
+  //       />
+  //     )}
+
+  //     {status?.status === 'success' && (
+  //       <div className="flex gap-1 border-b border-[#e8e8e8]">
+  //         {TABS.map(({ id, label, icon: Icon }) => (
+  //           <button key={id} onClick={() => setActiveTab(id)}
+  //             className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px cursor-pointer"
+  //             style={{ borderBottomColor: activeTab === id ? '#12a6e0' : 'transparent', color: activeTab === id ? '#12a6e0' : '#888888', background: 'transparent' }}>
+  //             <Icon size={14} />{label}
+  //           </button>
+  //         ))}
+  //       </div>
+  //     )}
+
+  //     {loading ? (
+  //       <div className="flex items-center justify-center py-20 gap-3 text-[#12a6e0]">
+  //         <Loader2 size={20} className="animate-spin" /><span className="text-sm">Chargement des alertes…</span>
+  //       </div>
+  //     ) : status?.status === 'success' && (
+  //       <>
+  //         {activeTab === 'commandes'    && <TabCommandes ruptures={ruptures} baseName={baseName} />}
+  //         {activeTab === 'previsions'   && <TabPrevisions prophet={prophet} baseName={baseName} />}
+  //         {activeTab === 'anomalies'    && <TabAnomalies anomalies={anomalies} baseName={baseName} />}
+  //         {activeTab === 'prioritaires' && <TabPrioritaires kmeans={kmeans} segments={segments} baseName={baseName} />}
+  //       </>
+  //     )}
+  //   </div>
+  // );
+return (
+  <div className="flex flex-col gap-4">
+    {/* En-tête */}
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 className="text-[1.1rem] font-semibold text-[#0d0c0c] m-0">Actions à faire</h1>
+        <p className="text-[0.8rem] text-[#aaaaaa] m-0 mt-0.5">Ce que vous devez faire aujourd'hui — en langage simple</p>
       </div>
-
-      {status?.status === 'failed' && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm bg-[#FCEBEB] border-[#F7C1C1] text-[#791F1F]">
-          <XCircle size={15} /><span>Le calcul a échoué. Allez dans Prédictions puis Relancer.</span>
-        </div>
-      )}
-      {status?.status === 'not_started' && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm bg-[#FAEEDA] border-[#FAC775] text-[#633806]">
-          <Clock size={15} /><span>Aucune analyse pour <strong>{baseName}</strong>. Allez dans Prédictions pour lancer le calcul.</span>
-        </div>
-      )}
-      {error && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm bg-[#FCEBEB] border-[#F7C1C1] text-[#791F1F]">
-          <XCircle size={15} /><span>{error}</span>
-        </div>
-      )}
-
-      {/* Bandeau résumé — phrase auto + pastilles — visible avant les onglets */}
-      {status?.status === 'success' && (
-        <ResumeBandeau
-          critiques={resumeData.critiques}
-          alertes={resumeData.alertes}
-          suspects={resumeData.suspects}
-          prioritaires={resumeData.prioritaires}
-          baseName={baseName}
-        />
-      )}
-
-      {status?.status === 'success' && (
-        <div className="flex gap-1 border-b border-[#e8e8e8]">
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setActiveTab(id)}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px cursor-pointer"
-              style={{ borderBottomColor: activeTab === id ? '#12a6e0' : 'transparent', color: activeTab === id ? '#12a6e0' : '#888888', background: 'transparent' }}>
-              <Icon size={14} />{label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex items-center justify-center py-20 gap-3 text-[#12a6e0]">
-          <Loader2 size={20} className="animate-spin" /><span className="text-sm">Chargement des alertes…</span>
-        </div>
-      ) : status?.status === 'success' && (
-        <>
-          {activeTab === 'commandes'    && <TabCommandes ruptures={ruptures} baseName={baseName} />}
-          {activeTab === 'previsions'   && <TabPrevisions prophet={prophet} baseName={baseName} />}
-          {activeTab === 'anomalies'    && <TabAnomalies anomalies={anomalies} baseName={baseName} />}
-          {activeTab === 'prioritaires' && <TabPrioritaires kmeans={kmeans} segments={segments} baseName={baseName} />}
-        </>
-      )}
+      <div className="flex items-center gap-2">
+        <BaseSelector bases={bases} value={baseName} onChange={setBaseName} loading={loadingBase} />
+        <button onClick={() => loadData(baseName)} disabled={loading || !baseName}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-all"
+          style={{ background: loading || !baseName ? '#f5f5f5' : 'white', borderColor: '#e0e0e0', color: loading || !baseName ? '#aaa' : '#555', cursor: loading || !baseName ? 'not-allowed' : 'pointer' }}>
+          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+          {loading ? 'Chargement…' : 'Actualiser'}
+        </button>
+      </div>
     </div>
-  );
+
+    {/* Banners — uniquement si base sélectionnée */}
+    {baseName && status?.status === 'failed' && (
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm bg-[#FCEBEB] border-[#F7C1C1] text-[#791F1F]">
+        <XCircle size={15} /><span>Le calcul a échoué. Allez dans Prédictions puis Relancer.</span>
+      </div>
+    )}
+    {baseName && status?.status === 'not_started' && (
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm bg-[#FAEEDA] border-[#FAC775] text-[#633806]">
+        <Clock size={15} /><span>Aucune analyse pour <strong>{baseName}</strong>. Allez dans Prédictions pour lancer le calcul.</span>
+      </div>
+    )}
+    {error && (
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl border text-sm bg-[#FCEBEB] border-[#F7C1C1] text-[#791F1F]">
+        <XCircle size={15} /><span>{error}</span>
+      </div>
+    )}
+
+    {/* Bandeau résumé — uniquement si données disponibles */}
+    {baseName && status?.status === 'success' && (
+      <ResumeBandeau
+        critiques={resumeData.critiques}
+        alertes={resumeData.alertes}
+        suspects={resumeData.suspects}
+        prioritaires={resumeData.prioritaires}
+        baseName={baseName}
+      />
+    )}
+
+    {/* ── Onglets — TOUJOURS visibles comme dans Prédictions ── */}
+    <div className="flex gap-1 border-b border-[#e8e8e8]">
+      {TABS.map(({ id, label, icon: Icon }) => (
+        <button key={id} onClick={() => setActiveTab(id)}
+          className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px cursor-pointer"
+          style={{ borderBottomColor: activeTab === id ? '#12a6e0' : 'transparent', color: activeTab === id ? '#12a6e0' : '#888888', background: 'transparent' }}>
+          <Icon size={14} />{label}
+        </button>
+      ))}
+    </div>
+
+    {/* ── Contenu ── */}
+    {loading ? (
+      <div className="flex items-center justify-center py-20 gap-3 text-[#12a6e0]">
+        <Loader2 size={20} className="animate-spin" /><span className="text-sm">Chargement des alertes…</span>
+      </div>
+    ) : !baseName ? (
+      // Aucune base — état vide identique à Prédictions
+      <div className="flex flex-col items-center justify-center py-20 text-[#c5c5c5]">
+        {activeTab === 'commandes'    && <ShoppingCart size={36} className="mb-3" />}
+        {activeTab === 'previsions'   && <PackageCheck size={36} className="mb-3" />}
+        {activeTab === 'anomalies'    && <Radar size={36} className="mb-3" />}
+        {activeTab === 'prioritaires' && <Star size={36} className="mb-3" />}
+        <p className="text-sm">Sélectionnez une base pour afficher les données</p>
+      </div>
+    ) : status?.status === 'success' ? (
+      <>
+        {activeTab === 'commandes'    && <TabCommandes ruptures={ruptures} baseName={baseName} />}
+        {activeTab === 'previsions'   && <TabPrevisions prophet={prophet} baseName={baseName} />}
+        {activeTab === 'anomalies'    && <TabAnomalies anomalies={anomalies} baseName={baseName} />}
+        {activeTab === 'prioritaires' && <TabPrioritaires kmeans={kmeans} segments={segments} baseName={baseName} />}
+      </>
+    ) : null}
+  </div>
+);
+
 }
