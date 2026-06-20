@@ -5,7 +5,7 @@ import {
   LayoutDashboard, PackageSearch, ArrowDownUp,
   BarChart3, Settings, Boxes, Warehouse,
   BellRing, BrainCircuit, FileText, TrendingUp, Star,
-  Database, LogOut,
+  Database, LogOut,LineChart,ClipboardCheck
 } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
 
@@ -21,8 +21,8 @@ const PAGE_META = {
   '/articles':               { title: 'Articles',         icon: Boxes           },
   '/depots':                 { title: 'Dépôts',           icon: Warehouse       },
   '/analyses':               { title: 'Analyses',         icon: BarChart3       },
-  '/alertes':                { title: 'Alertes',          icon: BellRing        },
-  '/previsions':             { title: 'Analyse prédictive',    icon: BrainCircuit    },
+  '/alertes':                { title: 'Actions à faire',          icon: ClipboardCheck        },
+  '/previsions':             { title: 'Analyse prédictive',    icon: LineChart    },
   '/rapports':               { title: 'Rapports',         icon: FileText        },
   '/parametres':             { title: 'Paramètres',       icon: Settings        },
 };

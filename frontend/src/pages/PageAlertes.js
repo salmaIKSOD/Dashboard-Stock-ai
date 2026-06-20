@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════
-//  PageAlertes.js — Alertes & Recommandations
+//  PageAlertes.js — Actions à faire
 //  Design en onglets — cohérent avec AIPrevisions.js et StockTable.js
 //  + Résumé visuel en haut (pastilles + phrase auto + jauges)
 // ══════════════════════════════════════════════════════════════
@@ -784,7 +784,7 @@ export default function PageAlertes() {
       {/* En-tête */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-[1.1rem] font-semibold text-[#0d0c0c] m-0">Alertes & Recommandations</h1>
+          <h1 className="text-[1.1rem] font-semibold text-[#0d0c0c] m-0">Actions à faire</h1>
           <p className="text-[0.8rem] text-[#aaaaaa] m-0 mt-0.5">Ce que vous devez faire aujourd'hui — en langage simple</p>
         </div>
         <div className="flex items-center gap-2">
