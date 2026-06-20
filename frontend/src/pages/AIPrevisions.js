@@ -101,11 +101,53 @@ function Pagination({ page, total, pageSize, onChange }) {
   );
 }
 
+// function BaseSelector({ bases, value, onChange, loading }) {
+//   const [open, setOpen] = useState(false);
+//   const selected = bases.find(b => b.BaseName === value);
+//   return (
+//     <div className="relative">
+//       <button onClick={() => setOpen(o => !o)}
+//         className="flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all cursor-pointer"
+//         style={{ background: value ? '#E6F1FB' : 'white', borderColor: value ? '#B5D4F4' : '#e0e0e0', color: value ? '#0C447C' : '#888888' }}>
+//         <Database size={14} />
+//         {loading ? <Loader2 size={14} className="animate-spin" /> : (selected?.BaseLabel || selected?.BaseName || 'Sélectionner une base')}
+//         <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+//       </button>
+//       {open && (
+//         <div className="absolute top-full mt-1 left-0 bg-white border border-[#e0e0e0] rounded-lg shadow-lg z-50 min-w-[200px]">
+//           {bases.map(b => (
+//             <button key={b.BaseName} onClick={() => { onChange(b.BaseName); setOpen(false); }}
+//               className="w-full text-left px-4 py-2.5 text-sm hover:bg-[#f2faff] transition-colors cursor-pointer"
+//               style={{ color: b.BaseName === value ? '#12a6e0' : '#333', fontWeight: b.BaseName === value ? 500 : 400 }}>
+//               {b.BaseLabel || b.BaseName}
+//             </button>
+//           ))}
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+// ── Graphe prévision article ENRICHI ─────────────────────────
+
 function BaseSelector({ bases, value, onChange, loading }) {
   const [open, setOpen] = useState(false);
+  const ref = React.useRef(null);
   const selected = bases.find(b => b.BaseName === value);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={ref}>
       <button onClick={() => setOpen(o => !o)}
         className="flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all cursor-pointer"
         style={{ background: value ? '#E6F1FB' : 'white', borderColor: value ? '#B5D4F4' : '#e0e0e0', color: value ? '#0C447C' : '#888888' }}>
@@ -128,7 +170,6 @@ function BaseSelector({ bases, value, onChange, loading }) {
   );
 }
 
-// ── Graphe prévision article ENRICHI ─────────────────────────
 function ForecastChart({ baseName, arRef, onClose }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
