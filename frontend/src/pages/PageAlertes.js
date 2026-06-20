@@ -662,7 +662,8 @@ function TabPrioritaires({ kmeans, segments, baseName }) {
     'quasi-immobile'   : 'Éviter de sur-stocker. Envisager de réduire ou arrêter ces références.',
   };
 
-  const prioritaires = segments.filter(s => s.segment?.toLowerCase().includes('forte'));
+  // const prioritaires = segments.filter(s => s.segment?.toLowerCase().includes('forte'));
+  const prioritaires = segments.filter(s => String(s.segment ?? '').toLowerCase().includes('forte'));
 
   return (
     <div className="flex flex-col gap-4">
@@ -775,7 +776,8 @@ export default function PageAlertes() {
     const critiques = rupturesSorted.filter(r => Number(r.jours_estimes) < 7).length;
     const alertesCount = rupturesSorted.filter(r => Number(r.jours_estimes) >= 7 && Number(r.jours_estimes) < 30).length;
     const suspects = anomalies.filter(r => r.is_anomalie === 1).length;
-    const prioritairesCount = segments.filter(s => s.segment?.toLowerCase().includes('forte')).length;
+    // const prioritairesCount = segments.filter(s => s.segment?.toLowerCase().includes('forte')).length;
+    const prioritairesCount = segments.filter(s => String(s.segment ?? '').toLowerCase().includes('forte')).length;
     return { critiques, alertes: alertesCount, suspects, prioritaires: prioritairesCount };
   }, [ruptures, anomalies, segments]);
 
