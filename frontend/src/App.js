@@ -20,7 +20,7 @@ import PageArticles from './pages/PageArticles';
 import PageDepots from './pages/PageDepots';
 import PageAnalyses from './pages/PageAnalyses';
 import PageAlertes from './pages/PageAlertes';
-import PageRapports from './pages/PageRapports';
+// import PageRapports from './pages/PageRapports';
 import PageParametres from './pages/PageParametres';
 import AIPrevisions from './pages/AIPrevisions';
 
@@ -832,7 +832,7 @@ export default function App() {
             <Route path="/analyses"         element={<PageAnalyses />}        />
             <Route path="/alertes"          element={<PageAlertes />}         />
             <Route path="/previsions" element={<AIPrevisions />} />
-            <Route path="/rapports"         element={<PageRapports />}        />
+            {/* <Route path="/rapports"         element={<PageRapports />}        /> */}
             <Route path="/parametres"       element={<PageParametres />}      />
           </Routes>
         </main>

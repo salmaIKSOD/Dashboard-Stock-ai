@@ -112,7 +112,7 @@ const NAV_ITEMS = [
   // { label: 'Analyses',         path: '/analyses',         icon: BarChart3       },
   { label: 'Prédictions',    path: '/previsions',       icon: LineChart    },
   { label: 'Actions à faire',          path: '/alertes',          icon: ClipboardCheck        },
-  { label: 'Rapports',         path: '/rapports',         icon: FileText        },
+  // { label: 'Rapports',         path: '/rapports',         icon: FileText        },
   // { label: 'Paramètres',       path: '/parametres',       icon: Settings        },
 ];
 
