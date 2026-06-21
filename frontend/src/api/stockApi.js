@@ -66,3 +66,18 @@ export function splitPeriodJS(dateDebut, dateFin, monthsPerChunk = 3) {
 export async function fetchStockChunk(params, dateDebut, dateFin) {
   return apiFetch('/stock/chunk', { ...params, dateDebut, dateFin });
 }
+
+
+// ── RAPPORTS ────────────────────────────────────────────────
+
+export async function fetchEtatStock({ base, date, depot }) {
+  return apiFetch('/rapports/etat-stock', { base, date, depot });
+}
+
+export async function fetchBalanceStock({ base, dateDebut, dateFin, groupBy = 'article' }) {
+  return apiFetch('/rapports/balance-stock', { base, dateDebut, dateFin, groupBy });
+}
+
+export async function fetchStockParDepot({ base, date }) {
+  return apiFetch('/rapports/stock-par-depot', { base, date });
+}

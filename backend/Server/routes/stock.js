@@ -476,4 +476,110 @@ router.post('/cache/refresh', async (req, res) => {
   }
 });
 
+
+
+
+
+
+
+
+
+// // Rapports
+// ── TTL pour les rapports ─────────────────────────────────────
+TTL.rapports = 5 * 60 * 1000; // 5 min, car ce sont des états figés à une date/période
+
+// ── GET /api/rapports/etat-stock ──────────────────────────────
+router.get('/rapports/etat-stock', async (req, res) => {
+  const { base, date, depot } = req.query;
+
+  if (!base) return res.status(400).json({ error: 'Paramètre base requis' });
+  if (!date) return res.status(400).json({ error: 'Paramètre date requis' });
+
+  const cacheKey = `rapports:etat-stock:${base}:${date}:${depot || 'all'}`;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    const pool    = await getPool();
+    const request = pool.request();
+    request.timeout = 60000;
+    request.input('Base',  sql.NVarChar(128), base);
+    request.input('Date',  sql.Date,          date);
+    request.input('Depot', sql.Int,           depot ? parseInt(depot) : null);
+
+    const t0     = Date.now();
+    const result = await request.execute('stock.SP_RapportEtatStock');
+    console.log(`[/rapports/etat-stock] ${result.recordset.length} lignes en ${Date.now() - t0}ms`);
+
+    setCached(cacheKey, result.recordset);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('[/rapports/etat-stock]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/rapports/balance-stock ───────────────────────────
+router.get('/rapports/balance-stock', async (req, res) => {
+  const { base, dateDebut, dateFin, groupBy } = req.query;
+
+  if (!base)      return res.status(400).json({ error: 'Paramètre base requis' });
+  if (!dateDebut) return res.status(400).json({ error: 'Paramètre dateDebut requis' });
+  if (!dateFin)   return res.status(400).json({ error: 'Paramètre dateFin requis' });
+
+  const grp = groupBy === 'famille' ? 'famille' : 'article';
+  const cacheKey = `rapports:balance-stock:${base}:${dateDebut}:${dateFin}:${grp}`;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    const pool    = await getPool();
+    const request = pool.request();
+    request.timeout = 120000;
+    request.input('Base',      sql.NVarChar(128), base);
+    request.input('DateDebut', sql.Date,          dateDebut);
+    request.input('DateFin',   sql.Date,          dateFin);
+    request.input('GroupBy',   sql.NVarChar(10),  grp);
+
+    const t0     = Date.now();
+    const result = await request.execute('stock.SP_RapportBalanceStock');
+    console.log(`[/rapports/balance-stock] ${result.recordset.length} lignes en ${Date.now() - t0}ms`);
+
+    setCached(cacheKey, result.recordset);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('[/rapports/balance-stock]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/rapports/stock-par-depot ─────────────────────────
+router.get('/rapports/stock-par-depot', async (req, res) => {
+  const { base, date } = req.query;
+
+  if (!base) return res.status(400).json({ error: 'Paramètre base requis' });
+  if (!date) return res.status(400).json({ error: 'Paramètre date requis' });
+
+  const cacheKey = `rapports:stock-par-depot:${base}:${date}`;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    const pool    = await getPool();
+    const request = pool.request();
+    request.timeout = 60000;
+    request.input('Base', sql.NVarChar(128), base);
+    request.input('Date', sql.Date,          date);
+
+    const t0     = Date.now();
+    const result = await request.execute('stock.SP_RapportStockParDepot');
+    console.log(`[/rapports/stock-par-depot] ${result.recordset.length} lignes en ${Date.now() - t0}ms`);
+
+    setCached(cacheKey, result.recordset);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('[/rapports/stock-par-depot]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 module.exports = router;

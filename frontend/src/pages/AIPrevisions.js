@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { fetchBases } from '../api/stockApi';
 import { fetchPipelineStatus, fetchPredictionResults, runPipeline } from '../api/predictionsApi';
+import { useDashboard } from '../context/DashboardContext';
 
 const fmtNum = (n) => {
   if (n === null || n === undefined || isNaN(Number(n))) return '—';
@@ -928,8 +929,11 @@ const TABS = [
 
 // ── Page principale ───────────────────────────────────────────
 export default function AIPrevisions() {
+  const { currentFilters } = useDashboard();
+  
   const [bases,       setBases]       = useState([]);
-  const [baseName,    setBaseName]    = useState('');
+  // const [baseName,    setBaseName]    = useState('');
+  const [baseName,    setBaseName]    = useState(currentFilters.base || '');
   const [activeTab,   setActiveTab]   = useState('prevision');
   const [status,      setStatus]      = useState(null);
   const [results,     setResults]     = useState(null);

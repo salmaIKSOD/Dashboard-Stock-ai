@@ -1242,3 +1242,132 @@ GO
 
 PRINT '✅ Initialisation complète — Base Test prête.';
 GO
+
+
+
+
+
+
+-- partie rapports 
+-- ── 20. SP_RapportEtatStock ────────────────────────────────────
+--      État de stock à une date donnée (par article + dépôt)
+-- ════════════════════════════════════════════════════════════
+CREATE OR ALTER PROCEDURE stock.SP_RapportEtatStock
+    @Base   NVARCHAR(128),
+    @Date   DATE,
+    @Depot  INT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH Dernier AS (
+        SELECT *,
+            ROW_NUMBER() OVER (
+                PARTITION BY AR_Ref, DE_No
+                ORDER BY DateJour DESC
+            ) AS rn
+        FROM stock.StockJournalierCache
+        WHERE BaseName = @Base
+          AND DateJour <= @Date
+          AND (@Depot IS NULL OR DE_No = @Depot)
+    )
+    SELECT
+        AR_Ref          AS [Article],
+        AR_Design       AS [Designation],
+        FA_CodeFamille  AS [Code Famille],
+        FA_Intitule     AS [Famille],
+        DE_No           AS [Depot],
+        DE_Intitule     AS [Nom Depot],
+        ISNULL(StockFinal, 0)   AS [Stock],
+        ISNULL(ValeurFinale, 0) AS [Valeur]
+    FROM Dernier
+    WHERE rn = 1
+    ORDER BY [Nom Depot], [Article];
+END
+GO
+
+-- ── 21. SP_RapportBalanceStock ─────────────────────────────────
+--      Balance des stocks (début / mouvements / fin) par période
+--      Regroupement au choix : article ou famille
+-- ════════════════════════════════════════════════════════════
+CREATE OR ALTER PROCEDURE stock.SP_RapportBalanceStock
+    @Base       NVARCHAR(128),
+    @DateDebut  DATE,
+    @DateFin    DATE,
+    @GroupBy    NVARCHAR(10) = 'article'   -- 'article' ou 'famille'
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH Periode AS (
+        SELECT *
+        FROM stock.StockJournalierCache
+        WHERE BaseName = @Base
+          AND DateJour BETWEEN @DateDebut AND @DateFin
+    ),
+    PremierJour AS (
+        SELECT *,
+            ROW_NUMBER() OVER (PARTITION BY AR_Ref, DE_No ORDER BY DateJour ASC) AS rn
+        FROM Periode
+    ),
+    DernierJour AS (
+        SELECT *,
+            ROW_NUMBER() OVER (PARTITION BY AR_Ref, DE_No ORDER BY DateJour DESC) AS rn
+        FROM Periode
+    ),
+    Cumuls AS (
+        SELECT AR_Ref, DE_No,
+            SUM(TotalEntree) AS Entrees,
+            SUM(TotalSortie) AS Sorties
+        FROM Periode
+        GROUP BY AR_Ref, DE_No
+    )
+    SELECT
+        CASE WHEN @GroupBy = 'famille' THEN p.FA_CodeFamille ELSE p.AR_Ref      END AS [Code],
+        CASE WHEN @GroupBy = 'famille' THEN p.FA_Intitule    ELSE p.AR_Design   END AS [Libelle],
+        SUM(p.StockInitial)            AS [Stock Debut],
+        SUM(c.Entrees)                 AS [Total Entrees],
+        SUM(c.Sorties)                 AS [Total Sorties],
+        SUM(d.StockFinal)              AS [Stock Fin],
+        SUM(d.ValeurFinale)            AS [Valeur Fin]
+    FROM PremierJour p
+    JOIN DernierJour d ON d.AR_Ref = p.AR_Ref AND d.DE_No = p.DE_No AND d.rn = 1
+    JOIN Cumuls c      ON c.AR_Ref = p.AR_Ref AND c.DE_No = p.DE_No
+    WHERE p.rn = 1
+    GROUP BY CASE WHEN @GroupBy = 'famille' THEN p.FA_CodeFamille ELSE p.AR_Ref    END,
+             CASE WHEN @GroupBy = 'famille' THEN p.FA_Intitule    ELSE p.AR_Design END
+    ORDER BY [Libelle];
+END
+GO
+
+-- ── 22. SP_RapportStockParDepot ────────────────────────────────
+--      État des stocks par dépôt (récap multi-dépôts)
+-- ════════════════════════════════════════════════════════════
+CREATE OR ALTER PROCEDURE stock.SP_RapportStockParDepot
+    @Base NVARCHAR(128),
+    @Date DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH Dernier AS (
+        SELECT *,
+            ROW_NUMBER() OVER (
+                PARTITION BY AR_Ref, DE_No
+                ORDER BY DateJour DESC
+            ) AS rn
+        FROM stock.StockJournalierCache
+        WHERE BaseName = @Base AND DateJour <= @Date
+    )
+    SELECT
+        DE_No                      AS [Depot],
+        DE_Intitule                AS [Nom Depot],
+        COUNT(DISTINCT AR_Ref)     AS [Nb Articles],
+        SUM(ISNULL(StockFinal,0))  AS [Stock Total],
+        SUM(ISNULL(ValeurFinale,0)) AS [Valeur Totale]
+    FROM Dernier
+    WHERE rn = 1
+    GROUP BY DE_No, DE_Intitule
+    ORDER BY [Nom Depot];
+END
+GO
