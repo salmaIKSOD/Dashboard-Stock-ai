@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import logo from '../images/logo.png';
 import {
   Eye,
   EyeOff,
@@ -105,9 +106,9 @@ function SignupPage() {
           <div className="flex-1 p-6 md:p-8 border-b md:border-b-0 md:border-r border-[#e8e8e8]">
             {/* Logo / Brand */}
             <div className="text-center mb-4">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-[#12a6e0] to-[#0d8fc4] shadow-lg shadow-[rgba(18,166,224,0.25)] mb-3">
+              {/* <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-[#12a6e0] to-[#0d8fc4] shadow-lg shadow-[rgba(18,166,224,0.25)] mb-3">
                 <Database size={24} className="text-white" />
-              </div>
+              </div> */}
               <h1 className="text-[#0d0c0c] text-[1.3rem] font-bold tracking-tight">
                 Stock<span className="text-[#12a6e0]">Analytics</span>
               </h1>
@@ -364,19 +365,13 @@ function SignupPage() {
           <div className="flex-1 bg-gradient-to-br from-[#ffffff] to-[#fafcff] p-6 md:p-10 flex flex-col justify-center items-center">
 
             {/* Image 3D */}
-            <div className="relative w-full max-w-[200px] md:max-w-[240px] mb-6 group">
-              <div className="relative w-full aspect-square rounded-2xl bg-gradient-to-br from-[#12a6e0]/10 to-[#01d63a]/10 flex items-center justify-center overflow-hidden shadow-lg transition-all duration-500 group-hover:scale-105">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-gradient-to-br from-[#12a6e0] to-[#0d8fc4] rotate-12 opacity-30 animate-spin-slow" />
-                  <div className="absolute w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-tr from-[#01d63a] to-[#01a82e] -rotate-6 opacity-30 animate-spin-reverse-slow" />
-                  <div className="absolute w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white shadow-lg flex items-center justify-center z-10">
-                    <Building2 size={24} className="text-[#12a6e0]" />
-                  </div>
-                </div>
-              </div>
-              <div className="absolute -inset-4 bg-gradient-to-r from-[#12a6e0]/10 to-[#01d63a]/10 rounded-full blur-2xl -z-10 animate-pulse-slow" />
+            <div className="relative w-full max-w-[280px] mb-6 flex items-center justify-center">
+              <img
+                src={logo}
+                alt="Imrasoft - Intégrateur des Solutions SAGE"
+                className="w-full object-contain drop-shadow-md"
+              />
             </div>
-
             {/* Features grid */}
             <div className="w-full">
               <p className="text-[#0d0c0c] text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-center mb-3">
