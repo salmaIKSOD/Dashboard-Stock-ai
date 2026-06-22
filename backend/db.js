@@ -18,10 +18,10 @@ const baseConfig = {
   },
 };
 
-// ── Config normale avec la base Test ─────────────────────────
+// ── Config normale avec la base StockAnalytics  ─────────────────────────
 const config = {
   ...baseConfig,
-  database: process.env.DB_NAME || 'Test',
+  database: process.env.DB_NAME || 'StockAnalytics ',
   pool: {
     max: 10,
     min: 0,
@@ -41,15 +41,15 @@ function splitSqlByGo(sqlText) {
 
 // ── Initialisation automatique au premier démarrage ──────────
 async function initDatabase() {
-  console.log('🔍 Vérification de la base Test...');
+  console.log('🔍 Vérification de la base StockAnalytics ...');
 
   // 1. Connexion à master (pas de database cible)
   const masterPool = await sql.connect({ ...baseConfig, database: 'master' });
 
   try {
-    // 2. Est-ce que Test existe déjà ?
+    // 2. Est-ce que StockAnalytics  existe déjà ?
     const check = await masterPool.request().query(
-      `SELECT COUNT(*) AS nb FROM sys.databases WHERE name = 'Test'`
+      `SELECT COUNT(*) AS nb FROM sys.databases WHERE name = 'StockAnalytics '`
     );
     const exists = check.recordset[0].nb > 0;
 
@@ -57,8 +57,8 @@ async function initDatabase() {
       // 3a. Vérifier que les procédures essentielles sont là
       const spCheck = await masterPool.request().query(`
         SELECT COUNT(*) AS nb
-        FROM Test.sys.procedures p
-        INNER JOIN Test.sys.schemas s ON s.schema_id = p.schema_id
+        FROM StockAnalytics .sys.procedures p
+        INNER JOIN StockAnalytics .sys.schemas s ON s.schema_id = p.schema_id
         WHERE s.name = 'stock'
           AND p.name IN (
             'SP_GetBases','SP_GetFiltres','SP_GetMouvements',
@@ -70,14 +70,14 @@ async function initDatabase() {
       const nbSP = spCheck.recordset[0].nb;
 
       if (nbSP >= 10) {
-        console.log('✅ Base Test déjà initialisée — démarrage normal');
+        console.log('✅ Base StockAnalytics  déjà initialisée — démarrage normal');
         await masterPool.close();
         return;
       }
 
-      console.log(`⚠️  Base Test existe mais incomplète (${nbSP}/10 procédures) — réinitialisation...`);
+      console.log(`⚠️  Base StockAnalytics  existe mais incomplète (${nbSP}/10 procédures) — réinitialisation...`);
     } else {
-      console.log('🆕 Base Test absente — création en cours...');
+      console.log('🆕 Base StockAnalytics  absente — création en cours...');
     }
 
     // 4. Lire et exécuter init.sql
@@ -105,7 +105,7 @@ async function initDatabase() {
       }
     }
 
-    console.log('✅ Base Test initialisée avec succès !');
+    console.log('✅ Base StockAnalytics  initialisée avec succès !');
     console.log('ℹ️  L\'encadrant peut maintenant ajouter ses bases SAGE via l\'interface.');
 
   } finally {
@@ -113,7 +113,7 @@ async function initDatabase() {
   }
 }
 
-// ── Pool principal vers Test ──────────────────────────────────
+// ── Pool principal vers StockAnalytics  ──────────────────────────────────
 async function getPool() {
   if (!pool) {
     pool = await sql.connect(config);
