@@ -16,6 +16,7 @@ import {
   BrainCircuit,
   MessageCircle,
   Shield,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 function SignupPage() {
@@ -40,11 +41,10 @@ function SignupPage() {
     console.log('Signup attempt:', formData);
   };
 
-  // Validation en temps réel
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
   const isPasswordValid = formData.password.length >= 8;
   const doPasswordsMatch = formData.password === formData.confirmPassword;
-  const isFormValid = 
+  const isFormValid =
     formData.firstName &&
     formData.lastName &&
     isEmailValid &&
@@ -55,12 +55,11 @@ function SignupPage() {
 
   return (
     <div className="min-h-screen w-full relative flex items-center justify-center p-4">
-      
-      {/* ─── ARRIÈRE-PLAN UNIFORME SUR TOUTE LA PAGE ─── */}
-      
+
+      {/* ARRIÈRE-PLAN */}
       <div className="fixed inset-0 w-screen h-screen bg-gradient-to-br from-[#e0f2fe] via-[#f0f9ff] to-[#eef2ff]" />
-      
-      {/* Vagues animées */}
+
+      {/* Vagues animées haut */}
       <div className="fixed top-0 left-0 right-0 w-full h-48 opacity-20 pointer-events-none">
         <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 320">
           <path fill="#12a6e0" fillOpacity="0.4" d="M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,176C672,171,768,181,864,197.3C960,213,1056,235,1152,234.7C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z">
@@ -73,6 +72,7 @@ function SignupPage() {
         </svg>
       </div>
 
+      {/* Vagues animées bas */}
       <div className="fixed bottom-0 left-0 right-0 w-full h-48 opacity-20 pointer-events-none">
         <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 320">
           <path fill="#01d63a" fillOpacity="0.4" d="M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,176C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
@@ -89,7 +89,7 @@ function SignupPage() {
       <div className="fixed top-10 left-10 w-80 h-80 bg-[#12a6e0]/10 rounded-full blur-3xl animate-float-slow" />
       <div className="fixed bottom-10 right-10 w-80 h-80 bg-[#01d63a]/10 rounded-full blur-3xl animate-float-reverse" />
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#7c4dff]/5 rounded-full blur-3xl animate-pulse-slow" />
-      
+
       {/* Grille de points */}
       <div className="fixed inset-0 w-full h-full pointer-events-none" style={{
         backgroundImage: `radial-gradient(circle at 1px 1px, rgba(18,166,224,0.12) 1px, transparent 1px)`,
@@ -98,59 +98,12 @@ function SignupPage() {
 
       {/* Carte blanche centrée */}
       <div className="relative w-full max-w-[1100px] my-8 bg-white/95 backdrop-blur-sm rounded-3xl border border-white/50 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] overflow-hidden z-10">
-        
+
         <div className="flex flex-col md:flex-row">
-          
-          {/* ─── COLONNE GAUCHE : IMAGE 3D + FEATURES (AGRANDIE COMME LOGIN) ─── */}
-          <div className="flex-1 bg-gradient-to-br from-[#ffffff] to-[#fafcff] p-6 md:p-10 flex flex-col justify-center items-center border-t md:border-t-0 md:border-r border-[#e8e8e8]">
-            
-            {/* Image 3D - plus grande */}
-            <div className="relative w-full max-w-[200px] md:max-w-[240px] mb-6 group">
-              <div className="relative w-full aspect-square rounded-2xl bg-gradient-to-br from-[#12a6e0]/10 to-[#01d63a]/10 flex items-center justify-center overflow-hidden shadow-lg transition-all duration-500 group-hover:scale-105">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-gradient-to-br from-[#12a6e0] to-[#0d8fc4] rotate-12 opacity-30 animate-spin-slow" />
-                  <div className="absolute w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-tr from-[#01d63a] to-[#01a82e] -rotate-6 opacity-30 animate-spin-reverse-slow" />
-                  <div className="absolute w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white shadow-lg flex items-center justify-center z-10">
-                    <Building2 size={24} className="text-[#12a6e0]" />
-                  </div>
-                </div>
-              </div>
-              <div className="absolute -inset-4 bg-gradient-to-r from-[#12a6e0]/10 to-[#01d63a]/10 rounded-full blur-2xl -z-10 animate-pulse-slow" />
-            </div>
 
-            {/* Features grid - agrandi */}
-            <div className="w-full">
-              <p className="text-[#0d0c0c] text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-center mb-3">
-                Fonctionnalités
-              </p>
-              <div className="grid grid-cols-1 gap-1.5">
-                {[
-                  { icon: TrendingUp, label: 'Analyse des mouvements de stock', color: '#12a6e0' },
-                  { icon: PackageSearch, label: 'Suivi des mouvements', color: '#01a82e' },
-                  { icon: Database, label: 'Multi-bases SAGE', color: '#12a6e0' },
-                  { icon: BrainCircuit, label: 'Prévisions IA (7j/14j/30j)', color: '#7c4dff' },
-                  { icon: MessageCircle, label: 'Assistant IA chatbot', color: '#e53935' },
-                ].map((feature, i) => (
-                  <div key={i} className="flex items-center gap-2 py-1.5 px-3 rounded-xl bg-white border border-[#e8e8e8] transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
-                    <feature.icon size={12} style={{ color: feature.color }} />
-                    <span className="text-[0.65rem] text-[#555555]">{feature.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Role hint */}
-            <div className="mt-5 text-center">
-              <p className="text-[0.54rem] text-[#aaaaaa]">
-                <Shield size={12} className="inline mr-1" />
-                Inscription réservée aux sociétés
-              </p>
-            </div>
-          </div>
-
-          {/* ─── COLONNE DROITE : FORMULAIRE D'INSCRIPTION (GARDÉ TEL QUEL) ─── */}
-          <div className="flex-1 p-6 md:p-8">
-            {/* Logo / Brand - réduit */}
+          {/* ─── COLONNE GAUCHE : FORMULAIRE ─── */}
+          <div className="flex-1 p-6 md:p-8 border-b md:border-b-0 md:border-r border-[#e8e8e8]">
+            {/* Logo / Brand */}
             <div className="text-center mb-4">
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-[#12a6e0] to-[#0d8fc4] shadow-lg shadow-[rgba(18,166,224,0.25)] mb-3">
                 <Database size={24} className="text-white" />
@@ -163,7 +116,7 @@ function SignupPage() {
               </p>
             </div>
 
-            {/* Header - réduit */}
+            {/* Header */}
             <div className="mb-4">
               <div className="flex items-center gap-2 mb-0.5">
                 <UserPlus size={14} className="text-[#12a6e0]" />
@@ -406,6 +359,55 @@ function SignupPage() {
               </p>
             </form>
           </div>
+
+          {/* ─── COLONNE DROITE : IMAGE 3D + FEATURES ─── */}
+          <div className="flex-1 bg-gradient-to-br from-[#ffffff] to-[#fafcff] p-6 md:p-10 flex flex-col justify-center items-center">
+
+            {/* Image 3D */}
+            <div className="relative w-full max-w-[200px] md:max-w-[240px] mb-6 group">
+              <div className="relative w-full aspect-square rounded-2xl bg-gradient-to-br from-[#12a6e0]/10 to-[#01d63a]/10 flex items-center justify-center overflow-hidden shadow-lg transition-all duration-500 group-hover:scale-105">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-gradient-to-br from-[#12a6e0] to-[#0d8fc4] rotate-12 opacity-30 animate-spin-slow" />
+                  <div className="absolute w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-tr from-[#01d63a] to-[#01a82e] -rotate-6 opacity-30 animate-spin-reverse-slow" />
+                  <div className="absolute w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white shadow-lg flex items-center justify-center z-10">
+                    <Building2 size={24} className="text-[#12a6e0]" />
+                  </div>
+                </div>
+              </div>
+              <div className="absolute -inset-4 bg-gradient-to-r from-[#12a6e0]/10 to-[#01d63a]/10 rounded-full blur-2xl -z-10 animate-pulse-slow" />
+            </div>
+
+            {/* Features grid */}
+            <div className="w-full">
+              <p className="text-[#0d0c0c] text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-center mb-3">
+                Fonctionnalités
+              </p>
+              <div className="grid grid-cols-1 gap-1.5">
+                {[
+                  { icon: TrendingUp, label: 'Analyse des mouvements de stock', color: '#12a6e0' },
+                  { icon: PackageSearch, label: 'Suivi des mouvements', color: '#01a82e' },
+                  { icon: Database, label: 'Multi-bases SAGE', color: '#12a6e0' },
+                  { icon: BrainCircuit, label: 'Prévisions IA (7j/14j/30j)', color: '#7c4dff' },
+                  // { icon: MessageCircle, label: 'Assistant IA chatbot', color: '#e53935' },
+                  { icon: FileSpreadsheet, label: 'Export rapports & Excel',         color: '#e53935' },
+                ].map((feature, i) => (
+                  <div key={i} className="flex items-center gap-2 py-1.5 px-3 rounded-xl bg-white border border-[#e8e8e8] transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
+                    <feature.icon size={12} style={{ color: feature.color }} />
+                    <span className="text-[0.65rem] text-[#555555]">{feature.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Role hint */}
+            <div className="mt-5 text-center">
+              <p className="text-[0.54rem] text-[#aaaaaa]">
+                <Shield size={12} className="inline mr-1" />
+                Inscription réservée aux sociétés
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
 

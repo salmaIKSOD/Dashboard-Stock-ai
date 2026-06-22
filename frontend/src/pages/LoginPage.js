@@ -13,6 +13,7 @@ import {
   MessageCircle,
   Shield,
   Building2,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 function LoginPage() {
@@ -266,7 +267,8 @@ function LoginPage() {
                   { icon: PackageSearch, label: 'Suivi des mouvements', color: '#01a82e' },
                   { icon: Database, label: 'Multi-bases SAGE', color: '#12a6e0' },
                   { icon: BrainCircuit, label: 'Prévisions IA (7j/14j/30j)', color: '#7c4dff' },
-                  { icon: MessageCircle, label: 'Assistant IA chatbot', color: '#e53935' },
+                  // { icon: MessageCircle, label: 'Assistant IA chatbot', color: '#e53935' },
+                  { icon: FileSpreadsheet, label: 'Export rapports & Excel',         color: '#e53935' },
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-2 py-1.5 px-3 rounded-xl bg-white border border-[#e8e8e8] transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
                     <feature.icon size={12} style={{ color: feature.color }} />

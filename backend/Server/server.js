@@ -1,36 +1,54 @@
-const express = require('express');
-const cors    = require('cors');
+const express      = require('express');
+const cors         = require('cors');
+const cookieParser = require('cookie-parser');
+const path         = require('path');
 
-const { initDatabase } = require('../db');  // ← import initDatabase
-const stockRoutes      = require('./routes/stock');
-// pipeline prediction 
-const pipelineRoutes = require('./routes/pipeline');
+const { initDatabase }  = require('../db');
+const stockRoutes       = require('./routes/stock');
+const pipelineRoutes    = require('./routes/pipeline');
+const authRoutes        = require('./routes/authRoutes');
+const adminRoutes       = require('./routes/adminRoutes');
+const profilRoutes      = require('./routes/profilRoutes');
 
 const app  = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
+// ── CORS — autoriser les cookies httpOnly depuis React ────────
 app.use(cors({
-  origin: 'http://localhost:3000',
-  methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
+  origin:      'http://localhost:3000',
+  methods:     ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,   // ← OBLIGATOIRE pour les cookies cross-origin
 }));
-app.use(express.json());
 
+app.use(express.json());
+app.use(cookieParser());   // ← lit les cookies httpOnly
+
+// ── Servir les photos de profil uploadées ─────────────────────
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ── Routes existantes ─────────────────────────────────────────
 app.use('/api', stockRoutes);
-// pipeline prediction 
-app.use('/api/pipeline', pipelineRoutes); 
+app.use('/api/pipeline', pipelineRoutes);
+
+// ── Routes auth (publiques : register, login) ─────────────────
+app.use('/api/auth', authRoutes);
+
+// ── Routes admin (protégées : admin uniquement) ───────────────
+app.use('/api/admin', adminRoutes);
+
+// ── Routes profil (protégées : tout utilisateur connecté) ─────
+app.use('/api/profil', profilRoutes);
 
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'StockAnalytics API en ligne' });
 });
 
-// ── Démarrage : init SQL d'abord, puis écoute ────────────────
+// ── Démarrage : init SQL d'abord, puis écoute ─────────────────
 async function start() {
   try {
-    // 1. Initialiser la base Test (créer si absente, vérifier si présente)
     await initDatabase();
 
-    // 2. Démarrer le serveur Express
     const server = app.listen(PORT, () => {
       console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
     });
@@ -61,39 +79,64 @@ async function start() {
 start();
 
 // const express = require('express');
-// const cors = require('cors');
+// const cors    = require('cors');
 
-// const stockRoutes = require('./routes/stock');
+// const { initDatabase } = require('../db');  // ← import initDatabase
+// const stockRoutes      = require('./routes/stock');
+// // pipeline prediction 
+// const pipelineRoutes = require('./routes/pipeline');
 
-// const app = express();
+// const app  = express();
 // const PORT = 5000;
 
 // app.use(cors({
 //   origin: 'http://localhost:3000',
-//   methods: ['GET', 'POST','DELETE', 'PUT', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type','Authorization'],
+//   methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
 // }));
 // app.use(express.json());
 
 // app.use('/api', stockRoutes);
+// // pipeline prediction 
+// app.use('/api/pipeline', pipelineRoutes); 
 
 // app.get('/', (req, res) => {
 //   res.json({ status: 'ok', message: 'StockAnalytics API en ligne' });
 // });
 
-// const server = app.listen(PORT, () => {
-//   console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
-// });
+// // ── Démarrage : init SQL d'abord, puis écoute ────────────────
+// async function start() {
+//   try {
+//     // 1. Initialiser la base Test (créer si absente, vérifier si présente)
+//     await initDatabase();
 
-// server.on('error', (err) => {
-//   if (err.code === 'EADDRINUSE') {
-//     console.log(`⚠️ Port ${PORT} occupé, tentative de libération...`);
-//     const { execSync } = require('child_process');
-//     try {
-//       execSync(`for /f "tokens=5" %a in ('netstat -ano ^| findstr :${PORT}') do taskkill /F /PID %a`, { shell: 'cmd.exe' });
-//       console.log('✅ Port libéré, redémarrage...');
-//     } catch(e) {
-//       console.error('❌ Impossible de libérer le port, lance CMD en administrateur');
-//     }
+//     // 2. Démarrer le serveur Express
+//     const server = app.listen(PORT, () => {
+//       console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
+//     });
+
+//     server.on('error', (err) => {
+//       if (err.code === 'EADDRINUSE') {
+//         console.log(`⚠️  Port ${PORT} occupé, tentative de libération...`);
+//         const { execSync } = require('child_process');
+//         try {
+//           execSync(
+//             `for /f "tokens=5" %a in ('netstat -ano ^| findstr :${PORT}') do taskkill /F /PID %a`,
+//             { shell: 'cmd.exe' }
+//           );
+//           console.log('✅ Port libéré, redémarrage...');
+//         } catch (e) {
+//           console.error('❌ Impossible de libérer le port, lance CMD en administrateur');
+//         }
+//       }
+//     });
+
+//   } catch (err) {
+//     console.error('❌ Erreur critique au démarrage :', err.message);
+//     console.error('   → Vérifiez votre fichier .env (DB_SERVER, DB_USER, DB_PASSWORD, DB_PORT)');
+//     process.exit(1);
 //   }
-// });
+// }
+
+// start();
+
