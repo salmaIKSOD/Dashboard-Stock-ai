@@ -717,13 +717,13 @@ export default function PageMovements() {
               color="#c47a00" bgColor="rgba(224,138,0,0.06)" borderColor="rgba(224,138,0,0.18)" iconBg="rgba(224,138,0,0.08)"
               icon={Boxes}
             />
-            <KpiCard
+            {/* <KpiCard
                 label="Valeur Permanente"
                 value={fmtNum(kpis.totalValeurPermanente)}
                 sub="valeur stock permanent"
                 color="#0b7db0" bgColor="rgba(18,166,224,0.06)" borderColor="rgba(18,166,224,0.18)" iconBg="rgba(18,166,224,0.08)"
                 icon={TrendingUp}
-            />
+            /> */}
             <KpiCard
               label="Total Entrées"
               value={fmtNum(kpis.totalE)}

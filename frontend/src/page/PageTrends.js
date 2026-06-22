@@ -572,7 +572,7 @@ function ArticlesDormants({ data, cols, filters }) {
   const prevLen = React.useRef(rows.length);
   if (prevLen.current !== rows.length) { prevLen.current = rows.length; if (page !== 0) setPage(0); }
 
-  if (!rows.length) return <Empty msg="Aucun article dormant — tout le stock a bougé sur la période 👍" />;
+  if (!rows.length) return <Empty msg="Aucun article dormant — tout le stock a bougé sur la période " />;
 
   const displayed = rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
