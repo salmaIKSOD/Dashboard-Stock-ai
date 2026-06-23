@@ -73,7 +73,7 @@ def run(base_name=None):
                DE_No, DE_Intitule,
                TotalEntree, TotalSortie,
                ValeurEntree, ValeurSortie, TotalValeurMouvement
-        FROM Test.stock.VW_MouvementsJournaliers
+        FROM StockAnalytics.stock.VW_MouvementsJournaliers
         WHERE BaseName = '{BASE_NAME}'
         ORDER BY DateJour, AR_Ref, DE_No
     """, conn)
@@ -86,7 +86,7 @@ def run(base_name=None):
                TotalEntree, TotalSortie,
                ValeurEntree, ValeurSortie,
                StockInitial, StockFinal, ValeurInitiale, ValeurFinale
-        FROM Test.stock.StockJournalierCache
+        FROM StockAnalytics.stock.StockJournalierCache
         WHERE BaseName = '{BASE_NAME}'
         ORDER BY DateJour, AR_Ref, DE_No
     """, conn)

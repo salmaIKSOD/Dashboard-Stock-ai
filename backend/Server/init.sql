@@ -1562,3 +1562,341 @@ BEGIN
     ORDER BY [Nom Depot];
 END
 GO
+
+
+
+
+-- ════════════════════════════════════════════════════════════
+--  PARTIE UTILISATEURS — Comptes Admin / Employé
+--  À coller dans INIT.SQL après le point 22
+--
+--  Règles métier :
+--  - Admin : accès toutes pages + gestion comptes + voir données employés
+--  - Employé : accès toutes pages SAUF Prédictions et Gestion comptes
+--  - Chaque employé voit UNIQUEMENT ses propres bases ajoutées
+--  - Admin voit TOUTES les bases de SAGE_Bases
+--  - Inscription employé → statut 'en_attente' → validation admin obligatoire
+--  - Rejouable sans erreur (IF NOT EXISTS pour les tables)
+-- ════════════════════════════════════════════════════════════
+-- ── 23. Table Utilisateurs ────────────────────────────────────
+IF NOT EXISTS (
+    SELECT 1 FROM sys.tables t
+    INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
+    WHERE s.name = 'stock' AND t.name = 'Utilisateurs'
+)
+BEGIN
+    CREATE TABLE stock.Utilisateurs (
+        UtilisateurId       INT IDENTITY(1,1) PRIMARY KEY,
+        Email               NVARCHAR(255) NOT NULL UNIQUE,
+        MotDePasseHash      NVARCHAR(255) NOT NULL,         -- bcrypt (jamais exposé via API)
+        Nom                 NVARCHAR(100) NOT NULL,
+        Prenom              NVARCHAR(100) NOT NULL,
+        Telephone           NVARCHAR(30)  NULL,
+        Poste               NVARCHAR(100) NULL,             -- fonction / poste dans l'entreprise
+        PhotoUrl            NVARCHAR(500) NULL,             -- chemin relatif vers la photo uploadée
+        Role                NVARCHAR(20)  NOT NULL DEFAULT 'employe',   -- 'admin' | 'employe'
+        Statut              NVARCHAR(20)  NOT NULL DEFAULT 'en_attente',-- 'en_attente' | 'valide' | 'refuse'
+        EstConnecte         BIT           NOT NULL DEFAULT 0,
+        DerniereConnexion   DATETIME      NULL,
+        DateCreation        DATETIME      NOT NULL DEFAULT GETDATE(),
+        CreePar             INT           NULL,             -- UtilisateurId de l'admin créateur
+        CONSTRAINT CHK_Utilisateurs_Role   CHECK (Role   IN ('admin', 'employe')),
+        CONSTRAINT CHK_Utilisateurs_Statut CHECK (Statut IN ('en_attente', 'valide', 'refuse')),
+        CONSTRAINT FK_Utilisateurs_CreePar FOREIGN KEY (CreePar)
+            REFERENCES stock.Utilisateurs(UtilisateurId)
+    );
+
+    CREATE INDEX IX_Utilisateurs_Email  ON stock.Utilisateurs(Email);
+    CREATE INDEX IX_Utilisateurs_Statut ON stock.Utilisateurs(Statut);
+    CREATE INDEX IX_Utilisateurs_Role   ON stock.Utilisateurs(Role);
+
+    PRINT 'Table Utilisateurs créée.';
+END
+ELSE
+    PRINT 'Table Utilisateurs déjà existante — conservée.';
+GO
+
+-- ── 24. Table UtilisateurBases ────────────────────────────────
+--  Enregistre quelle base chaque EMPLOYÉ a ajoutée.
+--  Les admins ont accès à toutes les bases via stock.SAGE_Bases
+--  directement (pas besoin de cette table pour eux).
+-- ─────────────────────────────────────────────────────────────
+IF NOT EXISTS (
+    SELECT 1 FROM sys.tables t
+    INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
+    WHERE s.name = 'stock' AND t.name = 'UtilisateurBases'
+)
+BEGIN
+    CREATE TABLE stock.UtilisateurBases (
+        Id              INT IDENTITY(1,1) PRIMARY KEY,
+        UtilisateurId   INT           NOT NULL,
+        BaseName        NVARCHAR(128) NOT NULL,
+        DateAjout       DATETIME      NOT NULL DEFAULT GETDATE(),
+        CONSTRAINT FK_UtilisateurBases_Utilisateur FOREIGN KEY (UtilisateurId)
+            REFERENCES stock.Utilisateurs(UtilisateurId) ON DELETE CASCADE,
+        CONSTRAINT UQ_UtilisateurBase UNIQUE (UtilisateurId, BaseName)
+    );
+
+    CREATE INDEX IX_UtilisateurBases_UserId ON stock.UtilisateurBases(UtilisateurId);
+
+    PRINT 'Table UtilisateurBases créée.';
+END
+ELSE
+    PRINT 'Table UtilisateurBases déjà existante — conservée.';
+GO
+
+-- ── 25. SP_CreerUtilisateur ────────────────────────────────────
+--  Utilisé pour : inscription employé (statut en_attente)
+--                 ET création admin par un admin (statut valide)
+-- ─────────────────────────────────────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_CreerUtilisateur
+    @Email          NVARCHAR(255),
+    @MotDePasseHash NVARCHAR(255),
+    @Nom            NVARCHAR(100),
+    @Prenom         NVARCHAR(100),
+    @Telephone      NVARCHAR(30)  = NULL,
+    @Poste          NVARCHAR(100) = NULL,
+    @Role           NVARCHAR(20)  = 'employe',
+    @Statut         NVARCHAR(20)  = 'en_attente',
+    @CreePar        INT           = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (SELECT 1 FROM stock.Utilisateurs WHERE Email = @Email)
+    BEGIN
+        RAISERROR('Un compte existe déjà avec cet email.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO stock.Utilisateurs
+        (Email, MotDePasseHash, Nom, Prenom, Telephone, Poste, Role, Statut, CreePar)
+    VALUES
+        (@Email, @MotDePasseHash, @Nom, @Prenom, @Telephone, @Poste, @Role, @Statut, @CreePar);
+
+    SELECT SCOPE_IDENTITY() AS UtilisateurId;
+END
+GO
+
+-- ── 26. SP_GetUtilisateurByEmail ───────────────────────────────
+--  Utilisé pour le login — retourne le hash pour comparaison bcrypt
+-- ─────────────────────────────────────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateurByEmail
+    @Email NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT UtilisateurId, Email, MotDePasseHash, Nom, Prenom,
+           Telephone, Poste, PhotoUrl, Role, Statut,
+           EstConnecte, DerniereConnexion, DateCreation
+    FROM stock.Utilisateurs
+    WHERE Email = @Email;
+END
+GO
+
+-- ── 27. SP_GetUtilisateurById ──────────────────────────────────
+--  Utilisé pour le middleware JWT (vérification à chaque requête)
+--  NE retourne PAS le mot de passe
+-- ─────────────────────────────────────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateurById
+    @UtilisateurId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT UtilisateurId, Email, Nom, Prenom,
+           Telephone, Poste, PhotoUrl, Role, Statut,
+           EstConnecte, DerniereConnexion, DateCreation
+    FROM stock.Utilisateurs
+    WHERE UtilisateurId = @UtilisateurId;
+END
+GO
+
+-- ── 28. SP_ListerUtilisateurs ──────────────────────────────────
+--  Pour la page Admin — liste tous les comptes (sans mot de passe)
+--  Filtrable par statut (en_attente, valide, refuse, NULL = tous)
+-- ─────────────────────────────────────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_ListerUtilisateurs
+    @Statut NVARCHAR(20) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT UtilisateurId, Email, Nom, Prenom,
+           Telephone, Poste, PhotoUrl, Role, Statut,
+           EstConnecte, DerniereConnexion, DateCreation
+    FROM stock.Utilisateurs
+    WHERE (@Statut IS NULL OR Statut = @Statut)
+    ORDER BY
+        CASE Statut
+            WHEN 'en_attente' THEN 1  -- les inscriptions en attente en premier
+            WHEN 'valide'     THEN 2
+            WHEN 'refuse'     THEN 3
+        END,
+        DateCreation DESC;
+END
+GO
+
+-- ── 29. SP_ValiderUtilisateur ──────────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_ValiderUtilisateur
+    @UtilisateurId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE stock.Utilisateurs
+    SET Statut = 'valide'
+    WHERE UtilisateurId = @UtilisateurId AND Statut = 'en_attente';
+
+    IF @@ROWCOUNT = 0
+        RAISERROR('Utilisateur introuvable ou déjà traité.', 16, 1);
+END
+GO
+
+-- ── 30. SP_RefuserUtilisateur ──────────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_RefuserUtilisateur
+    @UtilisateurId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE stock.Utilisateurs
+    SET Statut = 'refuse'
+    WHERE UtilisateurId = @UtilisateurId AND Statut = 'en_attente';
+
+    IF @@ROWCOUNT = 0
+        RAISERROR('Utilisateur introuvable ou déjà traité.', 16, 1);
+END
+GO
+
+-- ── 31. SP_SetConnexionStatut ──────────────────────────────────
+--  Appelé au login (EstConnecte=1) et au logout (EstConnecte=0)
+-- ─────────────────────────────────────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_SetConnexionStatut
+    @UtilisateurId INT,
+    @EstConnecte   BIT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE stock.Utilisateurs
+    SET
+        EstConnecte       = @EstConnecte,
+        DerniereConnexion = CASE WHEN @EstConnecte = 1 THEN GETDATE() ELSE DerniereConnexion END
+    WHERE UtilisateurId = @UtilisateurId;
+END
+GO
+
+-- ── 32. SP_UpdateProfil ────────────────────────────────────────
+--  Chaque utilisateur (admin ou employé) modifie son propre profil
+--  Si @PhotoUrl est NULL → garde l'ancienne photo
+-- ─────────────────────────────────────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_UpdateProfil
+    @UtilisateurId INT,
+    @Nom           NVARCHAR(100),
+    @Prenom        NVARCHAR(100),
+    @Telephone     NVARCHAR(30)  = NULL,
+    @Poste         NVARCHAR(100) = NULL,
+    @PhotoUrl      NVARCHAR(500) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE stock.Utilisateurs
+    SET
+        Nom       = @Nom,
+        Prenom    = @Prenom,
+        Telephone = @Telephone,
+        Poste     = @Poste,
+        PhotoUrl  = COALESCE(@PhotoUrl, PhotoUrl)
+    WHERE UtilisateurId = @UtilisateurId;
+END
+GO
+
+-- ── 33. SP_AjouterBaseUtilisateur ──────────────────────────────
+--  Enregistre qu'un employé a ajouté une base
+--  Idempotente : ne plante pas si déjà ajoutée
+-- ─────────────────────────────────────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_AjouterBaseUtilisateur
+    @UtilisateurId INT,
+    @BaseName      NVARCHAR(128)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM stock.UtilisateurBases
+        WHERE UtilisateurId = @UtilisateurId AND BaseName = @BaseName
+    )
+    BEGIN
+        INSERT INTO stock.UtilisateurBases (UtilisateurId, BaseName)
+        VALUES (@UtilisateurId, @BaseName);
+    END
+
+    SELECT BaseName, DateAjout
+    FROM stock.UtilisateurBases
+    WHERE UtilisateurId = @UtilisateurId
+    ORDER BY DateAjout DESC;
+END
+GO
+
+-- ── 34. SP_GetBasesUtilisateur ─────────────────────────────────
+--  Bases ajoutées par UN employé donné
+--  Utilisé par : la page Alertes/Mouvements côté employé
+--               ET par l'admin pour voir les bases d'un employé
+-- ─────────────────────────────────────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_GetBasesUtilisateur
+    @UtilisateurId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT ub.BaseName, sb.BaseLabel, ub.DateAjout
+    FROM stock.UtilisateurBases ub
+    LEFT JOIN stock.SAGE_Bases sb ON sb.BaseName = ub.BaseName
+    WHERE ub.UtilisateurId = @UtilisateurId
+    ORDER BY ub.DateAjout DESC;
+END
+GO
+
+-- ── 35. SP_GetToutesBasesParUtilisateur ────────────────────────
+--  Vue d'ensemble admin : quel employé a ajouté quelle base
+-- ─────────────────────────────────────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_GetToutesBasesParUtilisateur
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT
+        u.UtilisateurId,
+        u.Nom,
+        u.Prenom,
+        u.Email,
+        u.Poste,
+        u.Role,
+        ub.BaseName,
+        sb.BaseLabel,
+        ub.DateAjout
+    FROM stock.Utilisateurs u
+    INNER JOIN stock.UtilisateurBases ub ON ub.UtilisateurId = u.UtilisateurId
+    LEFT  JOIN stock.SAGE_Bases sb        ON sb.BaseName = ub.BaseName
+    ORDER BY u.Nom, ub.DateAjout DESC;
+END
+GO
+
+-- ── 36. SP_GetUtilisateursConnectes ────────────────────────────
+--  Pour la page Admin — voir qui est connecté/déconnecté en temps réel
+-- ─────────────────────────────────────────────────────────────
+CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateursConnectes
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT
+        UtilisateurId,
+        Nom,
+        Prenom,
+        Email,
+        Poste,
+        Role,
+        EstConnecte,
+        DerniereConnexion
+    FROM stock.Utilisateurs
+    WHERE Statut = 'valide'
+    ORDER BY EstConnecte DESC, DerniereConnexion DESC;
+END
+GO
+
+PRINT '✅ Partie Utilisateurs (23-36) initialisée avec succès.';
+GO

@@ -1,305 +1,719 @@
+// import React, { useState } from 'react';
+// import { Link } from 'react-router-dom';
+// import logo from '../images/logo.png';
+// import {
+//   Eye,
+//   EyeOff,
+//   Mail,
+//   Lock,
+//   UserPlus,
+//   Database,
+//   Building2,
+//   User,
+//   Check,
+//   X,
+//   TrendingUp,
+//   PackageSearch,
+//   BrainCircuit,
+//   MessageCircle,
+//   Shield,
+//   FileSpreadsheet,
+// } from 'lucide-react';
+
+// function SignupPage() {
+//   const [showPassword, setShowPassword] = useState(false);
+//   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+//   const [formData, setFormData] = useState({
+//     firstName: '',
+//     lastName: '',
+//     email: '',
+//     company: '',
+//     password: '',
+//     confirmPassword: '',
+//   });
+//   const [agreeTerms, setAgreeTerms] = useState(false);
+
+//   const handleChange = (e) => {
+//     setFormData({ ...formData, [e.target.name]: e.target.value });
+//   };
+
+//   const handleSubmit = (e) => {
+//     e.preventDefault();
+//     console.log('Signup attempt:', formData);
+//   };
+
+//   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+//   const isPasswordValid = formData.password.length >= 8;
+//   const doPasswordsMatch = formData.password === formData.confirmPassword;
+//   const isFormValid =
+//     formData.firstName &&
+//     formData.lastName &&
+//     isEmailValid &&
+//     formData.company &&
+//     isPasswordValid &&
+//     doPasswordsMatch &&
+//     agreeTerms;
+
+//   return (
+//     <div className="min-h-screen w-full relative flex items-center justify-center p-4">
+
+//       {/* ARRIÈRE-PLAN */}
+//       <div className="fixed inset-0 w-screen h-screen bg-gradient-to-br from-[#e0f2fe] via-[#f0f9ff] to-[#eef2ff]" />
+
+//       {/* Vagues animées haut */}
+//       <div className="fixed top-0 left-0 right-0 w-full h-48 opacity-20 pointer-events-none">
+//         <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 320">
+//           <path fill="#12a6e0" fillOpacity="0.4" d="M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,176C672,171,768,181,864,197.3C960,213,1056,235,1152,234.7C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z">
+//             <animate attributeName="d" dur="8s" repeatCount="indefinite" values="
+//               M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,176C672,171,768,181,864,197.3C960,213,1056,235,1152,234.7C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z;
+//               M0,160L48,165.3C96,171,192,181,288,186.7C384,192,480,192,576,186.7C672,181,768,171,864,165.3C960,160,1056,160,1152,165.3C1248,171,1344,181,1392,186.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z;
+//               M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,176C672,171,768,181,864,197.3C960,213,1056,235,1152,234.7C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z
+//             " />
+//           </path>
+//         </svg>
+//       </div>
+
+//       {/* Vagues animées bas */}
+//       <div className="fixed bottom-0 left-0 right-0 w-full h-48 opacity-20 pointer-events-none">
+//         <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 320">
+//           <path fill="#01d63a" fillOpacity="0.4" d="M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,176C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+//             <animate attributeName="d" dur="10s" repeatCount="indefinite" values="
+//               M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,176C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+//               M0,224L48,218.7C96,213,192,203,288,208C384,213,480,235,576,245.3C672,256,768,256,864,245.3C960,235,1056,213,1152,197.3C1248,181,1344,171,1392,165.3L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+//               M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,176C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z
+//             " />
+//           </path>
+//         </svg>
+//       </div>
+
+//       {/* Cercles flottants */}
+//       <div className="fixed top-10 left-10 w-80 h-80 bg-[#12a6e0]/10 rounded-full blur-3xl animate-float-slow" />
+//       <div className="fixed bottom-10 right-10 w-80 h-80 bg-[#01d63a]/10 rounded-full blur-3xl animate-float-reverse" />
+//       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#7c4dff]/5 rounded-full blur-3xl animate-pulse-slow" />
+
+//       {/* Grille de points */}
+//       <div className="fixed inset-0 w-full h-full pointer-events-none" style={{
+//         backgroundImage: `radial-gradient(circle at 1px 1px, rgba(18,166,224,0.12) 1px, transparent 1px)`,
+//         backgroundSize: '30px 30px',
+//       }} />
+
+//       {/* Carte blanche centrée */}
+//       <div className="relative w-full max-w-[1100px] my-8 bg-white/95 backdrop-blur-sm rounded-3xl border border-white/50 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] overflow-hidden z-10">
+
+//         <div className="flex flex-col md:flex-row">
+
+//           {/* ─── COLONNE GAUCHE : FORMULAIRE ─── */}
+//           <div className="flex-1 p-6 md:p-8 border-b md:border-b-0 md:border-r border-[#e8e8e8]">
+//             {/* Logo / Brand */}
+//             <div className="text-center mb-4">
+//               {/* <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-[#12a6e0] to-[#0d8fc4] shadow-lg shadow-[rgba(18,166,224,0.25)] mb-3">
+//                 <Database size={24} className="text-white" />
+//               </div> */}
+//               <h1 className="text-[#0d0c0c] text-[1.3rem] font-bold tracking-tight">
+//                 Stock<span className="text-[#12a6e0]">Analytics</span>
+//               </h1>
+//               <p className="text-[#888888] text-[0.7rem] mt-0.5">
+//                 Créez votre espace d'analyse
+//               </p>
+//             </div>
+
+//             {/* Header */}
+//             <div className="mb-4">
+//               <div className="flex items-center gap-2 mb-0.5">
+//                 <UserPlus size={14} className="text-[#12a6e0]" />
+//                 <span className="text-[#0d0c0c] text-[0.65rem] font-semibold uppercase tracking-[0.08em]">
+//                   Inscription Société
+//                 </span>
+//               </div>
+//               <p className="text-[#aaaaaa] text-[0.65rem]">
+//                 Remplissez le formulaire pour créer votre compte
+//               </p>
+//             </div>
+
+//             <form onSubmit={handleSubmit} className="space-y-3">
+//               {/* Name row */}
+//               <div className="grid grid-cols-2 gap-3">
+//                 <div className="space-y-0.5">
+//                   <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+//                     <User size={9} />
+//                     Prénom
+//                   </label>
+//                   <input
+//                     type="text"
+//                     name="firstName"
+//                     value={formData.firstName}
+//                     onChange={handleChange}
+//                     placeholder="Jean"
+//                     className="w-full px-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all duration-200 focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]"
+//                     required
+//                   />
+//                 </div>
+//                 <div className="space-y-0.5">
+//                   <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+//                     <User size={9} />
+//                     Nom
+//                   </label>
+//                   <input
+//                     type="text"
+//                     name="lastName"
+//                     value={formData.lastName}
+//                     onChange={handleChange}
+//                     placeholder="Dupont"
+//                     className="w-full px-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all duration-200 focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]"
+//                     required
+//                   />
+//                 </div>
+//               </div>
+
+//               {/* Email */}
+//               <div className="space-y-0.5">
+//                 <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+//                   <Mail size={9} />
+//                   Email professionnel
+//                 </label>
+//                 <div className="relative">
+//                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]">
+//                     <Mail size={13} />
+//                   </div>
+//                   <input
+//                     type="email"
+//                     name="email"
+//                     value={formData.email}
+//                     onChange={handleChange}
+//                     placeholder="jean.dupont@entreprise.com"
+//                     className={`w-full pl-9 pr-8 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all duration-200 placeholder:text-[#c5c5c5] ${
+//                       formData.email && !isEmailValid
+//                         ? 'border-[#e53935] focus:border-[#e53935]'
+//                         : formData.email && isEmailValid
+//                         ? 'border-[#01a82e] focus:border-[#01a82e]'
+//                         : 'border-[#e0e0e0] focus:border-[#12a6e0]'
+//                     }`}
+//                     required
+//                   />
+//                   {formData.email && (
+//                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
+//                       {isEmailValid ? (
+//                         <Check size={13} className="text-[#01a82e]" />
+//                       ) : (
+//                         <X size={13} className="text-[#e53935]" />
+//                       )}
+//                     </div>
+//                   )}
+//                 </div>
+//               </div>
+
+//               {/* Company */}
+//               <div className="space-y-0.5">
+//                 <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+//                   <Building2 size={9} />
+//                   Nom de la société
+//                 </label>
+//                 <div className="relative">
+//                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]">
+//                     <Building2 size={13} />
+//                   </div>
+//                   <input
+//                     type="text"
+//                     name="company"
+//                     value={formData.company}
+//                     onChange={handleChange}
+//                     placeholder="Ma Société SAS"
+//                     className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all duration-200 focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]"
+//                     required
+//                   />
+//                 </div>
+//               </div>
+
+//               {/* Password */}
+//               <div className="space-y-0.5">
+//                 <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+//                   <Lock size={9} />
+//                   Mot de passe
+//                 </label>
+//                 <div className="relative">
+//                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]">
+//                     <Lock size={13} />
+//                   </div>
+//                   <input
+//                     type={showPassword ? 'text' : 'password'}
+//                     name="password"
+//                     value={formData.password}
+//                     onChange={handleChange}
+//                     placeholder="••••••••"
+//                     className={`w-full pl-9 pr-9 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all duration-200 placeholder:text-[#c5c5c5] ${
+//                       formData.password && !isPasswordValid
+//                         ? 'border-[#e53935] focus:border-[#e53935]'
+//                         : formData.password && isPasswordValid
+//                         ? 'border-[#01a82e] focus:border-[#01a82e]'
+//                         : 'border-[#e0e0e0] focus:border-[#12a6e0]'
+//                     }`}
+//                     required
+//                   />
+//                   <button
+//                     type="button"
+//                     onClick={() => setShowPassword(!showPassword)}
+//                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c5c5c5] hover:text-[#888888] transition-colors"
+//                   >
+//                     {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+//                   </button>
+//                 </div>
+//                 <p className="text-[0.55rem] text-[#aaaaaa] mt-0.5">
+//                   {formData.password ? (
+//                     isPasswordValid ? (
+//                       <span className="text-[#01a82e]">✓ Mot de passe valide (8+ caractères)</span>
+//                     ) : (
+//                       <span className="text-[#e53935]">✗ Minimum 8 caractères</span>
+//                     )
+//                   ) : (
+//                     'Minimum 8 caractères'
+//                   )}
+//                 </p>
+//               </div>
+
+//               {/* Confirm Password */}
+//               <div className="space-y-0.5">
+//                 <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+//                   <Lock size={9} />
+//                   Confirmer le mot de passe
+//                 </label>
+//                 <div className="relative">
+//                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]">
+//                     <Lock size={13} />
+//                   </div>
+//                   <input
+//                     type={showConfirmPassword ? 'text' : 'password'}
+//                     name="confirmPassword"
+//                     value={formData.confirmPassword}
+//                     onChange={handleChange}
+//                     placeholder="••••••••"
+//                     className={`w-full pl-9 pr-9 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all duration-200 placeholder:text-[#c5c5c5] ${
+//                       formData.confirmPassword && !doPasswordsMatch
+//                         ? 'border-[#e53935] focus:border-[#e53935]'
+//                         : formData.confirmPassword && doPasswordsMatch
+//                         ? 'border-[#01a82e] focus:border-[#01a82e]'
+//                         : 'border-[#e0e0e0] focus:border-[#12a6e0]'
+//                     }`}
+//                     required
+//                   />
+//                   <button
+//                     type="button"
+//                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+//                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c5c5c5] hover:text-[#888888] transition-colors"
+//                   >
+//                     {showConfirmPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+//                   </button>
+//                 </div>
+//                 {formData.confirmPassword && !doPasswordsMatch && (
+//                   <p className="text-[0.55rem] text-[#e53935] mt-0.5">✗ Les mots de passe ne correspondent pas</p>
+//                 )}
+//               </div>
+
+//               {/* Terms */}
+//               <label className="flex items-center gap-2 cursor-pointer group pt-0.5">
+//                 <div className="relative">
+//                   <input
+//                     type="checkbox"
+//                     checked={agreeTerms}
+//                     onChange={(e) => setAgreeTerms(e.target.checked)}
+//                     className="peer sr-only"
+//                   />
+//                   <div className="w-3.5 h-3.5 rounded border border-[#c5c5c5] bg-white transition-all duration-150 peer-checked:bg-[#12a6e0] peer-checked:border-[#12a6e0] peer-focus:ring-2 peer-focus:ring-[rgba(18,166,224,0.2)]">
+//                     {agreeTerms && (
+//                       <svg className="w-2.5 h-2.5 text-white m-[2px]" viewBox="0 0 12 12" fill="none">
+//                         <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+//                       </svg>
+//                     )}
+//                   </div>
+//                 </div>
+//                 <span className="text-[0.6rem] text-[#888888] group-hover:text-[#0d0c0c] transition-colors">
+//                   J'accepte les{' '}
+//                   <button type="button" className="text-[#12a6e0] hover:text-[#0d8fc4] font-medium">
+//                     conditions
+//                   </button>
+//                   {' '}et la{' '}
+//                   <button type="button" className="text-[#12a6e0] hover:text-[#0d8fc4] font-medium">
+//                     politique
+//                   </button>
+//                 </span>
+//               </label>
+
+//               {/* Submit button */}
+//               <button
+//                 type="submit"
+//                 disabled={!isFormValid}
+//                 className={`w-full flex items-center justify-center gap-2 py-1.5 rounded-xl text-[0.7rem] font-semibold transition-all duration-200 ${
+//                   isFormValid
+//                     ? 'bg-gradient-to-r from-[#12a6e0] to-[#0d8fc4] text-white shadow-md shadow-[rgba(18,166,224,0.25)] hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]'
+//                     : 'bg-[#e8f6fd] text-[#92cfe8] cursor-not-allowed'
+//                 }`}
+//               >
+//                 <UserPlus size={13} />
+//                 Créer mon compte société
+//               </button>
+
+//               {/* Login link */}
+//               <p className="text-center text-[0.6rem] text-[#aaaaaa] pt-0.5">
+//                 Déjà un compte ?{' '}
+//                 <Link to="/login" className="text-[#12a6e0] font-semibold hover:text-[#0d8fc4] transition-colors">
+//                   Se connecter
+//                 </Link>
+//               </p>
+//             </form>
+//           </div>
+
+//           {/* ─── COLONNE DROITE : IMAGE 3D + FEATURES ─── */}
+//           <div className="flex-1 bg-gradient-to-br from-[#ffffff] to-[#fafcff] p-6 md:p-10 flex flex-col justify-center items-center">
+
+//             {/* Image 3D */}
+//             <div className="relative w-full max-w-[280px] mb-6 flex items-center justify-center">
+//               <img
+//                 src={logo}
+//                 alt="Imrasoft - Intégrateur des Solutions SAGE"
+//                 className="w-full object-contain drop-shadow-md"
+//               />
+//             </div>
+//             {/* Features grid */}
+//             <div className="w-full">
+//               <p className="text-[#0d0c0c] text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-center mb-3">
+//                 Fonctionnalités
+//               </p>
+//               <div className="grid grid-cols-1 gap-1.5">
+//                 {[
+//                   { icon: TrendingUp, label: 'Analyse des mouvements de stock', color: '#12a6e0' },
+//                   { icon: PackageSearch, label: 'Suivi des mouvements', color: '#01a82e' },
+//                   { icon: Database, label: 'Multi-bases SAGE', color: '#12a6e0' },
+//                   { icon: BrainCircuit, label: 'Prévisions IA (7j/14j/30j)', color: '#7c4dff' },
+//                   // { icon: MessageCircle, label: 'Assistant IA chatbot', color: '#e53935' },
+//                   { icon: FileSpreadsheet, label: 'Export rapports & Excel',         color: '#e53935' },
+//                 ].map((feature, i) => (
+//                   <div key={i} className="flex items-center gap-2 py-1.5 px-3 rounded-xl bg-white border border-[#e8e8e8] transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
+//                     <feature.icon size={12} style={{ color: feature.color }} />
+//                     <span className="text-[0.65rem] text-[#555555]">{feature.label}</span>
+//                   </div>
+//                 ))}
+//               </div>
+//             </div>
+
+//             {/* Role hint */}
+//             <div className="mt-5 text-center">
+//               <p className="text-[0.54rem] text-[#aaaaaa]">
+//                 <Shield size={12} className="inline mr-1" />
+//                 Inscription réservée aux sociétés
+//               </p>
+//             </div>
+//           </div>
+
+//         </div>
+//       </div>
+
+//       <style>{`
+//         @keyframes float-slow {
+//           0%, 100% { transform: translate(0, 0) scale(1); }
+//           33% { transform: translate(25px, -15px) scale(1.05); }
+//           66% { transform: translate(-15px, 10px) scale(0.95); }
+//         }
+//         @keyframes float-reverse {
+//           0%, 100% { transform: translate(0, 0) scale(1); }
+//           33% { transform: translate(-20px, 15px) scale(1.05); }
+//           66% { transform: translate(15px, -10px) scale(0.95); }
+//         }
+//         @keyframes pulse-slow {
+//           0%, 100% { opacity: 0.3; transform: scale(1); }
+//           50% { opacity: 0.5; transform: scale(1.05); }
+//         }
+//         @keyframes spin-slow {
+//           from { transform: rotate(0deg); }
+//           to { transform: rotate(360deg); }
+//         }
+//         @keyframes spin-reverse-slow {
+//           from { transform: rotate(360deg); }
+//           to { transform: rotate(0deg); }
+//         }
+//         .animate-float-slow {
+//           animation: float-slow 20s ease-in-out infinite;
+//         }
+//         .animate-float-reverse {
+//           animation: float-reverse 25s ease-in-out infinite;
+//         }
+//         .animate-pulse-slow {
+//           animation: pulse-slow 8s ease-in-out infinite;
+//         }
+//         .animate-spin-slow {
+//           animation: spin-slow 20s linear infinite;
+//         }
+//         .animate-spin-reverse-slow {
+//           animation: spin-reverse-slow 25s linear infinite;
+//         }
+//       `}</style>
+//     </div>
+//   );
+// }
+
+// export default SignupPage;
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import logo from '../images/logo.png';
+import axios from 'axios';
 import {
-  Eye,
-  EyeOff,
-  Mail,
-  Lock,
-  UserPlus,
-  Database,
-  Building2,
-  User,
-  Check,
-  X,
-  TrendingUp,
-  PackageSearch,
-  BrainCircuit,
-  MessageCircle,
-  Shield,
-  FileSpreadsheet,
+  Eye, EyeOff, Mail, Lock, UserPlus, Database,
+  User, Check, X, TrendingUp, PackageSearch,
+  BrainCircuit, FileSpreadsheet, Phone, Briefcase,
+  AlertCircle, CheckCircle2, Loader2,
 } from 'lucide-react';
 
+const API = 'http://localhost:5000';
+
 function SignupPage() {
-  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+
+  const [showPassword,        setShowPassword]        = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    company: '',
-    password: '',
+    prenom:          '',
+    nom:             '',
+    email:           '',
+    telephone:       '',
+    poste:           '',
+    password:        '',
     confirmPassword: '',
   });
-  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreeTerms,  setAgreeTerms]  = useState(false);
+  const [submitting,  setSubmitting]  = useState(false);
+  const [error,       setError]       = useState(null);
+  const [success,     setSuccess]     = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  // Email : domaine avec extension reconnue (pas .si, .ab, .x...)
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.(com|fr|net|org|ma|io|co|eu|be|ca|uk|de|es|it|nl|ch|tn|dz|sn|ci|cm|info|biz|edu|gov|pro)$/i.test(formData.email);
+
+  // Téléphone : exactement 10 chiffres (espaces/tirets ignorés lors du test)
+  const phoneDigits     = formData.telephone.replace(/[\s\-\.]/g, '');
+  const isPhoneValid    = formData.telephone === '' || /^\d{10}$/.test(phoneDigits);
+
+  const isPasswordValid  = formData.password.length >= 6;
+  const doPasswordsMatch = formData.password === formData.confirmPassword;
+  const isFormValid      = formData.prenom && formData.nom && isEmailValid
+                        && isPhoneValid && isPasswordValid && doPasswordsMatch && agreeTerms;
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Signup attempt:', formData);
+    if (!isFormValid) return;
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      await axios.post(`${API}/api/auth/register`, {
+        nom:       formData.nom,
+        prenom:    formData.prenom,
+        email:     formData.email,
+        password:  formData.password,
+        telephone: formData.telephone || undefined,
+        poste:     formData.poste || undefined,
+      });
+      setSuccess(true);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Erreur lors de l\'inscription.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
-  const isPasswordValid = formData.password.length >= 8;
-  const doPasswordsMatch = formData.password === formData.confirmPassword;
-  const isFormValid =
-    formData.firstName &&
-    formData.lastName &&
-    isEmailValid &&
-    formData.company &&
-    isPasswordValid &&
-    doPasswordsMatch &&
-    agreeTerms;
+  // ── Écran de succès ───────────────────────────────────────
+  if (success) {
+    return (
+      <div className="min-h-screen w-full relative flex items-center justify-center p-4">
+        <div className="fixed inset-0 w-screen h-screen bg-gradient-to-br from-[#e0f2fe] via-[#f0f9ff] to-[#eef2ff]" />
+        <div className="fixed inset-0 w-full h-full pointer-events-none" style={{ backgroundImage: `radial-gradient(circle at 1px 1px, rgba(18,166,224,0.12) 1px, transparent 1px)`, backgroundSize: '30px 30px' }} />
+
+        <div className="relative z-10 bg-white/95 backdrop-blur-sm rounded-3xl border border-white/50 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] p-12 max-w-[480px] w-full text-center">
+          <div className="w-16 h-16 rounded-2xl bg-[rgba(1,168,46,0.1)] flex items-center justify-center mx-auto mb-5">
+            <CheckCircle2 size={32} className="text-[#01a82e]" />
+          </div>
+          <h2 className="text-[1.2rem] font-bold text-[#0d0c0c] mb-2">Inscription envoyée !</h2>
+          <p className="text-[0.8rem] text-[#666] leading-relaxed mb-2">
+            Votre demande a bien été reçue.
+          </p>
+          <div className="bg-[rgba(245,158,11,0.06)] border border-[rgba(245,158,11,0.25)] rounded-xl px-4 py-3 mb-6">
+            <p className="text-[0.78rem] text-[#854f0b] leading-relaxed">
+              ⏳ Un administrateur doit valider votre compte avant que vous puissiez vous connecter. Vous serez notifié dès validation.
+            </p>
+          </div>
+          <button onClick={() => navigate('/login')}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-[#12a6e0] to-[#0d8fc4] text-white text-[0.8rem] font-semibold shadow-md shadow-[rgba(18,166,224,0.25)] transition-all hover:shadow-lg hover:scale-[1.02]">
+            Retour à la connexion
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full relative flex items-center justify-center p-4">
 
-      {/* ARRIÈRE-PLAN */}
+      {/* ── Arrière-plan ── */}
       <div className="fixed inset-0 w-screen h-screen bg-gradient-to-br from-[#e0f2fe] via-[#f0f9ff] to-[#eef2ff]" />
 
-      {/* Vagues animées haut */}
       <div className="fixed top-0 left-0 right-0 w-full h-48 opacity-20 pointer-events-none">
         <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 320">
           <path fill="#12a6e0" fillOpacity="0.4" d="M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,176C672,171,768,181,864,197.3C960,213,1056,235,1152,234.7C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z">
-            <animate attributeName="d" dur="8s" repeatCount="indefinite" values="
-              M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,176C672,171,768,181,864,197.3C960,213,1056,235,1152,234.7C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z;
-              M0,160L48,165.3C96,171,192,181,288,186.7C384,192,480,192,576,186.7C672,181,768,171,864,165.3C960,160,1056,160,1152,165.3C1248,171,1344,181,1392,186.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z;
-              M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,176C672,171,768,181,864,197.3C960,213,1056,235,1152,234.7C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z
-            " />
+            <animate attributeName="d" dur="8s" repeatCount="indefinite" values="M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,176C672,171,768,181,864,197.3C960,213,1056,235,1152,234.7C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z;M0,160L48,165.3C96,171,192,181,288,186.7C384,192,480,192,576,186.7C672,181,768,171,864,165.3C960,160,1056,160,1152,165.3C1248,171,1344,181,1392,186.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z;M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,176C672,171,768,181,864,197.3C960,213,1056,235,1152,234.7C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z" />
           </path>
         </svg>
       </div>
 
-      {/* Vagues animées bas */}
       <div className="fixed bottom-0 left-0 right-0 w-full h-48 opacity-20 pointer-events-none">
         <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 320">
           <path fill="#01d63a" fillOpacity="0.4" d="M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,176C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
-            <animate attributeName="d" dur="10s" repeatCount="indefinite" values="
-              M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,176C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
-              M0,224L48,218.7C96,213,192,203,288,208C384,213,480,235,576,245.3C672,256,768,256,864,245.3C960,235,1056,213,1152,197.3C1248,181,1344,171,1392,165.3L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
-              M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,176C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z
-            " />
+            <animate attributeName="d" dur="10s" repeatCount="indefinite" values="M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,176C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;M0,224L48,218.7C96,213,192,203,288,208C384,213,480,235,576,245.3C672,256,768,256,864,245.3C960,235,1056,213,1152,197.3C1248,181,1344,171,1392,165.3L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,176C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
           </path>
         </svg>
       </div>
 
-      {/* Cercles flottants */}
       <div className="fixed top-10 left-10 w-80 h-80 bg-[#12a6e0]/10 rounded-full blur-3xl animate-float-slow" />
       <div className="fixed bottom-10 right-10 w-80 h-80 bg-[#01d63a]/10 rounded-full blur-3xl animate-float-reverse" />
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#7c4dff]/5 rounded-full blur-3xl animate-pulse-slow" />
+      <div className="fixed inset-0 w-full h-full pointer-events-none" style={{ backgroundImage: `radial-gradient(circle at 1px 1px, rgba(18,166,224,0.12) 1px, transparent 1px)`, backgroundSize: '30px 30px' }} />
 
-      {/* Grille de points */}
-      <div className="fixed inset-0 w-full h-full pointer-events-none" style={{
-        backgroundImage: `radial-gradient(circle at 1px 1px, rgba(18,166,224,0.12) 1px, transparent 1px)`,
-        backgroundSize: '30px 30px',
-      }} />
-
-      {/* Carte blanche centrée */}
+      {/* ── Carte ── */}
       <div className="relative w-full max-w-[1100px] my-8 bg-white/95 backdrop-blur-sm rounded-3xl border border-white/50 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] overflow-hidden z-10">
-
         <div className="flex flex-col md:flex-row">
 
-          {/* ─── COLONNE GAUCHE : FORMULAIRE ─── */}
+          {/* ── Colonne gauche : formulaire ── */}
           <div className="flex-1 p-6 md:p-8 border-b md:border-b-0 md:border-r border-[#e8e8e8]">
-            {/* Logo / Brand */}
+
+            {/* Brand */}
             <div className="text-center mb-4">
-              {/* <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-[#12a6e0] to-[#0d8fc4] shadow-lg shadow-[rgba(18,166,224,0.25)] mb-3">
-                <Database size={24} className="text-white" />
-              </div> */}
               <h1 className="text-[#0d0c0c] text-[1.3rem] font-bold tracking-tight">
                 Stock<span className="text-[#12a6e0]">Analytics</span>
               </h1>
-              <p className="text-[#888888] text-[0.7rem] mt-0.5">
-                Créez votre espace d'analyse
-              </p>
+              <p className="text-[#888888] text-[0.7rem] mt-0.5">Créez votre espace d'analyse</p>
             </div>
 
             {/* Header */}
             <div className="mb-4">
               <div className="flex items-center gap-2 mb-0.5">
                 <UserPlus size={14} className="text-[#12a6e0]" />
-                <span className="text-[#0d0c0c] text-[0.65rem] font-semibold uppercase tracking-[0.08em]">
-                  Inscription Société
-                </span>
+                <span className="text-[#0d0c0c] text-[0.65rem] font-semibold uppercase tracking-[0.08em]">Inscription Employé</span>
               </div>
-              <p className="text-[#aaaaaa] text-[0.65rem]">
-                Remplissez le formulaire pour créer votre compte
-              </p>
+              <p className="text-[#aaaaaa] text-[0.65rem]">Remplissez le formulaire pour créer votre compte</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
-              {/* Name row */}
+
+              {/* Prénom + Nom */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-0.5">
-                  <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
-                    <User size={9} />
-                    Prénom
-                  </label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    placeholder="Jean"
-                    className="w-full px-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all duration-200 focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]"
-                    required
-                  />
-                </div>
-                <div className="space-y-0.5">
-                  <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
-                    <User size={9} />
-                    Nom
-                  </label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    placeholder="Dupont"
-                    className="w-full px-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all duration-200 focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]"
-                    required
-                  />
-                </div>
+                {[
+                  { label: 'Prénom', name: 'prenom', placeholder: 'Jean',   icon: User },
+                  { label: 'Nom',    name: 'nom',    placeholder: 'Dupont', icon: User },
+                ].map(({ label, name, placeholder, icon: Icon }) => (
+                  <div key={name} className="space-y-0.5">
+                    <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+                      <Icon size={9} /> {label}
+                    </label>
+                    <input type="text" name={name} value={formData[name]} onChange={handleChange}
+                      placeholder={placeholder} required
+                      className="w-full px-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]" />
+                  </div>
+                ))}
               </div>
 
               {/* Email */}
               <div className="space-y-0.5">
                 <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
-                  <Mail size={9} />
-                  Email professionnel
+                  <Mail size={9} /> Email professionnel
                 </label>
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]">
-                    <Mail size={13} />
-                  </div>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="jean.dupont@entreprise.com"
-                    className={`w-full pl-9 pr-8 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all duration-200 placeholder:text-[#c5c5c5] ${
-                      formData.email && !isEmailValid
-                        ? 'border-[#e53935] focus:border-[#e53935]'
-                        : formData.email && isEmailValid
-                        ? 'border-[#01a82e] focus:border-[#01a82e]'
-                        : 'border-[#e0e0e0] focus:border-[#12a6e0]'
-                    }`}
-                    required
-                  />
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]"><Mail size={13} /></div>
+                  <input type="email" name="email" value={formData.email} onChange={handleChange}
+                    placeholder="jean.dupont@entreprise.com" required
+                    className={`w-full pl-9 pr-8 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all placeholder:text-[#c5c5c5] ${
+                      formData.email && !isEmailValid ? 'border-[#e53935]' : formData.email && isEmailValid ? 'border-[#01a82e]' : 'border-[#e0e0e0] focus:border-[#12a6e0]'
+                    }`} />
                   {formData.email && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      {isEmailValid ? (
-                        <Check size={13} className="text-[#01a82e]" />
-                      ) : (
-                        <X size={13} className="text-[#e53935]" />
-                      )}
+                      {isEmailValid ? <Check size={13} className="text-[#01a82e]" /> : <X size={13} className="text-[#e53935]" />}
                     </div>
+                  )}
+                  {formData.email && !isEmailValid && (
+                    <p className="text-[0.55rem] text-[#e53935] mt-0.5">✗ Email invalide — utilisez un domaine reconnu (.com, .fr, .ma, .net…)</p>
                   )}
                 </div>
               </div>
 
-              {/* Company */}
-              <div className="space-y-0.5">
-                <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
-                  <Building2 size={9} />
-                  Nom de la société
-                </label>
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]">
-                    <Building2 size={13} />
+              {/* Téléphone + Poste */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-0.5">
+                  <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+                    <Phone size={9} /> Téléphone
+                  </label>
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]"><Phone size={12} /></div>
+                    <input type="tel" name="telephone" value={formData.telephone} onChange={handleChange}
+                      placeholder="06 00 00 00 00"
+                      className={`w-full pl-8 pr-3 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all placeholder:text-[#c5c5c5] ${
+                        formData.telephone && !isPhoneValid ? 'border-[#e53935]' : 'border-[#e0e0e0] focus:border-[#12a6e0]'
+                      }`} />
                   </div>
-                  <input
-                    type="text"
-                    name="company"
-                    value={formData.company}
-                    onChange={handleChange}
-                    placeholder="Ma Société SAS"
-                    className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all duration-200 focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]"
-                    required
-                  />
+                  {formData.telephone && !isPhoneValid && (
+                    <p className="text-[0.55rem] text-[#e53935] mt-0.5">✗ Le téléphone doit contenir exactement 10 chiffres</p>
+                  )}
+                </div>
+                <div className="space-y-0.5">
+                  <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+                    <Briefcase size={9} /> Poste / Fonction
+                  </label>
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]"><Briefcase size={12} /></div>
+                    <input type="text" name="poste" value={formData.poste} onChange={handleChange}
+                      placeholder="ex : Magasinier"
+                      className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]" />
+                  </div>
                 </div>
               </div>
 
-              {/* Password */}
+              {/* Mot de passe */}
               <div className="space-y-0.5">
                 <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
-                  <Lock size={9} />
-                  Mot de passe
+                  <Lock size={9} /> Mot de passe
                 </label>
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]">
-                    <Lock size={13} />
-                  </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="••••••••"
-                    className={`w-full pl-9 pr-9 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all duration-200 placeholder:text-[#c5c5c5] ${
-                      formData.password && !isPasswordValid
-                        ? 'border-[#e53935] focus:border-[#e53935]'
-                        : formData.password && isPasswordValid
-                        ? 'border-[#01a82e] focus:border-[#01a82e]'
-                        : 'border-[#e0e0e0] focus:border-[#12a6e0]'
-                    }`}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c5c5c5] hover:text-[#888888] transition-colors"
-                  >
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]"><Lock size={13} /></div>
+                  <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange}
+                    placeholder="••••••••" required
+                    className={`w-full pl-9 pr-9 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all placeholder:text-[#c5c5c5] ${
+                      formData.password && !isPasswordValid ? 'border-[#e53935]' : formData.password && isPasswordValid ? 'border-[#01a82e]' : 'border-[#e0e0e0] focus:border-[#12a6e0]'
+                    }`} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c5c5c5] hover:text-[#888888] transition-colors">
                     {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
                   </button>
                 </div>
                 <p className="text-[0.55rem] text-[#aaaaaa] mt-0.5">
                   {formData.password ? (
-                    isPasswordValid ? (
-                      <span className="text-[#01a82e]">✓ Mot de passe valide (8+ caractères)</span>
-                    ) : (
-                      <span className="text-[#e53935]">✗ Minimum 8 caractères</span>
-                    )
-                  ) : (
-                    'Minimum 8 caractères'
-                  )}
+                    isPasswordValid
+                      ? <span className="text-[#01a82e]">✓ Mot de passe valide</span>
+                      : <span className="text-[#e53935]">✗ Minimum 6 caractères</span>
+                  ) : 'Minimum 6 caractères'}
                 </p>
               </div>
 
-              {/* Confirm Password */}
+              {/* Confirmer mot de passe */}
               <div className="space-y-0.5">
                 <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
-                  <Lock size={9} />
-                  Confirmer le mot de passe
+                  <Lock size={9} /> Confirmer le mot de passe
                 </label>
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]">
-                    <Lock size={13} />
-                  </div>
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="••••••••"
-                    className={`w-full pl-9 pr-9 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all duration-200 placeholder:text-[#c5c5c5] ${
-                      formData.confirmPassword && !doPasswordsMatch
-                        ? 'border-[#e53935] focus:border-[#e53935]'
-                        : formData.confirmPassword && doPasswordsMatch
-                        ? 'border-[#01a82e] focus:border-[#01a82e]'
-                        : 'border-[#e0e0e0] focus:border-[#12a6e0]'
-                    }`}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c5c5c5] hover:text-[#888888] transition-colors"
-                  >
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]"><Lock size={13} /></div>
+                  <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
+                    placeholder="••••••••" required
+                    className={`w-full pl-9 pr-9 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all placeholder:text-[#c5c5c5] ${
+                      formData.confirmPassword && !doPasswordsMatch ? 'border-[#e53935]' : formData.confirmPassword && doPasswordsMatch ? 'border-[#01a82e]' : 'border-[#e0e0e0] focus:border-[#12a6e0]'
+                    }`} />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c5c5c5] hover:text-[#888888] transition-colors">
                     {showConfirmPassword ? <EyeOff size={13} /> : <Eye size={13} />}
                   </button>
                 </div>
@@ -308,16 +722,11 @@ function SignupPage() {
                 )}
               </div>
 
-              {/* Terms */}
+              {/* CGU */}
               <label className="flex items-center gap-2 cursor-pointer group pt-0.5">
                 <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="peer sr-only"
-                  />
-                  <div className="w-3.5 h-3.5 rounded border border-[#c5c5c5] bg-white transition-all duration-150 peer-checked:bg-[#12a6e0] peer-checked:border-[#12a6e0] peer-focus:ring-2 peer-focus:ring-[rgba(18,166,224,0.2)]">
+                  <input type="checkbox" checked={agreeTerms} onChange={e => setAgreeTerms(e.target.checked)} className="peer sr-only" />
+                  <div className="w-3.5 h-3.5 rounded border border-[#c5c5c5] bg-white transition-all peer-checked:bg-[#12a6e0] peer-checked:border-[#12a6e0]">
                     {agreeTerms && (
                       <svg className="w-2.5 h-2.5 text-white m-[2px]" viewBox="0 0 12 12" fill="none">
                         <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -326,80 +735,60 @@ function SignupPage() {
                   </div>
                 </div>
                 <span className="text-[0.6rem] text-[#888888] group-hover:text-[#0d0c0c] transition-colors">
-                  J'accepte les{' '}
-                  <button type="button" className="text-[#12a6e0] hover:text-[#0d8fc4] font-medium">
-                    conditions
-                  </button>
-                  {' '}et la{' '}
-                  <button type="button" className="text-[#12a6e0] hover:text-[#0d8fc4] font-medium">
-                    politique
-                  </button>
+                  J'accepte les <button type="button" className="text-[#12a6e0] hover:text-[#0d8fc4] font-medium">conditions</button> et la <button type="button" className="text-[#12a6e0] hover:text-[#0d8fc4] font-medium">politique</button>
                 </span>
               </label>
 
-              {/* Submit button */}
-              <button
-                type="submit"
-                disabled={!isFormValid}
+              {/* Erreur */}
+              {error && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-[12px] bg-[rgba(229,57,53,0.05)] border border-[rgba(229,57,53,0.2)] text-[#c62828]">
+                  <AlertCircle size={14} className="shrink-0" /> {error}
+                </div>
+              )}
+
+              {/* Submit */}
+              <button type="submit" disabled={!isFormValid || submitting}
                 className={`w-full flex items-center justify-center gap-2 py-1.5 rounded-xl text-[0.7rem] font-semibold transition-all duration-200 ${
-                  isFormValid
+                  isFormValid && !submitting
                     ? 'bg-gradient-to-r from-[#12a6e0] to-[#0d8fc4] text-white shadow-md shadow-[rgba(18,166,224,0.25)] hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]'
                     : 'bg-[#e8f6fd] text-[#92cfe8] cursor-not-allowed'
-                }`}
-              >
-                <UserPlus size={13} />
-                Créer mon compte société
+                }`}>
+                {submitting ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
+                {submitting ? 'Envoi en cours…' : 'Créer mon compte'}
               </button>
 
-              {/* Login link */}
+              {/* Lien connexion */}
               <p className="text-center text-[0.6rem] text-[#aaaaaa] pt-0.5">
                 Déjà un compte ?{' '}
-                <Link to="/login" className="text-[#12a6e0] font-semibold hover:text-[#0d8fc4] transition-colors">
-                  Se connecter
-                </Link>
+                <Link to="/login" className="text-[#12a6e0] font-semibold hover:text-[#0d8fc4] transition-colors">Se connecter</Link>
               </p>
             </form>
           </div>
 
-          {/* ─── COLONNE DROITE : IMAGE 3D + FEATURES ─── */}
+          {/* ── Colonne droite : features ── */}
           <div className="flex-1 bg-gradient-to-br from-[#ffffff] to-[#fafcff] p-6 md:p-10 flex flex-col justify-center items-center">
-
-            {/* Image 3D */}
             <div className="relative w-full max-w-[280px] mb-6 flex items-center justify-center">
-              <img
-                src={logo}
-                alt="Imrasoft - Intégrateur des Solutions SAGE"
-                className="w-full object-contain drop-shadow-md"
-              />
+              <img src={logo} alt="Imrasoft" className="w-full object-contain drop-shadow-md" />
             </div>
-            {/* Features grid */}
             <div className="w-full">
-              <p className="text-[#0d0c0c] text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-center mb-3">
-                Fonctionnalités
-              </p>
+              <p className="text-[#0d0c0c] text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-center mb-3">Fonctionnalités</p>
               <div className="grid grid-cols-1 gap-1.5">
                 {[
-                  { icon: TrendingUp, label: 'Analyse des mouvements de stock', color: '#12a6e0' },
-                  { icon: PackageSearch, label: 'Suivi des mouvements', color: '#01a82e' },
-                  { icon: Database, label: 'Multi-bases SAGE', color: '#12a6e0' },
-                  { icon: BrainCircuit, label: 'Prévisions IA (7j/14j/30j)', color: '#7c4dff' },
-                  // { icon: MessageCircle, label: 'Assistant IA chatbot', color: '#e53935' },
-                  { icon: FileSpreadsheet, label: 'Export rapports & Excel',         color: '#e53935' },
-                ].map((feature, i) => (
-                  <div key={i} className="flex items-center gap-2 py-1.5 px-3 rounded-xl bg-white border border-[#e8e8e8] transition-all duration-300 hover:scale-[1.02] hover:shadow-md">
-                    <feature.icon size={12} style={{ color: feature.color }} />
-                    <span className="text-[0.65rem] text-[#555555]">{feature.label}</span>
+                  { icon: TrendingUp,     label: 'Analyse des mouvements de stock', color: '#12a6e0' },
+                  { icon: PackageSearch,  label: 'Suivi des mouvements',            color: '#01a82e' },
+                  { icon: Database,       label: 'Multi-bases SAGE',                color: '#12a6e0' },
+                  { icon: BrainCircuit,   label: 'Prévisions IA (7j/14j/30j)',      color: '#7c4dff' },
+                  { icon: FileSpreadsheet,label: 'Export rapports & Excel',          color: '#e53935' },
+                ].map((f, i) => (
+                  <div key={i} className="flex items-center gap-2 py-1.5 px-3 rounded-xl bg-white border border-[#e8e8e8] transition-all hover:scale-[1.02] hover:shadow-md">
+                    <f.icon size={12} style={{ color: f.color }} />
+                    <span className="text-[0.65rem] text-[#555555]">{f.label}</span>
                   </div>
                 ))}
               </div>
             </div>
-
-            {/* Role hint */}
             <div className="mt-5 text-center">
-              <p className="text-[0.54rem] text-[#aaaaaa]">
-                <Shield size={12} className="inline mr-1" />
-                Inscription réservée aux sociétés
-              </p>
+              <p className="text-[0.54rem] text-[#aaaaaa]">Inscription réservée aux employés — un admin validera votre compte</p>
             </div>
           </div>
 
@@ -407,46 +796,362 @@ function SignupPage() {
       </div>
 
       <style>{`
-        @keyframes float-slow {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(25px, -15px) scale(1.05); }
-          66% { transform: translate(-15px, 10px) scale(0.95); }
-        }
-        @keyframes float-reverse {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(-20px, 15px) scale(1.05); }
-          66% { transform: translate(15px, -10px) scale(0.95); }
-        }
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.3; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.05); }
-        }
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes spin-reverse-slow {
-          from { transform: rotate(360deg); }
-          to { transform: rotate(0deg); }
-        }
-        .animate-float-slow {
-          animation: float-slow 20s ease-in-out infinite;
-        }
-        .animate-float-reverse {
-          animation: float-reverse 25s ease-in-out infinite;
-        }
-        .animate-pulse-slow {
-          animation: pulse-slow 8s ease-in-out infinite;
-        }
-        .animate-spin-slow {
-          animation: spin-slow 20s linear infinite;
-        }
-        .animate-spin-reverse-slow {
-          animation: spin-reverse-slow 25s linear infinite;
-        }
+        @keyframes float-slow { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(25px,-15px) scale(1.05);} 66%{transform:translate(-15px,10px) scale(0.95);} }
+        @keyframes float-reverse { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(-20px,15px) scale(1.05);} 66%{transform:translate(15px,-10px) scale(0.95);} }
+        @keyframes pulse-slow { 0%,100%{opacity:0.3;transform:scale(1);} 50%{opacity:0.5;transform:scale(1.05);} }
+        .animate-float-slow { animation: float-slow 20s ease-in-out infinite; }
+        .animate-float-reverse { animation: float-reverse 25s ease-in-out infinite; }
+        .animate-pulse-slow { animation: pulse-slow 8s ease-in-out infinite; }
       `}</style>
     </div>
   );
 }
 
 export default SignupPage;
+
+
+
+// import React, { useState } from 'react';
+// import { Link, useNavigate } from 'react-router-dom';
+// import logo from '../images/logo.png';
+// import axios from 'axios';
+// import {
+//   Eye, EyeOff, Mail, Lock, UserPlus, Database,
+//   User, Check, X, TrendingUp, PackageSearch,
+//   BrainCircuit, FileSpreadsheet, Phone, Briefcase,
+//   AlertCircle, CheckCircle2, Loader2,
+// } from 'lucide-react';
+
+// const API = 'http://localhost:5000';
+
+// function SignupPage() {
+//   const navigate = useNavigate();
+
+//   const [showPassword,        setShowPassword]        = useState(false);
+//   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+//   const [formData, setFormData] = useState({
+//     prenom:          '',
+//     nom:             '',
+//     email:           '',
+//     telephone:       '',
+//     poste:           '',
+//     password:        '',
+//     confirmPassword: '',
+//   });
+//   const [agreeTerms,  setAgreeTerms]  = useState(false);
+//   const [submitting,  setSubmitting]  = useState(false);
+//   const [error,       setError]       = useState(null);
+//   const [success,     setSuccess]     = useState(false);
+
+//   const handleChange = (e) => {
+//     setFormData({ ...formData, [e.target.name]: e.target.value });
+//   };
+
+//   const isEmailValid      = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+//   const isPasswordValid   = formData.password.length >= 6;
+//   const doPasswordsMatch  = formData.password === formData.confirmPassword;
+//   const isFormValid       = formData.prenom && formData.nom && isEmailValid
+//                          && isPasswordValid && doPasswordsMatch && agreeTerms;
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     if (!isFormValid) return;
+
+//     setSubmitting(true);
+//     setError(null);
+//     try {
+//       await axios.post(`${API}/api/auth/register`, {
+//         nom:       formData.nom,
+//         prenom:    formData.prenom,
+//         email:     formData.email,
+//         password:  formData.password,
+//         telephone: formData.telephone || undefined,
+//         poste:     formData.poste || undefined,
+//       });
+//       setSuccess(true);
+//     } catch (err) {
+//       setError(err.response?.data?.error || 'Erreur lors de l\'inscription.');
+//     } finally {
+//       setSubmitting(false);
+//     }
+//   };
+
+//   // ── Écran de succès ───────────────────────────────────────
+//   if (success) {
+//     return (
+//       <div className="min-h-screen w-full relative flex items-center justify-center p-4">
+//         <div className="fixed inset-0 w-screen h-screen bg-gradient-to-br from-[#e0f2fe] via-[#f0f9ff] to-[#eef2ff]" />
+//         <div className="fixed inset-0 w-full h-full pointer-events-none" style={{ backgroundImage: `radial-gradient(circle at 1px 1px, rgba(18,166,224,0.12) 1px, transparent 1px)`, backgroundSize: '30px 30px' }} />
+
+//         <div className="relative z-10 bg-white/95 backdrop-blur-sm rounded-3xl border border-white/50 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] p-12 max-w-[480px] w-full text-center">
+//           <div className="w-16 h-16 rounded-2xl bg-[rgba(1,168,46,0.1)] flex items-center justify-center mx-auto mb-5">
+//             <CheckCircle2 size={32} className="text-[#01a82e]" />
+//           </div>
+//           <h2 className="text-[1.2rem] font-bold text-[#0d0c0c] mb-2">Inscription envoyée !</h2>
+//           <p className="text-[0.8rem] text-[#666] leading-relaxed mb-2">
+//             Votre demande a bien été reçue.
+//           </p>
+//           <div className="bg-[rgba(245,158,11,0.06)] border border-[rgba(245,158,11,0.25)] rounded-xl px-4 py-3 mb-6">
+//             <p className="text-[0.78rem] text-[#854f0b] leading-relaxed">
+//               ⏳ Un administrateur doit valider votre compte avant que vous puissiez vous connecter. Vous serez notifié dès validation.
+//             </p>
+//           </div>
+//           <button onClick={() => navigate('/login')}
+//             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-[#12a6e0] to-[#0d8fc4] text-white text-[0.8rem] font-semibold shadow-md shadow-[rgba(18,166,224,0.25)] transition-all hover:shadow-lg hover:scale-[1.02]">
+//             Retour à la connexion
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="min-h-screen w-full relative flex items-center justify-center p-4">
+
+//       {/* ── Arrière-plan ── */}
+//       <div className="fixed inset-0 w-screen h-screen bg-gradient-to-br from-[#e0f2fe] via-[#f0f9ff] to-[#eef2ff]" />
+
+//       <div className="fixed top-0 left-0 right-0 w-full h-48 opacity-20 pointer-events-none">
+//         <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 320">
+//           <path fill="#12a6e0" fillOpacity="0.4" d="M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,176C672,171,768,181,864,197.3C960,213,1056,235,1152,234.7C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z">
+//             <animate attributeName="d" dur="8s" repeatCount="indefinite" values="M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,176C672,171,768,181,864,197.3C960,213,1056,235,1152,234.7C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z;M0,160L48,165.3C96,171,192,181,288,186.7C384,192,480,192,576,186.7C672,181,768,171,864,165.3C960,160,1056,160,1152,165.3C1248,171,1344,181,1392,186.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z;M0,192L48,197.3C96,203,192,213,288,208C384,203,480,181,576,176C672,171,768,181,864,197.3C960,213,1056,235,1152,234.7C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z" />
+//           </path>
+//         </svg>
+//       </div>
+
+//       <div className="fixed bottom-0 left-0 right-0 w-full h-48 opacity-20 pointer-events-none">
+//         <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 320">
+//           <path fill="#01d63a" fillOpacity="0.4" d="M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,176C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+//             <animate attributeName="d" dur="10s" repeatCount="indefinite" values="M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,176C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;M0,224L48,218.7C96,213,192,203,288,208C384,213,480,235,576,245.3C672,256,768,256,864,245.3C960,235,1056,213,1152,197.3C1248,181,1344,171,1392,165.3L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,176C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+//           </path>
+//         </svg>
+//       </div>
+
+//       <div className="fixed top-10 left-10 w-80 h-80 bg-[#12a6e0]/10 rounded-full blur-3xl animate-float-slow" />
+//       <div className="fixed bottom-10 right-10 w-80 h-80 bg-[#01d63a]/10 rounded-full blur-3xl animate-float-reverse" />
+//       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#7c4dff]/5 rounded-full blur-3xl animate-pulse-slow" />
+//       <div className="fixed inset-0 w-full h-full pointer-events-none" style={{ backgroundImage: `radial-gradient(circle at 1px 1px, rgba(18,166,224,0.12) 1px, transparent 1px)`, backgroundSize: '30px 30px' }} />
+
+//       {/* ── Carte ── */}
+//       <div className="relative w-full max-w-[1100px] my-8 bg-white/95 backdrop-blur-sm rounded-3xl border border-white/50 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] overflow-hidden z-10">
+//         <div className="flex flex-col md:flex-row">
+
+//           {/* ── Colonne gauche : formulaire ── */}
+//           <div className="flex-1 p-6 md:p-8 border-b md:border-b-0 md:border-r border-[#e8e8e8]">
+
+//             {/* Brand */}
+//             <div className="text-center mb-4">
+//               <h1 className="text-[#0d0c0c] text-[1.3rem] font-bold tracking-tight">
+//                 Stock<span className="text-[#12a6e0]">Analytics</span>
+//               </h1>
+//               <p className="text-[#888888] text-[0.7rem] mt-0.5">Créez votre espace d'analyse</p>
+//             </div>
+
+//             {/* Header */}
+//             <div className="mb-4">
+//               <div className="flex items-center gap-2 mb-0.5">
+//                 <UserPlus size={14} className="text-[#12a6e0]" />
+//                 <span className="text-[#0d0c0c] text-[0.65rem] font-semibold uppercase tracking-[0.08em]">Inscription Employé</span>
+//               </div>
+//               <p className="text-[#aaaaaa] text-[0.65rem]">Remplissez le formulaire pour créer votre compte</p>
+//             </div>
+
+//             <form onSubmit={handleSubmit} className="space-y-3">
+
+//               {/* Prénom + Nom */}
+//               <div className="grid grid-cols-2 gap-3">
+//                 {[
+//                   { label: 'Prénom', name: 'prenom', placeholder: 'Jean',   icon: User },
+//                   { label: 'Nom',    name: 'nom',    placeholder: 'Dupont', icon: User },
+//                 ].map(({ label, name, placeholder, icon: Icon }) => (
+//                   <div key={name} className="space-y-0.5">
+//                     <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+//                       <Icon size={9} /> {label}
+//                     </label>
+//                     <input type="text" name={name} value={formData[name]} onChange={handleChange}
+//                       placeholder={placeholder} required
+//                       className="w-full px-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]" />
+//                   </div>
+//                 ))}
+//               </div>
+
+//               {/* Email */}
+//               <div className="space-y-0.5">
+//                 <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+//                   <Mail size={9} /> Email professionnel
+//                 </label>
+//                 <div className="relative">
+//                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]"><Mail size={13} /></div>
+//                   <input type="email" name="email" value={formData.email} onChange={handleChange}
+//                     placeholder="jean.dupont@entreprise.com" required
+//                     className={`w-full pl-9 pr-8 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all placeholder:text-[#c5c5c5] ${
+//                       formData.email && !isEmailValid ? 'border-[#e53935]' : formData.email && isEmailValid ? 'border-[#01a82e]' : 'border-[#e0e0e0] focus:border-[#12a6e0]'
+//                     }`} />
+//                   {formData.email && (
+//                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
+//                       {isEmailValid ? <Check size={13} className="text-[#01a82e]" /> : <X size={13} className="text-[#e53935]" />}
+//                     </div>
+//                   )}
+//                 </div>
+//               </div>
+
+//               {/* Téléphone + Poste */}
+//               <div className="grid grid-cols-2 gap-3">
+//                 <div className="space-y-0.5">
+//                   <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+//                     <Phone size={9} /> Téléphone
+//                   </label>
+//                   <div className="relative">
+//                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]"><Phone size={12} /></div>
+//                     <input type="tel" name="telephone" value={formData.telephone} onChange={handleChange}
+//                       placeholder="06 00 00 00 00"
+//                       className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]" />
+//                   </div>
+//                 </div>
+//                 <div className="space-y-0.5">
+//                   <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+//                     <Briefcase size={9} /> Poste / Fonction
+//                   </label>
+//                   <div className="relative">
+//                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]"><Briefcase size={12} /></div>
+//                     <input type="text" name="poste" value={formData.poste} onChange={handleChange}
+//                       placeholder="ex : Magasinier"
+//                       className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]" />
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* Mot de passe */}
+//               <div className="space-y-0.5">
+//                 <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+//                   <Lock size={9} /> Mot de passe
+//                 </label>
+//                 <div className="relative">
+//                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]"><Lock size={13} /></div>
+//                   <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange}
+//                     placeholder="••••••••" required
+//                     className={`w-full pl-9 pr-9 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all placeholder:text-[#c5c5c5] ${
+//                       formData.password && !isPasswordValid ? 'border-[#e53935]' : formData.password && isPasswordValid ? 'border-[#01a82e]' : 'border-[#e0e0e0] focus:border-[#12a6e0]'
+//                     }`} />
+//                   <button type="button" onClick={() => setShowPassword(!showPassword)}
+//                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c5c5c5] hover:text-[#888888] transition-colors">
+//                     {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+//                   </button>
+//                 </div>
+//                 <p className="text-[0.55rem] text-[#aaaaaa] mt-0.5">
+//                   {formData.password ? (
+//                     isPasswordValid
+//                       ? <span className="text-[#01a82e]">✓ Mot de passe valide</span>
+//                       : <span className="text-[#e53935]">✗ Minimum 6 caractères</span>
+//                   ) : 'Minimum 6 caractères'}
+//                 </p>
+//               </div>
+
+//               {/* Confirmer mot de passe */}
+//               <div className="space-y-0.5">
+//                 <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+//                   <Lock size={9} /> Confirmer le mot de passe
+//                 </label>
+//                 <div className="relative">
+//                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]"><Lock size={13} /></div>
+//                   <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
+//                     placeholder="••••••••" required
+//                     className={`w-full pl-9 pr-9 py-1.5 rounded-xl border bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all placeholder:text-[#c5c5c5] ${
+//                       formData.confirmPassword && !doPasswordsMatch ? 'border-[#e53935]' : formData.confirmPassword && doPasswordsMatch ? 'border-[#01a82e]' : 'border-[#e0e0e0] focus:border-[#12a6e0]'
+//                     }`} />
+//                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+//                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c5c5c5] hover:text-[#888888] transition-colors">
+//                     {showConfirmPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+//                   </button>
+//                 </div>
+//                 {formData.confirmPassword && !doPasswordsMatch && (
+//                   <p className="text-[0.55rem] text-[#e53935] mt-0.5">✗ Les mots de passe ne correspondent pas</p>
+//                 )}
+//               </div>
+
+//               {/* CGU */}
+//               <label className="flex items-center gap-2 cursor-pointer group pt-0.5">
+//                 <div className="relative">
+//                   <input type="checkbox" checked={agreeTerms} onChange={e => setAgreeTerms(e.target.checked)} className="peer sr-only" />
+//                   <div className="w-3.5 h-3.5 rounded border border-[#c5c5c5] bg-white transition-all peer-checked:bg-[#12a6e0] peer-checked:border-[#12a6e0]">
+//                     {agreeTerms && (
+//                       <svg className="w-2.5 h-2.5 text-white m-[2px]" viewBox="0 0 12 12" fill="none">
+//                         <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+//                       </svg>
+//                     )}
+//                   </div>
+//                 </div>
+//                 <span className="text-[0.6rem] text-[#888888] group-hover:text-[#0d0c0c] transition-colors">
+//                   J'accepte les <button type="button" className="text-[#12a6e0] hover:text-[#0d8fc4] font-medium">conditions</button> et la <button type="button" className="text-[#12a6e0] hover:text-[#0d8fc4] font-medium">politique</button>
+//                 </span>
+//               </label>
+
+//               {/* Erreur */}
+//               {error && (
+//                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-[12px] bg-[rgba(229,57,53,0.05)] border border-[rgba(229,57,53,0.2)] text-[#c62828]">
+//                   <AlertCircle size={14} className="shrink-0" /> {error}
+//                 </div>
+//               )}
+
+//               {/* Submit */}
+//               <button type="submit" disabled={!isFormValid || submitting}
+//                 className={`w-full flex items-center justify-center gap-2 py-1.5 rounded-xl text-[0.7rem] font-semibold transition-all duration-200 ${
+//                   isFormValid && !submitting
+//                     ? 'bg-gradient-to-r from-[#12a6e0] to-[#0d8fc4] text-white shadow-md shadow-[rgba(18,166,224,0.25)] hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]'
+//                     : 'bg-[#e8f6fd] text-[#92cfe8] cursor-not-allowed'
+//                 }`}>
+//                 {submitting ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
+//                 {submitting ? 'Envoi en cours…' : 'Créer mon compte'}
+//               </button>
+
+//               {/* Lien connexion */}
+//               <p className="text-center text-[0.6rem] text-[#aaaaaa] pt-0.5">
+//                 Déjà un compte ?{' '}
+//                 <Link to="/login" className="text-[#12a6e0] font-semibold hover:text-[#0d8fc4] transition-colors">Se connecter</Link>
+//               </p>
+//             </form>
+//           </div>
+
+//           {/* ── Colonne droite : features ── */}
+//           <div className="flex-1 bg-gradient-to-br from-[#ffffff] to-[#fafcff] p-6 md:p-10 flex flex-col justify-center items-center">
+//             <div className="relative w-full max-w-[280px] mb-6 flex items-center justify-center">
+//               <img src={logo} alt="Imrasoft" className="w-full object-contain drop-shadow-md" />
+//             </div>
+//             <div className="w-full">
+//               <p className="text-[#0d0c0c] text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-center mb-3">Fonctionnalités</p>
+//               <div className="grid grid-cols-1 gap-1.5">
+//                 {[
+//                   { icon: TrendingUp,     label: 'Analyse des mouvements de stock', color: '#12a6e0' },
+//                   { icon: PackageSearch,  label: 'Suivi des mouvements',            color: '#01a82e' },
+//                   { icon: Database,       label: 'Multi-bases SAGE',                color: '#12a6e0' },
+//                   { icon: BrainCircuit,   label: 'Prévisions IA (7j/14j/30j)',      color: '#7c4dff' },
+//                   { icon: FileSpreadsheet,label: 'Export rapports & Excel',          color: '#e53935' },
+//                 ].map((f, i) => (
+//                   <div key={i} className="flex items-center gap-2 py-1.5 px-3 rounded-xl bg-white border border-[#e8e8e8] transition-all hover:scale-[1.02] hover:shadow-md">
+//                     <f.icon size={12} style={{ color: f.color }} />
+//                     <span className="text-[0.65rem] text-[#555555]">{f.label}</span>
+//                   </div>
+//                 ))}
+//               </div>
+//             </div>
+//             <div className="mt-5 text-center">
+//               <p className="text-[0.54rem] text-[#aaaaaa]">Inscription réservée aux employés — un admin validera votre compte</p>
+//             </div>
+//           </div>
+
+//         </div>
+//       </div>
+
+//       <style>{`
+//         @keyframes float-slow { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(25px,-15px) scale(1.05);} 66%{transform:translate(-15px,10px) scale(0.95);} }
+//         @keyframes float-reverse { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(-20px,15px) scale(1.05);} 66%{transform:translate(15px,-10px) scale(0.95);} }
+//         @keyframes pulse-slow { 0%,100%{opacity:0.3;transform:scale(1);} 50%{opacity:0.5;transform:scale(1.05);} }
+//         .animate-float-slow { animation: float-slow 20s ease-in-out infinite; }
+//         .animate-float-reverse { animation: float-reverse 25s ease-in-out infinite; }
+//         .animate-pulse-slow { animation: pulse-slow 8s ease-in-out infinite; }
+//       `}</style>
+//     </div>
+//   );
+// }
+
+// export default SignupPage;

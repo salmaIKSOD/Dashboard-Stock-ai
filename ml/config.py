@@ -1,7 +1,7 @@
 BASE_NAME = "PHARMA"   # ← changer ici uniquement
 
 SQL_SERVER   = r"SALMAIKSOD\SAGE100"
-SQL_DATABASE = "Test"
+SQL_DATABASE = "StockAnalytics"
 SQL_UID      = "sa"
 SQL_PWD      = "123456"
 

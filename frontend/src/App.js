@@ -12,6 +12,7 @@ import InnerSidebar from './components/InnerSidebar';
 import EmptyStateDashboard, { saveToHistory } from './components/EmptyStateDashboard';
 
 import { DashboardProvider, useDashboard } from './context/DashboardContext';
+import ProtectedRoute    from './components/ProtectedRoute';
 
 // Pages principales
 import PageStockJournalier from './pages/PageStockJournalier';
@@ -214,69 +215,6 @@ function Dashboard({ sidebarOpen }) {
     registerReloadDashboard(loadData);
   }, [registerReloadDashboard, loadData]);
 
-//  const handleFilter = async (params) => {
-//     if (!params) {
-//       const d = {
-//         base: '',
-//         dateDebut: defaultDebut,
-//         dateFin:   defaultFin,
-//         depot: null, article: null,
-//         cl_no1: null, cl_no2: null, cl_no3: null, cl_no4: null,
-//         fa_codefamille: null,
-//       };
-//       setCurrentFilters(d);
-//       setHasFiltered(false);
-//       setTableData(null);
-//       setLoadingChunks(null);
-//       return;
-//       saveToHistory(params);
-//     }
-
-//     setHasFiltered(true);
-//     setCurrentFilters(params);
-//     setTableData(null);
-//     setError(null);
-//     setLoadingChunks(null);
-
-//     const { dateDebut, dateFin, ...rest } = params;
-
-//     // Période ≤ 3 mois → appel direct comme avant
-//     const debut    = new Date(dateDebut);
-//     const fin      = new Date(dateFin);
-//     const diffMois = (fin.getFullYear() - debut.getFullYear()) * 12
-//                   + (fin.getMonth()    - debut.getMonth());
-
-//     if (diffMois <= 3) {
-//       await loadData(params);
-//       return;
-//     }
-
-//     // Période > 3 mois → chargement progressif tranche par tranche
-//     const chunks = splitPeriodJS(dateDebut, dateFin, 3);
-//     setLoadingChunks({ total: chunks.length, done: 0 });
-//     setLoading(false); // pas de spinner principal, on utilise la barre de progression
-
-//     let accumulated = [];
-
-//     for (let i = 0; i < chunks.length; i++) {
-//       const chunk = chunks[i];
-//       try {
-//         const rows = await fetchStockChunk(rest, chunk.dateDebut, chunk.dateFin);
-//         accumulated = accumulated.concat(rows);
-
-//         // ✅ Affichage progressif après chaque tranche
-//         setTableData([...accumulated]);
-//         setLoadingChunks({ total: chunks.length, done: i + 1 });
-
-//       } catch (err) {
-//         console.error(`Tranche ${chunk.dateDebut}→${chunk.dateFin} échouée:`, err);
-//         setError(err.message);
-//       }
-//     }
-
-//     setLoadingChunks(null);
-//   };
-
 const handleFilter = async (params) => {
   if (!params) {
     const d = {
@@ -370,48 +308,6 @@ const handleFilter = async (params) => {
     let totalEntrees = 0;
     let totalSorties = 0;
  
-    // for (const r of tableData) {
-    //   const rawDate = r[kDate];
-    //   if (!rawDate) continue;
- 
-    //   const d = typeof rawDate === 'string'
-    //     ? rawDate.slice(0, 10)
-    //     : new Date(rawDate).toISOString().slice(0, 10);
- 
-    //   const rowDate  = new Date(d);
-    //   const artCode  = String(r[kArticle] ?? '(sans code)');
-    //   const depotKey = String(r[kDepot]   ?? '(sans dépôt)');
-    //   const key      = `${artCode}|||${depotKey}`;
- 
-    //   const e  = Number(r[kEntrees]    ?? 0);
-    //   const s  = Number(r[kSorties]    ?? 0);
-    //   const sf = Number(r[kStockFinal] ?? 0);
-    //   const v  = Number(r[kSolde]      ?? 0);
- 
-    //   totalEntrees += e;
-    //   totalSorties += s;
- 
-    //   if (e > 0) entreesParJour[d] = (entreesParJour[d] || 0) + e;
-    //   if (s > 0) sortiesParJour[d] = (sortiesParJour[d] || 0) + s;
- 
-    //   // ✅ Garder le DERNIER stock final connu par (article, dépôt)
-    //   if (
-    //     r[kStockFinal] !== null &&
-    //     r[kStockFinal] !== undefined &&
-    //     (!lastStockMap[key] || rowDate >= lastStockMap[key].date)
-    //   ) {
-    //     lastStockMap[key] = { stockFinal: sf, date: rowDate };
-    //   }
- 
-    //   // ✅ Garder la DERNIÈRE valeur permanente connue par (article, dépôt)
-    //   if (
-    //     r[kSolde] !== null &&
-    //     r[kSolde] !== undefined &&
-    //     (!lastValeurMap[key] || rowDate >= lastValeurMap[key].date)
-    //   ) {
-    //     lastValeurMap[key] = { valeur: v, date: rowDate };
-    //   }
-    // }
  
     // salma tu chnage
     for (const r of tableData) {
@@ -733,31 +629,54 @@ export default function App() {
 
   // Les pages admin ont leur propre layout complet (AdminShell)
   // donc on les rend directement sans le shell principal
+  // if (isAdminPage) {
+  //   return (
+  //     <DashboardProvider>
+  //       <Routes>
+  //         <Route path="/gestion-bases" element={
+  //           <AdminShell><GestionBases /></AdminShell>
+  //         } />
+  //         <Route path="/profil" element={
+  //           <AdminShell>
+  //             <PageProfil/>
+  //           </AdminShell>
+  //         } />
+
+  //         {/* ← ajouter */}
+  //         <Route path="/gestion-comptes" element={
+  //           <AdminShell>
+  //             <GestionComptes />  {/* ou ton composant */}
+  //           </AdminShell>
+  //         } />
+
+  //       </Routes>
+  //     </DashboardProvider>
+  //   );
+  // }
+
   if (isAdminPage) {
     return (
       <DashboardProvider>
         <Routes>
           <Route path="/gestion-bases" element={
-            <AdminShell><GestionBases /></AdminShell>
+            <AdminShell>
+              <ProtectedRoute><GestionBases /></ProtectedRoute>
+            </AdminShell>
           } />
           <Route path="/profil" element={
             <AdminShell>
-              <PageProfil/>
+              <ProtectedRoute><PageProfil /></ProtectedRoute>
             </AdminShell>
           } />
-
-          {/* ← ajouter */}
           <Route path="/gestion-comptes" element={
             <AdminShell>
-              <GestionComptes />  {/* ou ton composant */}
+              <ProtectedRoute requiredRole="admin"><GestionComptes /></ProtectedRoute>
             </AdminShell>
           } />
-
         </Routes>
       </DashboardProvider>
     );
   }
-
   return (
     <DashboardProvider>
       <div className="min-h-screen bg-[#f4f5f7]">
@@ -789,31 +708,31 @@ export default function App() {
         >
           <Routes>
             {/* ── Dashboard + inner tabs ── */}
-            <Route path="/" element={
+            <Route path="/" element={<ProtectedRoute>
               <DashboardShell sidebarOpen={sidebarOpen}>
                 <Dashboard sidebarOpen={sidebarOpen} />
               </DashboardShell>
-            } />
-            <Route path="/dashboard" element={
+            </ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute>
               <DashboardShell sidebarOpen={sidebarOpen}>
                 <Dashboard sidebarOpen={sidebarOpen} />
               </DashboardShell>
-            } />
-            <Route path="/dashboard/charts" element={
+            </ProtectedRoute>} />
+            <Route path="/dashboard/charts" element={<ProtectedRoute>
               <DashboardShell sidebarOpen={sidebarOpen}>
                 <PageCharts />
               </DashboardShell>
-            } />
-            <Route path="/dashboard/trends" element={
+            </ProtectedRoute>} />
+            <Route path="/dashboard/trends" element={<ProtectedRoute>
               <DashboardShell sidebarOpen={sidebarOpen}>
                 <PageTrends />
               </DashboardShell>
-            } />
-            <Route path="/dashboard/reports" element={
+            </ProtectedRoute>} />
+            <Route path="/dashboard/reports" element={<ProtectedRoute>
               <DashboardShell sidebarOpen={sidebarOpen}>
                 <PageDashboardReports />
               </DashboardShell>
-            } />
+            </ProtectedRoute>} />
             {/* <Route path="/dashboard/favorites" element={
               <DashboardShell sidebarOpen={sidebarOpen}>
                 <PageFavorites />
@@ -825,13 +744,13 @@ export default function App() {
             <Route path="/signup" element={<SignupPage />} />
 
             {/* ── Pages principales ── */}
-            <Route path="/stock-journalier" element={<PageStockJournalier />} />
-            <Route path="/mouvements"       element={<PageMovements />}       />
-            <Route path="/articles"         element={<PageArticles />}        />
-            <Route path="/depots"           element={<PageDepots />}          />
-            <Route path="/analyses"         element={<PageAnalyses />}        />
-            <Route path="/alertes"          element={<PageAlertes />}         />
-            <Route path="/previsions" element={<AIPrevisions />} />
+            <Route path="/stock-journalier" element={<ProtectedRoute><PageStockJournalier /></ProtectedRoute>} />
+            <Route path="/mouvements"       element={<ProtectedRoute><PageMovements /></ProtectedRoute>}       />
+            <Route path="/articles"         element={<ProtectedRoute><PageArticles /></ProtectedRoute>}        />
+            <Route path="/depots"           element={<ProtectedRoute><PageDepots /></ProtectedRoute>}          />
+            <Route path="/analyses"         element={<ProtectedRoute><PageAnalyses /></ProtectedRoute>}        />
+            <Route path="/alertes"          element={<ProtectedRoute><PageAlertes /></ProtectedRoute>}         />
+            <Route path="/previsions" element={<ProtectedRoute requiredRole="admin"><AIPrevisions /></ProtectedRoute>} />
             {/* <Route path="/rapports"         element={<PageRapports />}        /> */}
             <Route path="/parametres"       element={<PageParametres />}      />
           </Routes>

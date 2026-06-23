@@ -96,9 +96,64 @@ async function runStockChunk(pool, sqlLib, params, dateDebut, dateFin) {
   return result.recordset || [];
 }
 
+
+const jwt        = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'stockanalytics_secret_change_in_prod';
 // ── GET /api/bases ────────────────────────────────────────────
+// router.get('/bases', async (req, res) => {
+//   const force = req.query.force === '1';
+//   if (!force) {
+//     const cached = getCached('bases');
+//     if (cached) return res.json(cached);
+//   }
+//   try {
+//     const pool   = await getPool();
+//     const result = await pool.request().execute('stock.SP_GetBases');
+//     setCached('bases', result.recordset);
+//     res.json(result.recordset);
+//   } catch (err) {
+//     console.error('[GET /bases]', err.message);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 router.get('/bases', async (req, res) => {
   const force = req.query.force === '1';
+ 
+  // ── Détecter le rôle depuis le cookie JWT ─────────────────
+  let userRole = null;
+  let userId   = null;
+  try {
+    const token = req.cookies?.token;
+    if (token) {
+      const payload = jwt.verify(token, JWT_SECRET);
+      userRole = payload.Role;
+      userId   = payload.UtilisateurId;
+    }
+  } catch { /* pas connecté ou token invalide → comportement neutre */ }
+ 
+  // ── Employé : retourne uniquement ses propres bases ───────
+  if (userRole === 'employe' && userId) {
+    try {
+      const pool   = await getPool();
+      const result = await pool.request()
+        .input('UtilisateurId', sql.Int, userId)
+        .execute('stock.SP_GetBasesUtilisateur');
+ 
+      // SP_GetBasesUtilisateur retourne BaseName + BaseLabel
+      // On reformate pour être compatible avec le format attendu par le frontend
+      const bases = result.recordset.map(b => ({
+        BaseName:  b.BaseName,
+        BaseLabel: b.BaseLabel || b.BaseName,
+        IsActive:  1,
+      }));
+      return res.json(bases);
+    } catch (err) {
+      console.error('[GET /bases] employé:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+ 
+  // ── Admin ou non connecté : retourne toutes les bases ─────
   if (!force) {
     const cached = getCached('bases');
     if (cached) return res.json(cached);
@@ -124,65 +179,107 @@ router.get('/bases', async (req, res) => {
 //     const result = await pool.request()
 //       .input('BaseName',  sql.NVarChar(128), baseName)
 //       .input('BaseLabel', sql.NVarChar(255), baseLabel || baseName)
-//       .execute('stock.SP_AddBase');  // ← attend que tout soit fini
+//       .execute('stock.SP_AddBase');
 
 //     cache.clear();
-//     res.json(result.recordset[0]);   // ← répond seulement quand c'est prêt
+//     res.json(result.recordset[0]);
+
+//     // ── ÉTAPE 1 : Synchroniser le cache SQL d'abord ──────────
+//     console.log(`[${baseName}] Synchronisation cache SQL...`);
+//     try {
+//       const reqRefresh = pool.request();
+//       reqRefresh.timeout = 600000;
+//       await reqRefresh
+//         .input('BaseName', sql.NVarChar(128), baseName)
+//         .execute('stock.SP_RefreshStockCacheBase');
+//       console.log(`[${baseName}] ✅ Cache SQL synchronisé`);
+//     } catch (e) {
+//       console.error(`[${baseName}] ❌ Erreur sync cache :`, e.message);
+//     }
+
+//     // ── ÉTAPE 2 : Lancer le pipeline ML ──────────────────────
+//     const { spawn } = require('child_process');
+//     const path = require('path');
+//     const scriptPath = path.join(__dirname, '..', '..', '..', 'ml', 'pipeline', 'run_pipeline.py');
+//     const python = spawn('python', [scriptPath, '--base', baseName], {
+//       cwd : path.join(__dirname, '..', '..', '..', 'ml'),
+//       shell: true,
+//       env : { ...process.env, PYTHONIOENCODING: 'utf-8' }
+//     });
+//     python.stdout.on('data', d => console.log(`[ML ${baseName}] ${d.toString().trim()}`));
+//     python.stderr.on('data', d => console.error(`[ML ${baseName} ERR] ${d.toString().trim()}`));
+//     python.on('close', code => {
+//       if (code === 0) console.log(`✅ Pipeline ML terminé — ${baseName}`);
+//       else            console.error(`❌ Pipeline ML échoué — ${baseName}`);
+//     });
 
 //   } catch (err) {
 //     console.error('[POST /bases]', err.message);
 //     res.status(500).json({ error: err.message });
 //   }
 // });
-// l'ajout d'une base avec pipeline 
-// router.post('/bases', async (req, res) => {
-//   const { baseName, baseLabel } = req.body;
-//   if (!baseName) return res.status(400).json({ error: 'Paramètre baseName requis' });
-
-//   try {
-//     const pool   = await getPool();
-//     const result = await pool.request()
-//       .input('BaseName',  sql.NVarChar(128), baseName)
-//       .input('BaseLabel', sql.NVarChar(255), baseLabel || baseName)
-//       .execute('stock.SP_AddBase');  // ← identique
-
-//     cache.clear();  // ← identique
-
-//     // ✅ NOUVEAU — juste ces 5 lignes ajoutées ici
-//     const { spawn } = require('child_process');
-//     const path = require('path');
-//     const scriptPath = path.join(__dirname, '..', '..', '..', 'ml', 'pipeline', 'run_pipeline.py');
-//     const python = spawn('python', [scriptPath, '--base', baseName], {
-//       cwd: path.join(__dirname, '..', '..', '..', 'ml'), shell: true,
-//       env  : { ...process.env, PYTHONIOENCODING: 'utf-8' } 
-//     });
-//     python.stdout.on('data', d => console.log(`[ML ${baseName}] ${d.toString().trim()}`));
-//     python.stderr.on('data', d => console.error(`[ML ERR] ${d.toString().trim()}`));
-//     python.on('close', code => console.log(`[ML ${baseName}] terminé code=${code}`));
-//     // ✅ FIN NOUVEAU
-
-//     res.json(result.recordset[0]);  // ← identique
-
-//   } catch (err) {
-//     console.error('[POST /bases]', err.message);
-//     res.status(500).json({ error: err.message });  // ← identique
-//   }
-// });
 router.post('/bases', async (req, res) => {
   const { baseName, baseLabel } = req.body;
   if (!baseName) return res.status(400).json({ error: 'Paramètre baseName requis' });
-
+ 
+  // ── Détecter le rôle depuis le cookie JWT ─────────────────
+  let userRole = null;
+  let userId   = null;
+  try {
+    const token = req.cookies?.token;
+    if (token) {
+      const payload = jwt.verify(token, JWT_SECRET);
+      userRole = payload.Role;
+      userId   = payload.UtilisateurId;
+    }
+  } catch { /* non connecté */ }
+ 
+  // ── Employé : juste associer la base à son compte ─────────
+  if (userRole === 'employe' && userId) {
+    try {
+      const pool = await getPool();
+ 
+      // Vérifier que la base existe bien dans SAGE_Bases (validée par un admin)
+      const check = await pool.request().query(`
+        SELECT COUNT(*) AS nb FROM [StockAnalytics ].stock.SAGE_Bases
+        WHERE BaseName = '${baseName.replace(/'/g, "''")}' AND IsActive = 1
+      `);
+      if (check.recordset[0].nb === 0) {
+        return res.status(400).json({
+          error: `La base "${baseName}" n'existe pas ou n'a pas encore été configurée par un administrateur.`
+        });
+      }
+ 
+      // Associer la base à l'employé
+      await pool.request()
+        .input('UtilisateurId', sql.Int,          userId)
+        .input('BaseName',      sql.NVarChar(128), baseName)
+        .execute('stock.SP_AjouterBaseUtilisateur');
+ 
+      return res.json({
+        Statut:  'OK',
+        Base:    baseName,
+        Message: 'Base ajoutée à votre compte avec succès.',
+      });
+ 
+    } catch (err) {
+      console.error('[POST /bases] employé:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+ 
+  // ── Admin : ajoute dans SAGE_Bases + lance pipeline ───────
   try {
     const pool   = await getPool();
     const result = await pool.request()
       .input('BaseName',  sql.NVarChar(128), baseName)
       .input('BaseLabel', sql.NVarChar(255), baseLabel || baseName)
       .execute('stock.SP_AddBase');
-
+ 
     cache.clear();
     res.json(result.recordset[0]);
-
-    // ── ÉTAPE 1 : Synchroniser le cache SQL d'abord ──────────
+ 
+    // Sync cache SQL
     console.log(`[${baseName}] Synchronisation cache SQL...`);
     try {
       const reqRefresh = pool.request();
@@ -194,8 +291,8 @@ router.post('/bases', async (req, res) => {
     } catch (e) {
       console.error(`[${baseName}] ❌ Erreur sync cache :`, e.message);
     }
-
-    // ── ÉTAPE 2 : Lancer le pipeline ML ──────────────────────
+ 
+    // Pipeline ML
     const { spawn } = require('child_process');
     const path = require('path');
     const scriptPath = path.join(__dirname, '..', '..', '..', 'ml', 'pipeline', 'run_pipeline.py');
@@ -210,7 +307,7 @@ router.post('/bases', async (req, res) => {
       if (code === 0) console.log(`✅ Pipeline ML terminé — ${baseName}`);
       else            console.error(`❌ Pipeline ML échoué — ${baseName}`);
     });
-
+ 
   } catch (err) {
     console.error('[POST /bases]', err.message);
     res.status(500).json({ error: err.message });
@@ -267,7 +364,7 @@ router.get('/bases/disponibles', async (req, res) => {
       SELECT name AS BaseName
       FROM sys.databases
       WHERE name NOT IN (
-        SELECT BaseName FROM Test.stock.SAGE_Bases WHERE IsActive = 1
+        SELECT BaseName FROM StockAnalytics.stock.SAGE_Bases WHERE IsActive = 1
       )
       AND name NOT IN ('master', 'tempdb', 'model', 'msdb', 'Test')
       AND state_desc = 'ONLINE'
