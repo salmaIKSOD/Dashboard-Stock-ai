@@ -821,71 +821,271 @@ function ConfirmDialog({ title, message, confirmLabel = 'Confirmer', danger = tr
 }
 
 // ── Modal Créer Admin ─────────────────────────────────────────
+
+// ── Modal Créer Admin ─────────────────────────────────────────
+// function AddAdminModal({ onClose, onSaved }) {
+//   const [form, setForm] = useState({ nom: '', prenom: '', email: '', password: '', telephone: '', poste: '' });
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState(null);
+
+//   const handleSubmit = async () => {
+//     if (!form.nom || !form.prenom || !form.email || !form.password)
+//       return setError('Veuillez remplir les champs obligatoires.');
+//     setLoading(true); setError(null);
+//     try {
+//       await axios.post(`${API}/api/admin/creer-admin`, form, { withCredentials: true });
+//       onSaved(); onClose();
+//     } catch (err) {
+//       setError(err.response?.data?.error || 'Erreur serveur.');
+//     } finally { setLoading(false); }
+//   };
+
+//   const fields = [
+//     { label: 'Nom *',            key: 'nom',       placeholder: 'Entrer son nom',            half: true  },
+//     { label: 'Prénom *',         key: 'prenom',     placeholder: 'Entrer son prénom',              half: true  },
+//     { label: 'Email *',          key: 'email',      placeholder: 'Entreremail@...',      type: 'email',    half: false },
+//     { label: 'Mot de passe *',   key: 'password',   placeholder: '••••••••',          type: 'password', half: false },
+//     { label: 'Téléphone',        key: 'telephone',  placeholder: '06 00 00 00 00',    half: true  },
+//     { label: 'Poste / Fonction', key: 'poste',      placeholder: 'Responsable...', half: true  },
+//   ];
+
+//   // Centrage absolu — ignore complètement la sidebar
+//   const modalStyle = {
+//     position: 'fixed',
+//     top: 0, left: 0, right: 0, bottom: 0,
+//     display: 'flex',
+//     alignItems: 'center',
+//     justifyContent: 'center',
+//     zIndex: 99999,
+//     pointerEvents: 'none',
+//   };
+
+//   const cardStyle = {
+//     pointerEvents: 'all',
+//     background: '#fff',
+//     borderRadius: '1rem',
+//     boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+//     width: '480px',
+//     maxWidth: 'calc(100vw - 2rem)',
+//     overflow: 'hidden',
+//     animation: 'dialogIn 0.2s cubic-bezier(0.34,1.56,0.64,1) both',
+//     maxHeight: '90vh',
+//     display: 'flex',
+//     flexDirection: 'column',
+//   };
+
+//   return ReactDOM.createPortal(
+//     <>
+//       {/* Overlay */}
+//       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)', zIndex: 99999 }} onClick={onClose} />
+//       {/* Conteneur centré — flex sur tout l'écran, pointerEvents none pour que l'overlay fonctionne */}
+//       <div style={modalStyle}>
+//         <div style={cardStyle}>
+
+//           {/* Header sticky */}
+//           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '1px solid #e8f4fb', background: '#f8fcff', flexShrink: 0 }}>
+//             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+//               <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'linear-gradient(135deg,#12a6e0,#0d8fc4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+//                 <Plus size={14} color="#fff" />
+//               </div>
+//               <span style={{ fontSize: '13px', fontWeight: 600, color: '#0d0c0c' }}>Créer un compte administrateur</span>
+//             </div>
+//             <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa' }}><X size={16} /></button>
+//           </div>
+
+//           {/* Corps scrollable */}
+//           <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto' }}>
+//             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+//               {fields.map(({ label, key, placeholder, type = 'text', half }) => (
+//                 <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: half ? 'span 1' : 'span 2' }}>
+//                   <label style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#12a6e0' }}>{label}</label>
+//                   <input type={type} placeholder={placeholder} value={form[key]}
+//                     onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+//                     style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid #c5c5c5', fontSize: '14px', outline: 'none' }} />
+//                 </div>
+//               ))}
+//             </div>
+//             {error && (
+//               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(229,57,53,0.05)', border: '1px solid rgba(229,57,53,0.2)', color: '#c62828', fontSize: '13px' }}>
+//                 <AlertCircle size={14} /> {error}
+//               </div>
+//             )}
+//           </div>
+
+//           {/* Footer */}
+//           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', padding: '0.75rem 1.25rem', borderTop: '1px solid #f0f0f0', flexShrink: 0 }}>
+//             <button onClick={onClose} style={{ padding: '0.5rem 1rem', borderRadius: '0.5rem', fontSize: '13px', fontWeight: 500, color: '#666', background: '#f5f5f5', border: '1px solid #e0e0e0', cursor: 'pointer' }}>Annuler</button>
+//             <button onClick={handleSubmit} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg,#12a6e0,#0d8fc4)', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+//               {loading ? <Loader2 size={13} /> : <Plus size={13} />}
+//               {loading ? 'En cours…' : 'Créer le compte'}
+//             </button>
+//           </div>
+
+//         </div>
+//       </div>
+//     </>,
+//     document.body
+//   );
+// }
+// ── Modal Créer Admin ─────────────────────────────────────────
 function AddAdminModal({ onClose, onSaved }) {
   const [form, setForm] = useState({ nom: '', prenom: '', email: '', password: '', telephone: '', poste: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
+    // Validation des champs obligatoires
     if (!form.nom || !form.prenom || !form.email || !form.password)
       return setError('Veuillez remplir les champs obligatoires.');
-    setLoading(true); setError(null);
+
+    // Validation de l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email))
+      return setError('Veuillez entrer une adresse email valide (ex: nom@domaine.com).');
+
+    // Validation du téléphone (si fourni)
+    if (form.telephone) {
+      // Supprimer les espaces, tirets, points
+      const cleanPhone = form.telephone.replace(/[\s\-.]/g, '');
+      if (!/^\d{10}$/.test(cleanPhone))
+        return setError('Le numéro de téléphone doit contenir exactement 10 chiffres.');
+    }
+
+    setLoading(true); 
+    setError(null);
     try {
       await axios.post(`${API}/api/admin/creer-admin`, form, { withCredentials: true });
-      onSaved(); onClose();
+      onSaved(); 
+      onClose();
     } catch (err) {
       setError(err.response?.data?.error || 'Erreur serveur.');
-    } finally { setLoading(false); }
+    } finally { 
+      setLoading(false); 
+    }
+  };
+
+  // Fonction pour formater le téléphone en temps réel (optionnel)
+  const handlePhoneChange = (e) => {
+    let value = e.target.value;
+    // Supprimer tout ce qui n'est pas un chiffre
+    value = value.replace(/\D/g, '');
+    // Limiter à 10 chiffres
+    if (value.length > 10) value = value.slice(0, 10);
+    // Formatage optionnel: XX XX XX XX XX
+    let formatted = '';
+    for (let i = 0; i < value.length; i++) {
+      if (i > 0 && i % 2 === 0 && i < 10) formatted += ' ';
+      formatted += value[i];
+    }
+    setForm(f => ({ ...f, telephone: formatted }));
   };
 
   const fields = [
-    { label: 'Nom *',            key: 'nom',       placeholder: 'Dupont',            half: true  },
-    { label: 'Prénom *',         key: 'prenom',     placeholder: 'Jean',              half: true  },
-    { label: 'Email *',          key: 'email',      placeholder: 'j.dupont@...',      type: 'email',    half: false },
+    { label: 'Nom *',            key: 'nom',       placeholder: 'Entrer son nom',            half: true  },
+    { label: 'Prénom *',         key: 'prenom',     placeholder: 'Entrer son prénom',              half: true  },
+    { label: 'Email *',          key: 'email',      placeholder: 'p.nom@domaine.com', type: 'email', half: false },
     { label: 'Mot de passe *',   key: 'password',   placeholder: '••••••••',          type: 'password', half: false },
-    { label: 'Téléphone',        key: 'telephone',  placeholder: '06 00 00 00 00',    half: true  },
-    { label: 'Poste / Fonction', key: 'poste',      placeholder: 'Responsable stock', half: true  },
+    { label: 'Téléphone (10 chiffres)', key: 'telephone',  placeholder: '06 00 00 00 00',    half: true  },
+    { label: 'Poste / Fonction', key: 'poste',      placeholder: 'Responsable...', half: true  },
   ];
 
-  return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)' }} onClick={onClose} />
-      <div style={{ position: 'relative', background: '#fff', borderRadius: '1rem', boxShadow: '0 24px 64px rgba(0,0,0,0.22)', width: '100%', maxWidth: '480px', margin: '0 auto', overflow: 'hidden', animation: 'dialogIn 0.2s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '1px solid #e8f4fb', background: '#f8fcff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'linear-gradient(135deg,#12a6e0,#0d8fc4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Plus size={14} color="#fff" />
-            </div>
-            <span style={{ fontSize: '13px', fontWeight: 600 }}>Créer un compte administrateur</span>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa' }}><X size={16} /></button>
-        </div>
-        <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-            {fields.map(({ label, key, placeholder, type = 'text', half }) => (
-              <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: half ? 'span 1' : 'span 2' }}>
-                <label style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#12a6e0' }}>{label}</label>
-                <input type={type} placeholder={placeholder} value={form[key]}
-                  onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                  style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid #c5c5c5', fontSize: '14px', outline: 'none' }} />
+  // Centrage absolu — ignore complètement la sidebar
+  const modalStyle = {
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 99999,
+    pointerEvents: 'none',
+  };
+
+  const cardStyle = {
+    pointerEvents: 'all',
+    background: '#fff',
+    borderRadius: '1rem',
+    boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+    width: '480px',
+    maxWidth: 'calc(100vw - 2rem)',
+    overflow: 'hidden',
+    animation: 'dialogIn 0.2s cubic-bezier(0.34,1.56,0.64,1) both',
+    maxHeight: '90vh',
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
+  return ReactDOM.createPortal(
+    <>
+      {/* Overlay */}
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)', zIndex: 99999 }} onClick={onClose} />
+      {/* Conteneur centré — flex sur tout l'écran, pointerEvents none pour que l'overlay fonctionne */}
+      <div style={modalStyle}>
+        <div style={cardStyle}>
+
+          {/* Header sticky */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '1px solid #e8f4fb', background: '#f8fcff', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'linear-gradient(135deg,#12a6e0,#0d8fc4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Plus size={14} color="#fff" />
               </div>
-            ))}
-          </div>
-          {error && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(229,57,53,0.05)', border: '1px solid rgba(229,57,53,0.2)', color: '#c62828', fontSize: '13px' }}>
-              <AlertCircle size={14} /> {error}
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#0d0c0c' }}>Créer un compte administrateur</span>
             </div>
-          )}
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', padding: '0 1.25rem 1.25rem' }}>
-          <button onClick={onClose} style={{ padding: '0.5rem 1rem', borderRadius: '0.5rem', fontSize: '13px', fontWeight: 500, color: '#666', background: '#f5f5f5', border: '1px solid #e0e0e0', cursor: 'pointer' }}>Annuler</button>
-          <button onClick={handleSubmit} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg,#12a6e0,#0d8fc4)', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
-            {loading ? <Loader2 size={13} /> : <Plus size={13} />}
-            {loading ? 'En cours…' : 'Créer le compte'}
-          </button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa' }}><X size={16} /></button>
+          </div>
+
+          {/* Corps scrollable */}
+          <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              {fields.map(({ label, key, placeholder, type = 'text', half }) => (
+                <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: half ? 'span 1' : 'span 2' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#12a6e0' }}>{label}</label>
+                  {key === 'telephone' ? (
+                    <input 
+                      type="text" 
+                      placeholder={placeholder} 
+                      value={form.telephone}
+                      onChange={handlePhoneChange}
+                      maxLength="14" // 10 chiffres + 4 espaces
+                      style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid #c5c5c5', fontSize: '14px', outline: 'none', fontFamily: 'monospace' }} 
+                    />
+                  ) : (
+                    <input 
+                      type={type} 
+                      placeholder={placeholder} 
+                      value={form[key]}
+                      onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                      style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid #c5c5c5', fontSize: '14px', outline: 'none' }} 
+                    />
+                  )}
+                  {/* Petit message d'aide pour le téléphone */}
+                  {key === 'telephone' && form.telephone && (
+                    <span style={{ fontSize: '10px', color: '#888' }}>
+                      {form.telephone.replace(/\s/g, '').length}/10 chiffres
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+            {error && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(229,57,53,0.05)', border: '1px solid rgba(229,57,53,0.2)', color: '#c62828', fontSize: '13px' }}>
+                <AlertCircle size={14} /> {error}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', padding: '0.75rem 1.25rem', borderTop: '1px solid #f0f0f0', flexShrink: 0 }}>
+            <button onClick={onClose} style={{ padding: '0.5rem 1rem', borderRadius: '0.5rem', fontSize: '13px', fontWeight: 500, color: '#666', background: '#f5f5f5', border: '1px solid #e0e0e0', cursor: 'pointer' }}>Annuler</button>
+            <button onClick={handleSubmit} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg,#12a6e0,#0d8fc4)', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+              {loading ? <Loader2 size={13} /> : <Plus size={13} />}
+              {loading ? 'En cours…' : 'Créer le compte'}
+            </button>
+          </div>
+
         </div>
       </div>
-    </div>
+    </>,
+    document.body
   );
 }
 

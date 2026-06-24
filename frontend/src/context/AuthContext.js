@@ -42,11 +42,22 @@ export function AuthProvider({ children }) {
   };
 
   // ── Logout ────────────────────────────────────────────────
-  const logout = async () => {
+  // const logout = async () => {
+  //   try {
+  //     await axios.post(`${API}/api/auth/logout`, {}, { withCredentials: true });
+  //   } catch { /* silently ignore */ }
+  //   finally { setUser(null); }
+  // };
+   const logout = async () => {
     try {
       await axios.post(`${API}/api/auth/logout`, {}, { withCredentials: true });
     } catch { /* silently ignore */ }
-    finally { setUser(null); }
+    finally {
+      // Effacer tout le storage pour réinitialiser les filtres du dashboard
+      localStorage.clear();
+      sessionStorage.clear();
+      setUser(null);
+    }
   };
 
   // ── Helpers de rôle ───────────────────────────────────────
