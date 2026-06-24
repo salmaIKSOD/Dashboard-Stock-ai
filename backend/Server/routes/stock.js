@@ -173,18 +173,65 @@ router.get('/bases', async (req, res) => {
 // router.post('/bases', async (req, res) => {
 //   const { baseName, baseLabel } = req.body;
 //   if (!baseName) return res.status(400).json({ error: 'Paramètre baseName requis' });
-
+ 
+//   // ── Détecter le rôle depuis le cookie JWT ─────────────────
+//   let userRole = null;
+//   let userId   = null;
+//   try {
+//     const token = req.cookies?.token;
+//     if (token) {
+//       const payload = jwt.verify(token, JWT_SECRET);
+//       userRole = payload.Role;
+//       userId   = payload.UtilisateurId;
+//     }
+//   } catch { /* non connecté */ }
+ 
+//   // ── Employé : juste associer la base à son compte ─────────
+//   if (userRole === 'employe' && userId) {
+//     try {
+//       const pool = await getPool();
+ 
+//       // Vérifier que la base existe bien dans SAGE_Bases (validée par un admin)
+//       const check = await pool.request().query(`
+//         SELECT COUNT(*) AS nb FROM [StockAnalytics ].stock.SAGE_Bases
+//         WHERE BaseName = '${baseName.replace(/'/g, "''")}' AND IsActive = 1
+//       `);
+//       if (check.recordset[0].nb === 0) {
+//         return res.status(400).json({
+//           error: `La base "${baseName}" n'existe pas ou n'a pas encore été configurée par un administrateur.`
+//         });
+//       }
+ 
+//       // Associer la base à l'employé
+//       await pool.request()
+//         .input('UtilisateurId', sql.Int,          userId)
+//         .input('BaseName',      sql.NVarChar(128), baseName)
+//         .execute('stock.SP_AjouterBaseUtilisateur');
+ 
+//       return res.json({
+//         Statut:  'OK',
+//         Base:    baseName,
+//         Message: 'Base ajoutée à votre compte avec succès.',
+//       });
+ 
+//     } catch (err) {
+//       console.error('[POST /bases] employé:', err.message);
+//       return res.status(500).json({ error: err.message });
+//     }
+//   }
+ 
+//   // ── Admin : ajoute dans SAGE_Bases + lance pipeline ───────
 //   try {
 //     const pool   = await getPool();
 //     const result = await pool.request()
 //       .input('BaseName',  sql.NVarChar(128), baseName)
 //       .input('BaseLabel', sql.NVarChar(255), baseLabel || baseName)
 //       .execute('stock.SP_AddBase');
-
+ 
 //     cache.clear();
 //     res.json(result.recordset[0]);
-
-//     // ── ÉTAPE 1 : Synchroniser le cache SQL d'abord ──────────
+ 
+//     // Sync cache SQL
 //     console.log(`[${baseName}] Synchronisation cache SQL...`);
 //     try {
 //       const reqRefresh = pool.request();
@@ -196,8 +243,8 @@ router.get('/bases', async (req, res) => {
 //     } catch (e) {
 //       console.error(`[${baseName}] ❌ Erreur sync cache :`, e.message);
 //     }
-
-//     // ── ÉTAPE 2 : Lancer le pipeline ML ──────────────────────
+ 
+//     // Pipeline ML
 //     const { spawn } = require('child_process');
 //     const path = require('path');
 //     const scriptPath = path.join(__dirname, '..', '..', '..', 'ml', 'pipeline', 'run_pipeline.py');
@@ -212,7 +259,7 @@ router.get('/bases', async (req, res) => {
 //       if (code === 0) console.log(`✅ Pipeline ML terminé — ${baseName}`);
 //       else            console.error(`❌ Pipeline ML échoué — ${baseName}`);
 //     });
-
+ 
 //   } catch (err) {
 //     console.error('[POST /bases]', err.message);
 //     res.status(500).json({ error: err.message });
@@ -221,7 +268,7 @@ router.get('/bases', async (req, res) => {
 router.post('/bases', async (req, res) => {
   const { baseName, baseLabel } = req.body;
   if (!baseName) return res.status(400).json({ error: 'Paramètre baseName requis' });
- 
+
   // ── Détecter le rôle depuis le cookie JWT ─────────────────
   let userRole = null;
   let userId   = null;
@@ -233,41 +280,51 @@ router.post('/bases', async (req, res) => {
       userId   = payload.UtilisateurId;
     }
   } catch { /* non connecté */ }
- 
-  // ── Employé : juste associer la base à son compte ─────────
+
+  // ── Employé : insère directement dans UtilisateurBases ────
   if (userRole === 'employe' && userId) {
     try {
       const pool = await getPool();
- 
-      // Vérifier que la base existe bien dans SAGE_Bases (validée par un admin)
+
+      // 1. Vérifier que la base SQL existe et est accessible
       const check = await pool.request().query(`
-        SELECT COUNT(*) AS nb FROM [StockAnalytics ].stock.SAGE_Bases
-        WHERE BaseName = '${baseName.replace(/'/g, "''")}' AND IsActive = 1
+        SELECT COUNT(*) AS nb 
+        FROM sys.databases 
+        WHERE name = '${baseName.replace(/'/g, "''")}' 
+        AND state_desc = 'ONLINE'
       `);
       if (check.recordset[0].nb === 0) {
-        return res.status(400).json({
-          error: `La base "${baseName}" n'existe pas ou n'a pas encore été configurée par un administrateur.`
-        });
+        return res.status(400).json({ error: `La base "${baseName}" est inaccessible.` });
       }
- 
-      // Associer la base à l'employé
+
+      // 2. Vérifier que l'employé ne l'a pas déjà ajoutée
+      const already = await pool.request().query(`
+        SELECT COUNT(*) AS nb FROM stock.UtilisateurBases 
+        WHERE UtilisateurId = ${userId} 
+        AND BaseName = '${baseName.replace(/'/g, "''")}'
+      `);
+      if (already.recordset[0].nb > 0) {
+        return res.status(400).json({ error: `Vous avez déjà ajouté la base "${baseName}".` });
+      }
+
+      // 3. Insérer dans UtilisateurBases
       await pool.request()
         .input('UtilisateurId', sql.Int,          userId)
         .input('BaseName',      sql.NVarChar(128), baseName)
         .execute('stock.SP_AjouterBaseUtilisateur');
- 
+
       return res.json({
         Statut:  'OK',
         Base:    baseName,
         Message: 'Base ajoutée à votre compte avec succès.',
       });
- 
+
     } catch (err) {
       console.error('[POST /bases] employé:', err.message);
       return res.status(500).json({ error: err.message });
     }
   }
- 
+
   // ── Admin : ajoute dans SAGE_Bases + lance pipeline ───────
   try {
     const pool   = await getPool();
@@ -275,10 +332,10 @@ router.post('/bases', async (req, res) => {
       .input('BaseName',  sql.NVarChar(128), baseName)
       .input('BaseLabel', sql.NVarChar(255), baseLabel || baseName)
       .execute('stock.SP_AddBase');
- 
+
     cache.clear();
     res.json(result.recordset[0]);
- 
+
     // Sync cache SQL
     console.log(`[${baseName}] Synchronisation cache SQL...`);
     try {
@@ -291,7 +348,7 @@ router.post('/bases', async (req, res) => {
     } catch (e) {
       console.error(`[${baseName}] ❌ Erreur sync cache :`, e.message);
     }
- 
+
     // Pipeline ML
     const { spawn } = require('child_process');
     const path = require('path');
@@ -307,7 +364,7 @@ router.post('/bases', async (req, res) => {
       if (code === 0) console.log(`✅ Pipeline ML terminé — ${baseName}`);
       else            console.error(`❌ Pipeline ML échoué — ${baseName}`);
     });
- 
+
   } catch (err) {
     console.error('[POST /bases]', err.message);
     res.status(500).json({ error: err.message });
@@ -353,26 +410,96 @@ router.post('/bases/refresh-one', async (req, res) => {
   }
 });
 
+
 // ── GET /api/bases/disponibles — bases SQL non encore ajoutées ──
-// ── GET /api/bases/disponibles — bases SQL non encore ajoutées ──
+// router.get('/bases/disponibles', async (req, res) => {
+//   try {
+//     const pool = await getPool();
+
+//     // 1. Récupérer toutes les bases candidates
+//     const basesResult = await pool.request().query(`
+//       SELECT name AS BaseName
+//       FROM sys.databases
+//       WHERE name NOT IN (
+//         SELECT BaseName FROM StockAnalytics.stock.SAGE_Bases WHERE IsActive = 1
+//       )
+//       AND name NOT IN ('master', 'tempdb', 'model', 'msdb', 'Test')
+//       AND state_desc = 'ONLINE'
+//       AND name NOT LIKE 'snapshot_%'
+//       ORDER BY name
+//     `);
+
+//     // 2. Filtrer celles qui ont P_DOSSIER
+//     const basesValides = [];
+//     for (const row of basesResult.recordset) {
+//       try {
+//         const check = await pool.request().query(`
+//           SELECT COUNT(*) AS nb 
+//           FROM [${row.BaseName}].sys.tables 
+//           WHERE name = 'P_DOSSIER'
+//         `);
+//         if (check.recordset[0].nb > 0) {
+//           basesValides.push(row);
+//         }
+//       } catch (e) {
+//         // Base inaccessible → on l'ignore silencieusement
+//         console.warn(`[bases/disponibles] ${row.BaseName} inaccessible:`, e.message);
+//       }
+//     }
+
+//     res.json(basesValides);
+//   } catch (err) {
+//     console.error('[GET /bases/disponibles]', err.message);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 router.get('/bases/disponibles', async (req, res) => {
+  // Détecter le rôle
+  let userRole = null;
+  let userId   = null;
+  try {
+    const token = req.cookies?.token;
+    if (token) {
+      const payload = jwt.verify(token, JWT_SECRET);
+      userRole = payload.Role;
+      userId   = payload.UtilisateurId;
+    }
+  } catch { }
+
   try {
     const pool = await getPool();
 
-    // 1. Récupérer toutes les bases candidates
+    // Bases déjà prises — selon le rôle
+    let dejaAjouteesQuery = '';
+    if (userRole === 'employe' && userId) {
+      // Exclure les bases déjà ajoutées par CET employé
+      dejaAjouteesQuery = `
+        AND name NOT IN (
+          SELECT BaseName FROM stock.UtilisateurBases 
+          WHERE UtilisateurId = ${userId}
+        )
+      `;
+    } else {
+      // Admin : exclure les bases déjà dans SAGE_Bases
+      dejaAjouteesQuery = `
+        AND name NOT IN (
+          SELECT BaseName FROM [StockAnalytics ].stock.SAGE_Bases WHERE IsActive = 1
+        )
+      `;
+    }
+
     const basesResult = await pool.request().query(`
       SELECT name AS BaseName
       FROM sys.databases
-      WHERE name NOT IN (
-        SELECT BaseName FROM StockAnalytics.stock.SAGE_Bases WHERE IsActive = 1
-      )
-      AND name NOT IN ('master', 'tempdb', 'model', 'msdb', 'Test')
+      WHERE 1=1
+      ${dejaAjouteesQuery}
+      AND name NOT IN ('master', 'tempdb', 'model', 'msdb')
       AND state_desc = 'ONLINE'
       AND name NOT LIKE 'snapshot_%'
       ORDER BY name
     `);
 
-    // 2. Filtrer celles qui ont P_DOSSIER
+    // Filtrer celles qui ont P_DOSSIER (bases SAGE valides)
     const basesValides = [];
     for (const row of basesResult.recordset) {
       try {
@@ -385,7 +512,6 @@ router.get('/bases/disponibles', async (req, res) => {
           basesValides.push(row);
         }
       } catch (e) {
-        // Base inaccessible → on l'ignore silencieusement
         console.warn(`[bases/disponibles] ${row.BaseName} inaccessible:`, e.message);
       }
     }

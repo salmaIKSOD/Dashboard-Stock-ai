@@ -98,7 +98,8 @@ export default function GestionBases() {
   const fetchBases = async () => {
     setFetching(true);
     try {
-      const res = await axios.get(`${API}/api/bases?force=1`);
+      // const res = await axios.get(`${API}/api/bases?force=1`);
+      const res = await axios.get(`${API}/api/bases?force=1`, { withCredentials: true });
       setBases(res.data);
     } catch { /* silently ignore */ }
     finally { setFetching(false); }
@@ -107,7 +108,8 @@ export default function GestionBases() {
   const fetchBasesDisponibles = async () => {
     setLoadingDisp(true);
     try {
-      const res = await axios.get(`${API}/api/bases/disponibles`);
+      // const res = await axios.get(`${API}/api/bases/disponibles`);
+      const res = await axios.get(`${API}/api/bases/disponibles`, { withCredentials: true });
       setBasesDisponibles(res.data);
     } catch { /* silently ignore */ }
     finally { setLoadingDisp(false); }
@@ -129,10 +131,11 @@ export default function GestionBases() {
     setMessage(null);
     try {
       // ── Étape 1 : enregistrer la base (rapide)
-      const res = await axios.post(`${API}/api/bases`, {
-        baseName,
-        baseLabel: baseName,
-      });
+      // const res = await axios.post(`${API}/api/bases`, {
+      //   baseName,
+      //   baseLabel: baseName,
+      // });
+      const res = await axios.post(`${API}/api/bases`, { baseName, baseLabel: baseName }, { withCredentials: true });
       setBaseName('');
       fetchBases();
       fetchBasesDisponibles();
