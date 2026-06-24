@@ -193,9 +193,17 @@ export default function SidebarP({ sidebarOpen, onToggleSidebar }) {
               onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              <div style={{ width: '1.75rem', height: '1.75rem', borderRadius: '50%', background: 'linear-gradient(135deg, #12a6e0, #01d63a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontSize: '0.6875rem', fontWeight: 700 }}>
+              {/* <div style={{ width: '1.75rem', height: '1.75rem', borderRadius: '50%', background: 'linear-gradient(135deg, #12a6e0, #01d63a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontSize: '0.6875rem', fontWeight: 700 }}>
                 {initials}
-              </div>
+              </div> */}
+              {user?.PhotoUrl ? (
+                <img src={`http://localhost:5000${user.PhotoUrl}`} alt="profil"
+                  style={{ width: '1.75rem', height: '1.75rem', borderRadius: '50%', objectFit: 'cover', border: '2px solid #e8f4fb' }} />
+              ) : (
+                <div style={{ width: '1.75rem', height: '1.75rem', borderRadius: '50%', background: 'linear-gradient(135deg, #12a6e0, #01d63a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontSize: '0.6875rem', fontWeight: 700 }}>
+                  {initials}
+                </div>
+              )}
               <span className="hidden sm:inline" style={{ color: '#666666', fontSize: '0.75rem' }}>
                 {displayName}
               </span>

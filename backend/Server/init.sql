@@ -195,7 +195,7 @@ BEGIN
     DECLARE @firstStock BIT = 1;
 
     -- Si aucune base active : vues vides
-    IF NOT EXISTS s(SELECT 1 FROM @bases)
+    IF NOT EXISTS (SELECT 1 FROM @bases)
     BEGIN
         EXEC sp_executesql N'
         CREATE OR ALTER VIEW stock.VW_MouvementsJournaliers AS
@@ -1013,6 +1013,7 @@ BEGIN
         Prenom              NVARCHAR(100) NOT NULL,
         Telephone           NVARCHAR(30)  NULL,
         Poste               NVARCHAR(100) NULL,             -- fonction / poste dans l'entreprise
+        Societe             NVARCHAR(200) NULL, 
         PhotoUrl            NVARCHAR(500) NULL,             -- chemin relatif vers la photo uploadée
         Role                NVARCHAR(20)  NOT NULL DEFAULT 'employe',   -- 'admin' | 'employe'
         Statut              NVARCHAR(20)  NOT NULL DEFAULT 'en_attente',-- 'en_attente' | 'valide' | 'refuse'
@@ -1206,12 +1207,33 @@ GO
 --  Chaque utilisateur (admin ou employé) modifie son propre profil
 --  Si @PhotoUrl est NULL → garde l'ancienne photo
 -- ─────────────────────────────────────────────────────────────
+-- CREATE OR ALTER PROCEDURE stock.SP_UpdateProfil
+--     @UtilisateurId INT,
+--     @Nom           NVARCHAR(100),
+--     @Prenom        NVARCHAR(100),
+--     @Telephone     NVARCHAR(30)  = NULL,
+--     @Poste         NVARCHAR(100) = NULL,
+--     @PhotoUrl      NVARCHAR(500) = NULL
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+--     UPDATE stock.Utilisateurs
+--     SET
+--         Nom       = @Nom,
+--         Prenom    = @Prenom,
+--         Telephone = @Telephone,
+--         Poste     = @Poste,
+--         PhotoUrl  = COALESCE(@PhotoUrl, PhotoUrl)
+--     WHERE UtilisateurId = @UtilisateurId;
+-- END
+-- GO
 CREATE OR ALTER PROCEDURE stock.SP_UpdateProfil
     @UtilisateurId INT,
     @Nom           NVARCHAR(100),
     @Prenom        NVARCHAR(100),
     @Telephone     NVARCHAR(30)  = NULL,
     @Poste         NVARCHAR(100) = NULL,
+    @Societe       NVARCHAR(200) = NULL,
     @PhotoUrl      NVARCHAR(500) = NULL
 AS
 BEGIN
@@ -1222,6 +1244,7 @@ BEGIN
         Prenom    = @Prenom,
         Telephone = @Telephone,
         Poste     = @Poste,
+        Societe   = COALESCE(@Societe, Societe),
         PhotoUrl  = COALESCE(@PhotoUrl, PhotoUrl)
     WHERE UtilisateurId = @UtilisateurId;
 END
@@ -1887,6 +1910,29 @@ END
 GO
 
 --  Mettre à jour SP_UpdateProfil avec Societe ───────────────
+-- CREATE OR ALTER PROCEDURE stock.SP_UpdateProfil
+--     @UtilisateurId INT,
+--     @Nom           NVARCHAR(100),
+--     @Prenom        NVARCHAR(100),
+--     @Telephone     NVARCHAR(30)  = NULL,
+--     @Poste         NVARCHAR(100) = NULL,
+--     @Societe       NVARCHAR(200) = NULL,
+--     @PhotoUrl      NVARCHAR(500) = NULL
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+--     UPDATE stock.Utilisateurs
+--     SET
+--         Nom       = @Nom,
+--         Prenom    = @Prenom,
+--         Telephone = @Telephone,
+--         Poste     = @Poste,
+--         Societe   = @Societe,
+--         PhotoUrl  = COALESCE(@PhotoUrl, PhotoUrl)
+--     WHERE UtilisateurId = @UtilisateurId;
+-- END
+-- GO
+
 CREATE OR ALTER PROCEDURE stock.SP_UpdateProfil
     @UtilisateurId INT,
     @Nom           NVARCHAR(100),
@@ -1904,7 +1950,7 @@ BEGIN
         Prenom    = @Prenom,
         Telephone = @Telephone,
         Poste     = @Poste,
-        Societe   = @Societe,
+        Societe   = COALESCE(@Societe, Societe),
         PhotoUrl  = COALESCE(@PhotoUrl, PhotoUrl)
     WHERE UtilisateurId = @UtilisateurId;
 END
