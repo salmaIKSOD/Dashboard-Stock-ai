@@ -6,7 +6,7 @@ import {
   Eye, EyeOff, Mail, Lock, UserPlus, Database,
   User, Check, X, TrendingUp, PackageSearch,
   BrainCircuit, FileSpreadsheet, Phone, Briefcase,
-  AlertCircle, CheckCircle2, Loader2,
+  AlertCircle, CheckCircle2, Loader2,Building2,
 } from 'lucide-react';
 
 const API = 'http://localhost:5000';
@@ -22,6 +22,7 @@ function SignupPage() {
     email:           '',
     telephone:       '',
     poste:           '',
+    societe:         '',
     password:        '',
     confirmPassword: '',
   });
@@ -60,6 +61,7 @@ function SignupPage() {
         password:  formData.password,
         telephone: formData.telephone || undefined,
         poste:     formData.poste || undefined,
+        societe:   formData.societe || undefined,  
       });
       setSuccess(true);
     } catch (err) {
@@ -219,6 +221,19 @@ function SignupPage() {
                       placeholder="ex : comptable"
                       className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]" />
                   </div>
+                </div>
+              </div>
+
+              {/* Société — pleine largeur */}
+              <div className="space-y-0.5">
+                <label className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#12a6e0]">
+                  <Building2 size={9} /> Société
+                </label>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c5c5c5]"><Building2 size={12} /></div>
+                  <input type="text" name="societe" value={formData.societe} onChange={handleChange}
+                    placeholder="ex : IMRASOFT SARL"
+                    className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-[#e0e0e0] bg-white text-[0.7rem] text-[#0d0c0c] outline-none transition-all focus:border-[#12a6e0] focus:shadow-[0_0_0_3px_rgba(18,166,224,0.1)] placeholder:text-[#c5c5c5]" />
                 </div>
               </div>
 

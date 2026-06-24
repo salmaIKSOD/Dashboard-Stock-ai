@@ -5,7 +5,7 @@
 --  lui-même via l'interface Gestion Bases de Données
 -- ============================================================
 
--- ── 1. Création de la base StockAnalytics  ──────────────────────────────
+-- 1. Création de la base StockAnalytics  ────────────────────
 IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = 'StockAnalytics ')
 BEGIN
     CREATE DATABASE StockAnalytics ;
@@ -15,14 +15,14 @@ GO
 USE StockAnalytics ;
 GO
 
--- ── 2. Schéma stock ──────────────────────────────────────────
+-- 2. Schéma stock ──────────────────────────────────────────
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'stock')
 BEGIN
     EXEC('CREATE SCHEMA stock');
 END
 GO
 
--- ── 3. Table registre des bases SAGE (vide par défaut) ───────
+-- 3. Table registre des bases SAGE (vide par défaut) ───────
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
@@ -40,7 +40,7 @@ BEGIN
 END
 GO
 
--- ── 4. Table CacheFiltres ────────────────────────────────────
+-- 4. Table CacheFiltres ────────────────────────────────────
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
@@ -65,7 +65,7 @@ BEGIN
 END
 GO
 
--- ── 5. Table StockJournalierCache ────────────────────────────
+-- 5. Table StockJournalierCache ────────────────────────────
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
@@ -120,7 +120,7 @@ BEGIN
 END
 GO
 
--- ── 6. Vue VW_MouvementsJournaliers (vide au départ) ─────────
+-- 6. Vue VW_MouvementsJournaliers (vide au départ) ─────────
 CREATE OR ALTER VIEW stock.VW_MouvementsJournaliers
 AS
 SELECT
@@ -148,7 +148,7 @@ SELECT
 WHERE 1 = 0;
 GO
 
--- ── 7. Vue VW_StockJoursAvecMvt (vide au départ) ─────────────
+-- 7. Vue VW_StockJoursAvecMvt (vide au départ) ─────────────
 CREATE OR ALTER VIEW stock.VW_StockJoursAvecMvt
 AS
 SELECT
@@ -179,7 +179,7 @@ SELECT
 WHERE 1 = 0;
 GO
 
--- ── 8. SP_RebuildUnifiedViews ────────────────────────────────
+-- 8. SP_RebuildUnifiedViews ────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_RebuildUnifiedViews
 AS
 BEGIN
@@ -195,7 +195,7 @@ BEGIN
     DECLARE @firstStock BIT = 1;
 
     -- Si aucune base active : vues vides
-    IF NOT EXISTS (SELECT 1 FROM @bases)
+    IF NOT EXISTS s(SELECT 1 FROM @bases)
     BEGIN
         EXEC sp_executesql N'
         CREATE OR ALTER VIEW stock.VW_MouvementsJournaliers AS
@@ -320,7 +320,7 @@ BEGIN
 END
 GO
 
--- ── 9. SP_RefreshCacheFiltres ────────────────────────────────
+-- 9. SP_RefreshCacheFiltres ────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_RefreshCacheFiltres
 AS
 BEGIN
@@ -397,7 +397,7 @@ BEGIN
 END
 GO
 
--- ── 10. SP_RefreshStockCache ──────────────────────────────────
+-- 10. SP_RefreshStockCache ──────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_RefreshStockCache
 AS
 BEGIN
@@ -446,7 +446,7 @@ BEGIN
 END
 GO
 
--- ── 11. SP_GetBases ──────────────────────────────────────────
+-- 11. SP_GetBases ──────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetBases
 AS
 BEGIN
@@ -484,7 +484,7 @@ BEGIN
 END
 GO
 
--- ── 12. SP_GetFiltres ─────────────────────────────────────────
+-- 12. SP_GetFiltres ─────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetFiltres
     @Base           NVARCHAR(128),
     @CL_No1         INT          = NULL,
@@ -535,7 +535,7 @@ BEGIN
 END
 GO
 
--- ── 13. SP_GetMouvements ──────────────────────────────────────
+-- 13. SP_GetMouvements ──────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetMouvements
     @Base           NVARCHAR(128),
     @DateDebut      DATE          = NULL,
@@ -583,7 +583,7 @@ BEGIN
 END
 GO
 
--- ── 14. SP_GetStockJournalier ─────────────────────────────────
+-- 14. SP_GetStockJournalier ─────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetStockJournalier
     @Base           NVARCHAR(128),
     @DateDebut      DATE,
@@ -697,7 +697,7 @@ END
 GO
 
 
--- ── 15. SP_RefreshStockCacheBase ─────────────────────────────
+-- 15. SP_RefreshStockCacheBase ─────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_RefreshStockCacheBase
     @BaseName NVARCHAR(128)
 AS
@@ -800,122 +800,8 @@ BEGIN
 END
 GO
 
--- ── 16. SP_AddBase ────────────────────────────────────────────
--- CREATE OR ALTER PROCEDURE stock.SP_AddBase
---     @BaseName   NVARCHAR(128),
---     @BaseLabel  NVARCHAR(255)
--- AS
--- BEGIN
---     SET NOCOUNT ON;
 
---     IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = @BaseName)
---     BEGIN
---         RAISERROR('Base %s introuvable sur le serveur SQL.', 16, 1, @BaseName);
---         RETURN;
---     END
-
---     DECLARE @checkSql   NVARCHAR(MAX);
---     DECLARE @hasDossier INT = 0;
---     SET @checkSql = N'SELECT @res = COUNT(*) FROM [' + @BaseName
---                   + N'].sys.tables WHERE name = ''P_DOSSIER''';
---     EXEC sp_executesql @checkSql, N'@res INT OUTPUT', @res = @hasDossier OUTPUT;
-
---     IF @hasDossier = 0
---     BEGIN
---         RAISERROR('La base %s ne contient pas la table P_DOSSIER. Ajout refusé.', 16, 1, @BaseName);
---         RETURN;
---     END
-
---     IF NOT EXISTS (SELECT 1 FROM stock.SAGE_Bases WHERE BaseName = @BaseName)
---         INSERT INTO stock.SAGE_Bases (BaseName, BaseLabel, IsActive)
---         VALUES (@BaseName, @BaseLabel, 1);
---     ELSE
---         UPDATE stock.SAGE_Bases SET IsActive = 1, BaseLabel = @BaseLabel WHERE BaseName = @BaseName;
-
---     DECLARE @sql NVARCHAR(MAX);
---     SET @sql = N'USE [' + @BaseName + N']; EXEC(''
---     CREATE OR ALTER VIEW dbo.VW_StockJoursAvecMvt AS
---     WITH
---     StockInitialGlobal AS (
---         SELECT dl.AR_Ref, dl.DE_No,
---             SUM(CASE WHEN dl.DL_MvtStock=1 THEN ABS(dl.DL_Qte) WHEN dl.DL_MvtStock=3 THEN -ABS(dl.DL_Qte) ELSE 0 END) AS QteInitiale,
---             SUM(CASE WHEN dl.DL_MvtStock=1 THEN ABS(dl.DL_Qte)*dl.DL_PrixRU WHEN dl.DL_MvtStock=3 THEN -ABS(dl.DL_Qte)*dl.DL_PrixRU ELSE 0 END) AS ValeurInitiale
---         FROM dbo.F_DOCLIGNE dl
---         WHERE dl.DL_MvtStock IN (1,3)
---           AND CAST(dl.DO_Date AS DATE) < (SELECT MIN(CAST(DO_Date AS DATE)) FROM dbo.F_DOCLIGNE WHERE DL_MvtStock IN (1,3))
---         GROUP BY dl.AR_Ref, dl.DE_No
---     ),
---     TousMouvements AS (
---         SELECT dl.AR_Ref, fa.AR_Design, fa.FA_CodeFamille, fam.FA_Intitule,
---             fa.CL_No1, cl1.CL_Intitule AS CL_Intitule1, fa.CL_No2, cl2.CL_Intitule AS CL_Intitule2,
---             fa.CL_No3, cl3.CL_Intitule AS CL_Intitule3, fa.CL_No4, cl4.CL_Intitule AS CL_Intitule4,
---             dl.DL_No, CAST(dl.DO_Date AS DATE) AS DateJour, dl.DE_No, dp.DE_Intitule, dl.DL_MvtStock,
---             CASE WHEN dl.DL_MvtStock=1 THEN ABS(dl.DL_Qte) WHEN dl.DL_MvtStock=3 THEN -ABS(dl.DL_Qte) END AS QteSignee,
---             CASE WHEN dl.DL_MvtStock=1 THEN ABS(dl.DL_Qte) ELSE 0 END AS QteEntree,
---             CASE WHEN dl.DL_MvtStock=3 THEN ABS(dl.DL_Qte) ELSE 0 END AS QteSortie,
---             CASE WHEN dl.DL_MvtStock=1 THEN dl.DL_PrixRU WHEN dl.DL_MvtStock=3 THEN dl.DL_PrixRU END AS PRU_Ligne,
---             CASE WHEN dl.DL_MvtStock=1 THEN dl.DL_PrixRU ELSE 0 END AS PRU_Entree,
---             CASE WHEN dl.DL_MvtStock=3 THEN dl.DL_PrixRU ELSE 0 END AS PRU_Sortie
---         FROM dbo.F_DOCLIGNE dl
---         INNER JOIN dbo.F_ARTICLE fa ON fa.AR_Ref=dl.AR_Ref
---         INNER JOIN dbo.F_DEPOT dp ON dp.DE_No=dl.DE_No
---         LEFT JOIN dbo.F_FAMILLE fam ON fam.FA_CodeFamille=fa.FA_CodeFamille
---         LEFT JOIN dbo.F_CATALOGUE cl1 ON cl1.CL_No=fa.CL_No1
---         LEFT JOIN dbo.F_CATALOGUE cl2 ON cl2.CL_No=fa.CL_No2
---         LEFT JOIN dbo.F_CATALOGUE cl3 ON cl3.CL_No=fa.CL_No3
---         LEFT JOIN dbo.F_CATALOGUE cl4 ON cl4.CL_No=fa.CL_No4
---         WHERE dl.DL_MvtStock IN (1,3)
---     ),
---     CumulsGlissants AS (
---         SELECT m.*,
---             ISNULL(si.QteInitiale,0)+SUM(m.QteSignee) OVER (PARTITION BY m.AR_Ref,m.DE_No ORDER BY m.DateJour,m.DL_No ROWS UNBOUNDED PRECEDING) AS StockApres,
---             ISNULL(si.QteInitiale,0)+ISNULL(SUM(m.QteSignee) OVER (PARTITION BY m.AR_Ref,m.DE_No ORDER BY m.DateJour,m.DL_No ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),0) AS StockAvant,
---             ISNULL(si.ValeurInitiale,0)+SUM(m.QteSignee*m.PRU_Ligne) OVER (PARTITION BY m.AR_Ref,m.DE_No ORDER BY m.DateJour,m.DL_No ROWS UNBOUNDED PRECEDING) AS ValeurApres,
---             ISNULL(si.ValeurInitiale,0)+ISNULL(SUM(m.QteSignee*m.PRU_Ligne) OVER (PARTITION BY m.AR_Ref,m.DE_No ORDER BY m.DateJour,m.DL_No ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),0) AS ValeurAvant,
---             ROW_NUMBER() OVER (PARTITION BY m.AR_Ref,m.DE_No,m.DateJour ORDER BY m.DL_No ASC) AS PremierMvt,
---             ROW_NUMBER() OVER (PARTITION BY m.AR_Ref,m.DE_No,m.DateJour ORDER BY m.DL_No DESC) AS DernierMvt
---         FROM TousMouvements m
---         LEFT JOIN StockInitialGlobal si ON si.AR_Ref=m.AR_Ref AND si.DE_No=m.DE_No
---     )
---     SELECT DateJour, AR_Ref, AR_Design, FA_CodeFamille, FA_Intitule,
---         CL_No1, CL_Intitule1, CL_No2, CL_Intitule2, CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
---         DE_No, DE_Intitule,
---         SUM(QteEntree) AS TotalEntree, SUM(QteSortie) AS TotalSortie,
---         SUM(QteEntree*PRU_Entree) AS ValeurEntree, SUM(QteSortie*PRU_Sortie) AS ValeurSortie,
---         MAX(CASE WHEN PremierMvt=1 THEN StockAvant END) AS StockInitial,
---         MAX(CASE WHEN DernierMvt=1 THEN StockApres END) AS StockFinal,
---         MAX(CASE WHEN PremierMvt=1 THEN ValeurAvant END) AS ValeurInitiale,
---         MAX(CASE WHEN DernierMvt=1 THEN ValeurApres END) AS ValeurFinale
---     FROM CumulsGlissants
---     GROUP BY DateJour, AR_Ref, AR_Design, FA_CodeFamille, FA_Intitule,
---         CL_No1, CL_Intitule1, CL_No2, CL_Intitule2, CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
---         DE_No, DE_Intitule;
---     '')';
---     EXEC sp_executesql @sql;
-
---     SET @sql = N'USE [' + @BaseName + N'];
---     IF EXISTS (SELECT 1 FROM sys.indexes WHERE name=''IX_DOCLIGNE_PERF'' AND object_id=OBJECT_ID(''dbo.F_DOCLIGNE''))
---         DROP INDEX IX_DOCLIGNE_PERF ON dbo.F_DOCLIGNE;
---     CREATE INDEX IX_DOCLIGNE_PERF ON dbo.F_DOCLIGNE (DL_MvtStock, DO_Date, AR_Ref, DE_No)
---         INCLUDE (DL_Qte, DL_PrixRU, DL_No) WITH (FILLFACTOR=85, ONLINE=OFF);
---     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name=''IX_ARTICLE_COVER'' AND object_id=OBJECT_ID(''dbo.F_ARTICLE''))
---         CREATE INDEX IX_ARTICLE_COVER ON dbo.F_ARTICLE (AR_Ref)
---         INCLUDE (AR_Design, FA_CodeFamille, CL_No1, CL_No2, CL_No3, CL_No4) WITH (FILLFACTOR=90);
---     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name=''IX_DEPOT_COVER'' AND object_id=OBJECT_ID(''dbo.F_DEPOT''))
---         CREATE INDEX IX_DEPOT_COVER ON dbo.F_DEPOT (DE_No) INCLUDE (DE_Intitule) WITH (FILLFACTOR=90);
---     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name=''IX_CATALOGUE_COVER'' AND object_id=OBJECT_ID(''dbo.F_CATALOGUE''))
---         CREATE INDEX IX_CATALOGUE_COVER ON dbo.F_CATALOGUE (CL_No) INCLUDE (CL_Intitule) WITH (FILLFACTOR=90);
---     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name=''IX_FAMILLE_COVER'' AND object_id=OBJECT_ID(''dbo.F_FAMILLE''))
---         CREATE INDEX IX_FAMILLE_COVER ON dbo.F_FAMILLE (FA_CodeFamille) INCLUDE (FA_Intitule) WITH (FILLFACTOR=90);';
---     EXEC sp_executesql @sql;
-
---     -- ← SP_RefreshStockCacheBase supprimé — géré par le backend Node.js
---     EXEC stock.SP_RebuildUnifiedViews;
-
---     SELECT 'OK' AS Statut, @BaseName AS Base, 'Base ajoutée avec succès' AS Message;
--- END
--- GO
--- ── 16. SP_AddBase ────────────────────────────────────────────
+-- 16. SP_AddBase ────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_AddBase
     @BaseName   NVARCHAR(128),
     @BaseLabel  NVARCHAR(255)
@@ -1037,7 +923,7 @@ BEGIN
 END
 GO
 
--- ── 17. SP_RemoveBase ─────────────────────────────────────────
+-- 17. SP_RemoveBase ─────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_RemoveBase
     @BaseName NVARCHAR(128)
 AS
@@ -1048,7 +934,7 @@ BEGIN
 END
 GO
 
--- ── 18. SP_RefreshSiNecessaire ────────────────────────────────
+-- 18. SP_RefreshSiNecessaire ────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_RefreshSiNecessaire
     @HeuresMax INT = 8
 AS
@@ -1071,7 +957,7 @@ BEGIN
 END
 GO
 
--- ── 19. SP_VW_Dimensions ──────────────────────────────────────
+-- 19. SP_VW_Dimensions ──────────────────────────────────────
 CREATE OR ALTER VIEW stock.VW_Dimensions
 AS
 SELECT
@@ -1112,7 +998,7 @@ GO
 --  - Rejouable sans erreur (IF NOT EXISTS pour les tables)
 -- ════════════════════════════════════════════════════════════
 
--- ── 23. Table Utilisateurs ────────────────────────────────────
+-- 23. Table Utilisateurs ────────────────────────────────────
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
@@ -1150,7 +1036,7 @@ ELSE
     PRINT 'Table Utilisateurs déjà existante — conservée.';
 GO
 
--- ── 24. Table UtilisateurBases ────────────────────────────────
+-- 24. Table UtilisateurBases ────────────────────────────────
 --  Enregistre quelle base chaque EMPLOYÉ a ajoutée.
 --  Les admins ont accès à toutes les bases via stock.SAGE_Bases
 --  directement (pas besoin de cette table pour eux).
@@ -1179,7 +1065,7 @@ ELSE
     PRINT 'Table UtilisateurBases déjà existante — conservée.';
 GO
 
--- ── 25. SP_CreerUtilisateur ────────────────────────────────────
+-- 25. SP_CreerUtilisateur ────────────────────────────────────
 --  Utilisé pour : inscription employé (statut en_attente)
 --                 ET création admin par un admin (statut valide)
 -- ─────────────────────────────────────────────────────────────
@@ -1212,7 +1098,7 @@ BEGIN
 END
 GO
 
--- ── 26. SP_GetUtilisateurByEmail ───────────────────────────────
+-- 26. SP_GetUtilisateurByEmail ───────────────────────────────
 --  Utilisé pour le login — retourne le hash pour comparaison bcrypt
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateurByEmail
@@ -1228,7 +1114,7 @@ BEGIN
 END
 GO
 
--- ── 27. SP_GetUtilisateurById ──────────────────────────────────
+-- 27. SP_GetUtilisateurById ──────────────────────────────────
 --  Utilisé pour le middleware JWT (vérification à chaque requête)
 --  NE retourne PAS le mot de passe
 -- ─────────────────────────────────────────────────────────────
@@ -1245,7 +1131,7 @@ BEGIN
 END
 GO
 
--- ── 28. SP_ListerUtilisateurs ──────────────────────────────────
+-- 28. SP_ListerUtilisateurs ──────────────────────────────────
 --  Pour la page Admin — liste tous les comptes (sans mot de passe)
 --  Filtrable par statut (en_attente, valide, refuse, NULL = tous)
 -- ─────────────────────────────────────────────────────────────
@@ -1269,7 +1155,7 @@ BEGIN
 END
 GO
 
--- ── 29. SP_ValiderUtilisateur ──────────────────────────────────
+-- 29. SP_ValiderUtilisateur ──────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_ValiderUtilisateur
     @UtilisateurId INT
 AS
@@ -1284,7 +1170,7 @@ BEGIN
 END
 GO
 
--- ── 30. SP_RefuserUtilisateur ──────────────────────────────────
+-- 30. SP_RefuserUtilisateur ──────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_RefuserUtilisateur
     @UtilisateurId INT
 AS
@@ -1299,7 +1185,7 @@ BEGIN
 END
 GO
 
--- ── 31. SP_SetConnexionStatut ──────────────────────────────────
+-- 31. SP_SetConnexionStatut ──────────────────────────────────
 --  Appelé au login (EstConnecte=1) et au logout (EstConnecte=0)
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_SetConnexionStatut
@@ -1316,7 +1202,7 @@ BEGIN
 END
 GO
 
--- ── 32. SP_UpdateProfil ────────────────────────────────────────
+-- 32. SP_UpdateProfil ────────────────────────────────────────
 --  Chaque utilisateur (admin ou employé) modifie son propre profil
 --  Si @PhotoUrl est NULL → garde l'ancienne photo
 -- ─────────────────────────────────────────────────────────────
@@ -1341,7 +1227,7 @@ BEGIN
 END
 GO
 
--- ── 33. SP_AjouterBaseUtilisateur ──────────────────────────────
+-- 33. SP_AjouterBaseUtilisateur ──────────────────────────────
 --  Enregistre qu'un employé a ajouté une base
 --  Idempotente : ne plante pas si déjà ajoutée
 -- ─────────────────────────────────────────────────────────────
@@ -1368,7 +1254,7 @@ BEGIN
 END
 GO
 
--- ── 34. SP_GetBasesUtilisateur ─────────────────────────────────
+-- 34. SP_GetBasesUtilisateur ─────────────────────────────────
 --  Bases ajoutées par UN employé donné
 --  Utilisé par : la page Alertes/Mouvements côté employé
 --               ET par l'admin pour voir les bases d'un employé
@@ -1386,7 +1272,7 @@ BEGIN
 END
 GO
 
--- ── 35. SP_GetToutesBasesParUtilisateur ────────────────────────
+-- 35. SP_GetToutesBasesParUtilisateur ────────────────────────
 --  Vue d'ensemble admin : quel employé a ajouté quelle base
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetToutesBasesParUtilisateur
@@ -1410,7 +1296,7 @@ BEGIN
 END
 GO
 
--- ── 36. SP_GetUtilisateursConnectes ────────────────────────────
+-- 36. SP_GetUtilisateursConnectes ────────────────────────────
 --  Pour la page Admin — voir qui est connecté/déconnecté en temps réel
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateursConnectes
@@ -1440,7 +1326,7 @@ GO
 
 
 -- partie rapports 
--- ── 20. SP_RapportEtatStock ────────────────────────────────────
+-- 20. SP_RapportEtatStock ────────────────────────────────────
 --      État de stock à une date donnée (par article + dépôt)
 -- ════════════════════════════════════════════════════════════
 CREATE OR ALTER PROCEDURE stock.SP_RapportEtatStock
@@ -1477,7 +1363,7 @@ BEGIN
 END
 GO
 
--- ── 21. SP_RapportBalanceStock ─────────────────────────────────
+-- 21. SP_RapportBalanceStock ─────────────────────────────────
 --      Balance des stocks (début / mouvements / fin) par période
 --      Regroupement au choix : article ou famille
 -- ════════════════════════════════════════════════════════════
@@ -1531,7 +1417,7 @@ BEGIN
 END
 GO
 
--- ── 22. SP_RapportStockParDepot ────────────────────────────────
+-- 22. SP_RapportStockParDepot ────────────────────────────────
 --      État des stocks par dépôt (récap multi-dépôts)
 -- ════════════════════════════════════════════════════════════
 CREATE OR ALTER PROCEDURE stock.SP_RapportStockParDepot
@@ -1578,7 +1464,7 @@ GO
 --  - Inscription employé → statut 'en_attente' → validation admin obligatoire
 --  - Rejouable sans erreur (IF NOT EXISTS pour les tables)
 -- ════════════════════════════════════════════════════════════
--- ── 23. Table Utilisateurs ────────────────────────────────────
+--  23. Table Utilisateurs ────────────────────────────────────
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
@@ -1616,7 +1502,7 @@ ELSE
     PRINT 'Table Utilisateurs déjà existante — conservée.';
 GO
 
--- ── 24. Table UtilisateurBases ────────────────────────────────
+--  24. Table UtilisateurBases ────────────────────────────────
 --  Enregistre quelle base chaque EMPLOYÉ a ajoutée.
 --  Les admins ont accès à toutes les bases via stock.SAGE_Bases
 --  directement (pas besoin de cette table pour eux).
@@ -1645,7 +1531,7 @@ ELSE
     PRINT 'Table UtilisateurBases déjà existante — conservée.';
 GO
 
--- ── 25. SP_CreerUtilisateur ────────────────────────────────────
+--  25. SP_CreerUtilisateur ────────────────────────────────────
 --  Utilisé pour : inscription employé (statut en_attente)
 --                 ET création admin par un admin (statut valide)
 -- ─────────────────────────────────────────────────────────────
@@ -1678,7 +1564,7 @@ BEGIN
 END
 GO
 
--- ── 26. SP_GetUtilisateurByEmail ───────────────────────────────
+-- 26. SP_GetUtilisateurByEmail ───────────────────────────────
 --  Utilisé pour le login — retourne le hash pour comparaison bcrypt
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateurByEmail
@@ -1694,7 +1580,7 @@ BEGIN
 END
 GO
 
--- ── 27. SP_GetUtilisateurById ──────────────────────────────────
+-- 27. SP_GetUtilisateurById ──────────────────────────────────
 --  Utilisé pour le middleware JWT (vérification à chaque requête)
 --  NE retourne PAS le mot de passe
 -- ─────────────────────────────────────────────────────────────
@@ -1711,7 +1597,7 @@ BEGIN
 END
 GO
 
--- ── 28. SP_ListerUtilisateurs ──────────────────────────────────
+-- 28. SP_ListerUtilisateurs ──────────────────────────────────
 --  Pour la page Admin — liste tous les comptes (sans mot de passe)
 --  Filtrable par statut (en_attente, valide, refuse, NULL = tous)
 -- ─────────────────────────────────────────────────────────────
@@ -1735,7 +1621,7 @@ BEGIN
 END
 GO
 
--- ── 29. SP_ValiderUtilisateur ──────────────────────────────────
+-- 29. SP_ValiderUtilisateur ──────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_ValiderUtilisateur
     @UtilisateurId INT
 AS
@@ -1750,7 +1636,7 @@ BEGIN
 END
 GO
 
--- ── 30. SP_RefuserUtilisateur ──────────────────────────────────
+-- 30. SP_RefuserUtilisateur ──────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_RefuserUtilisateur
     @UtilisateurId INT
 AS
@@ -1765,7 +1651,7 @@ BEGIN
 END
 GO
 
--- ── 31. SP_SetConnexionStatut ──────────────────────────────────
+-- 31. SP_SetConnexionStatut ──────────────────────────────────
 --  Appelé au login (EstConnecte=1) et au logout (EstConnecte=0)
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_SetConnexionStatut
@@ -1782,7 +1668,7 @@ BEGIN
 END
 GO
 
--- ── 32. SP_UpdateProfil ────────────────────────────────────────
+-- 32. SP_UpdateProfil ────────────────────────────────────────
 --  Chaque utilisateur (admin ou employé) modifie son propre profil
 --  Si @PhotoUrl est NULL → garde l'ancienne photo
 -- ─────────────────────────────────────────────────────────────
@@ -1807,7 +1693,7 @@ BEGIN
 END
 GO
 
--- ── 33. SP_AjouterBaseUtilisateur ──────────────────────────────
+-- 33. SP_AjouterBaseUtilisateur ──────────────────────────────
 --  Enregistre qu'un employé a ajouté une base
 --  Idempotente : ne plante pas si déjà ajoutée
 -- ─────────────────────────────────────────────────────────────
@@ -1834,7 +1720,7 @@ BEGIN
 END
 GO
 
--- ── 34. SP_GetBasesUtilisateur ─────────────────────────────────
+-- 34. SP_GetBasesUtilisateur ─────────────────────────────────
 --  Bases ajoutées par UN employé donné
 --  Utilisé par : la page Alertes/Mouvements côté employé
 --               ET par l'admin pour voir les bases d'un employé
@@ -1852,7 +1738,7 @@ BEGIN
 END
 GO
 
--- ── 35. SP_GetToutesBasesParUtilisateur ────────────────────────
+-- 35. SP_GetToutesBasesParUtilisateur ────────────────────────
 --  Vue d'ensemble admin : quel employé a ajouté quelle base
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetToutesBasesParUtilisateur
@@ -1876,7 +1762,7 @@ BEGIN
 END
 GO
 
--- ── 36. SP_GetUtilisateursConnectes ────────────────────────────
+-- 36. SP_GetUtilisateursConnectes ────────────────────────────
 --  Pour la page Admin — voir qui est connecté/déconnecté en temps réel
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateursConnectes
@@ -1899,4 +1785,130 @@ END
 GO
 
 PRINT '✅ Partie Utilisateurs (23-36) initialisée avec succès.';
+GO
+
+
+
+
+
+
+
+-- ici j'ai ajouter les données de la société pour user employées 
+-- 37. Ajout colonne Societe dans Utilisateurs ───────────────
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns 
+    WHERE object_id = OBJECT_ID('stock.Utilisateurs') 
+    AND name = 'Societe'
+)
+BEGIN
+    ALTER TABLE stock.Utilisateurs 
+    ADD Societe NVARCHAR(200) NULL;
+    PRINT 'Colonne Societe ajoutée.';
+END
+ELSE
+    PRINT 'Colonne Societe déjà existante — conservée.';
+GO
+
+-- Mettre à jour SP_CreerUtilisateur avec Societe ────────────
+CREATE OR ALTER PROCEDURE stock.SP_CreerUtilisateur
+    @Email          NVARCHAR(255),
+    @MotDePasseHash NVARCHAR(255),
+    @Nom            NVARCHAR(100),
+    @Prenom         NVARCHAR(100),
+    @Telephone      NVARCHAR(30)  = NULL,
+    @Poste          NVARCHAR(100) = NULL,
+    @Societe        NVARCHAR(200) = NULL,
+    @Role           NVARCHAR(20)  = 'employe',
+    @Statut         NVARCHAR(20)  = 'en_attente',
+    @CreePar        INT           = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF EXISTS (SELECT 1 FROM stock.Utilisateurs WHERE Email = @Email)
+    BEGIN
+        RAISERROR('Un compte existe déjà avec cet email.', 16, 1);
+        RETURN;
+    END
+    INSERT INTO stock.Utilisateurs
+        (Email, MotDePasseHash, Nom, Prenom, Telephone, Poste, Societe, Role, Statut, CreePar)
+    VALUES
+        (@Email, @MotDePasseHash, @Nom, @Prenom, @Telephone, @Poste, @Societe, @Role, @Statut, @CreePar);
+    SELECT SCOPE_IDENTITY() AS UtilisateurId;
+END
+GO
+
+--  Mettre à jour SP_GetUtilisateurByEmail avec Societe ───────
+CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateurByEmail
+    @Email NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT UtilisateurId, Email, MotDePasseHash, Nom, Prenom,
+           Telephone, Poste, Societe, PhotoUrl, Role, Statut,
+           EstConnecte, DerniereConnexion, DateCreation
+    FROM stock.Utilisateurs
+    WHERE Email = @Email;
+END
+GO
+
+--  Mettre à jour SP_GetUtilisateurById avec Societe ─────────
+CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateurById
+    @UtilisateurId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT UtilisateurId, Email, Nom, Prenom,
+           Telephone, Poste, Societe, PhotoUrl, Role, Statut,
+           EstConnecte, DerniereConnexion, DateCreation
+    FROM stock.Utilisateurs
+    WHERE UtilisateurId = @UtilisateurId;
+END
+GO
+
+-- Mettre à jour SP_ListerUtilisateurs avec Societe ─────────
+CREATE OR ALTER PROCEDURE stock.SP_ListerUtilisateurs
+    @Statut NVARCHAR(20) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT UtilisateurId, Email, Nom, Prenom,
+           Telephone, Poste, Societe, PhotoUrl, Role, Statut,
+           EstConnecte, DerniereConnexion, DateCreation
+    FROM stock.Utilisateurs
+    WHERE (@Statut IS NULL OR Statut = @Statut)
+    ORDER BY
+        CASE Statut
+            WHEN 'en_attente' THEN 1
+            WHEN 'valide'     THEN 2
+            WHEN 'refuse'     THEN 3
+        END,
+        DateCreation DESC;
+END
+GO
+
+--  Mettre à jour SP_UpdateProfil avec Societe ───────────────
+CREATE OR ALTER PROCEDURE stock.SP_UpdateProfil
+    @UtilisateurId INT,
+    @Nom           NVARCHAR(100),
+    @Prenom        NVARCHAR(100),
+    @Telephone     NVARCHAR(30)  = NULL,
+    @Poste         NVARCHAR(100) = NULL,
+    @Societe       NVARCHAR(200) = NULL,
+    @PhotoUrl      NVARCHAR(500) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE stock.Utilisateurs
+    SET
+        Nom       = @Nom,
+        Prenom    = @Prenom,
+        Telephone = @Telephone,
+        Poste     = @Poste,
+        Societe   = @Societe,
+        PhotoUrl  = COALESCE(@PhotoUrl, PhotoUrl)
+    WHERE UtilisateurId = @UtilisateurId;
+END
+GO
+
+PRINT '✅ Colonne Societe et SPs mis à jour.';
 GO

@@ -6,7 +6,7 @@ import {
   AlertCircle, Loader2, RefreshCw, Search,
   ShieldCheck, Wifi, WifiOff, AlertTriangle, X,
   Clock, Database, Phone, Briefcase, Mail, UserCheck,
-  UserX, Eye,
+  UserX, Eye,Building2,
 } from 'lucide-react';
 
 const API = 'http://localhost:5000';
@@ -313,6 +313,7 @@ function EmployeDetailModal({ employe, onClose }) {
               { icon: <Mail size={13} />,      label: 'Email',              value: employe.Email },
               { icon: <Phone size={13} />,     label: 'Téléphone',          value: employe.Telephone || '—' },
               { icon: <Briefcase size={13} />, label: 'Poste / Fonction',   value: employe.Poste || '—' },
+              { icon: <Building2 size={13} />,  label: 'Société',           value: employe.Societe  || '—' },
               { icon: <Clock size={13} />,     label: 'Inscrit le',         value: fmtDate(employe.DateCreation) },
               { icon: <Clock size={13} />,     label: 'Dernière connexion', value: fmtDate(employe.DerniereConnexion) },
             ].map(({ icon, label, value }) => (
@@ -735,8 +736,10 @@ function TabEmployes() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
-                    {['Employé', 'Contact', 'Poste', 'Statut', 'Bases ajoutées', 'Actions'].map((h, i) => (
-                      <th key={h} style={{ ...thStyle, textAlign: i === 5 ? 'center' : 'left' }}>{h}</th>
+                    {/* {['Employé', 'Contact', 'Poste', 'Statut', 'Bases ajoutées', 'Actions'].map((h, i) => (
+                      <th key={h} style={{ ...thStyle, textAlign: i === 5 ? 'center' : 'left' }}>{h}</th> */}
+                      {['Employé', 'Contact', 'Poste', 'Société', 'Statut', 'Bases ajoutées', 'Actions'].map((h, i) => (
+                      <th key={h} style={{ ...thStyle, textAlign: i === 6 ? 'center' : 'left' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -761,6 +764,7 @@ function TabEmployes() {
                           {e.Telephone && <p style={{ fontSize: '11px', color: '#aaa', margin: '2px 0 0' }}>{e.Telephone}</p>}
                         </td>
                         <td style={tdStyle}><p style={{ fontSize: '12px', color: '#555', margin: 0 }}>{e.Poste || '—'}</p></td>
+                        <td style={tdStyle}><p style={{ fontSize: '12px', color: '#555', margin: 0 }}>{e.Societe || '—'}</p></td>
                         <td style={tdStyle}>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.7rem', fontWeight: 600, borderRadius: '9999px', padding: '0.25rem 0.625rem', background: e.EstConnecte ? 'rgba(1,168,46,0.07)' : '#f5f5f5', color: e.EstConnecte ? '#01773d' : '#888', border: `1px solid ${e.EstConnecte ? 'rgba(1,168,46,0.18)' : '#e0e0e0'}` }}>
                             {e.EstConnecte ? <Wifi size={10} /> : <WifiOff size={10} />}

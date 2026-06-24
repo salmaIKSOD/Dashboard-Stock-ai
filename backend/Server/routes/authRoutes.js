@@ -32,7 +32,7 @@ const cookieOptions = {
 //  L'admin doit valider avant que l'employé puisse se connecter
 // ══════════════════════════════════════════════════════════════
 router.post('/register', async (req, res) => {
-  const { nom, prenom, email, password, telephone, poste } = req.body;
+  const { nom, prenom, email, password, telephone, poste,societe } = req.body;
 
   // ── Validation des champs obligatoires ────────────────────
   if (!nom || !prenom || !email || !password) {
@@ -56,6 +56,7 @@ router.post('/register', async (req, res) => {
       .input('Prenom',         sql.NVarChar(100), prenom.trim())
       .input('Telephone',      sql.NVarChar(30),  telephone || null)
       .input('Poste',          sql.NVarChar(100), poste || null)
+      .input('Societe',        sql.NVarChar(200), societe || null)
       .input('Role',           sql.NVarChar(20),  'employe')
       .input('Statut',         sql.NVarChar(20),  'en_attente')
       .input('CreePar',        sql.Int,           null)
@@ -144,6 +145,7 @@ router.post('/login', async (req, res) => {
         Prenom:        user.Prenom,
         Telephone:     user.Telephone,
         Poste:         user.Poste,
+        Societe:       user.Societe,
         PhotoUrl:      user.PhotoUrl,
         Role:          user.Role,
       },
