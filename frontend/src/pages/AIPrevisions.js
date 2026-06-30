@@ -245,7 +245,8 @@ function ForecastChart({ baseName, arRef, onClose }) {
       </div>
 
       <div className="bg-[#fafafa] rounded-xl p-3">
-        <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
+        {/* <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}> */}
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: W, height: 'auto', display: 'block', margin: '0 auto', overflow: 'visible' }}>
           <rect x={futurStart} y={PT} width={futurEnd - futurStart} height={chartH} fill="#FFF3E0" opacity="0.5" rx="2" />
           {yTicks.map((v, i) => (
             <g key={i}>
@@ -365,7 +366,8 @@ function RuptureBarChart({ rows }) {
         <span className="text-[11px] text-[#aaa]">Barre courte = commander en urgence</span>
       </div>
       <div className="p-4">
-        <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
+        {/* <svg width="100%" viewBox={`0 0 ${W} ${H}`}> */}
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: W, height: 'auto', display: 'block', margin: '0 auto' }}>
           {top15.map((r, i) => {
             const v   = Number(r.jours_estimes);
             const y   = PT + i * (barH + gap);
@@ -498,7 +500,8 @@ function AnomalyScatter({ rows }) {
         <span className="text-[11px] text-[#aaa]">Échantillon de {normales.length + anomalies.length} mouvements (sur {rows.length})</span>
       </div>
       <div className="p-4">
-        <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
+        {/* <svg width="100%" viewBox={`0 0 ${W} ${H}`}> */}
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: W, height: 'auto', display: 'block', margin: '0 auto' }}>
           {yTicks.map((v, i) => (
             <g key={i}>
               <line x1={PL} y1={ty(v)} x2={W - PR} y2={ty(v)} stroke="#f0f0f0" strokeWidth="1" />

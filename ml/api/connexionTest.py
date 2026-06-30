@@ -2,10 +2,10 @@ import pyodbc
 import pandas as pd
 
 SERVER   = r'SALMAIKSOD\SAGE100'
-DATABASE = 'Test'
+DATABASE = 'StockAnalytics'
 USERNAME = 'sa'
 PASSWORD = '123456'
-BASE     = 'BIJOU'
+BASE     = 'STE_NGDM'
 
 conn = pyodbc.connect(
     f"DRIVER={{ODBC Driver 17 for SQL Server}};"

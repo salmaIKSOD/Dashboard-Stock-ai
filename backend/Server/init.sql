@@ -5,7 +5,7 @@
 --  lui-même via l'interface Gestion Bases de Données
 -- ============================================================
 
--- 1. Création de la base StockAnalytics  ────────────────────
+-- 1. Création de la base StockAnalytics 
 IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = 'StockAnalytics ')
 BEGIN
     CREATE DATABASE StockAnalytics ;
@@ -15,14 +15,14 @@ GO
 USE StockAnalytics ;
 GO
 
--- 2. Schéma stock ──────────────────────────────────────────
+-- 2. Schéma stock 
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'stock')
 BEGIN
     EXEC('CREATE SCHEMA stock');
 END
 GO
 
--- 3. Table registre des bases SAGE (vide par défaut) ───────
+-- 3. Table registre des bases SAGE (vide par défaut) 
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
@@ -40,7 +40,7 @@ BEGIN
 END
 GO
 
--- 4. Table CacheFiltres ────────────────────────────────────
+-- 4. Table CacheFiltres 
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
@@ -65,7 +65,7 @@ BEGIN
 END
 GO
 
--- 5. Table StockJournalierCache ────────────────────────────
+-- 5. Table StockJournalierCache 
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
@@ -120,7 +120,7 @@ BEGIN
 END
 GO
 
--- 6. Vue VW_MouvementsJournaliers (vide au départ) ─────────
+-- 6. Vue VW_MouvementsJournaliers (vide au départ) 
 CREATE OR ALTER VIEW stock.VW_MouvementsJournaliers
 AS
 SELECT
@@ -148,7 +148,7 @@ SELECT
 WHERE 1 = 0;
 GO
 
--- 7. Vue VW_StockJoursAvecMvt (vide au départ) ─────────────
+-- 7. Vue VW_StockJoursAvecMvt (vide au départ) 
 CREATE OR ALTER VIEW stock.VW_StockJoursAvecMvt
 AS
 SELECT
@@ -179,7 +179,7 @@ SELECT
 WHERE 1 = 0;
 GO
 
--- 8. SP_RebuildUnifiedViews ────────────────────────────────
+-- 8. SP_RebuildUnifiedViews 
 CREATE OR ALTER PROCEDURE stock.SP_RebuildUnifiedViews
 AS
 BEGIN
@@ -320,7 +320,7 @@ BEGIN
 END
 GO
 
--- 9. SP_RefreshCacheFiltres ────────────────────────────────
+-- 9. SP_RefreshCacheFiltres 
 CREATE OR ALTER PROCEDURE stock.SP_RefreshCacheFiltres
 AS
 BEGIN
@@ -397,7 +397,7 @@ BEGIN
 END
 GO
 
--- 10. SP_RefreshStockCache ──────────────────────────────────
+-- 10. SP_RefreshStockCache 
 CREATE OR ALTER PROCEDURE stock.SP_RefreshStockCache
 AS
 BEGIN
@@ -446,7 +446,7 @@ BEGIN
 END
 GO
 
--- 11. SP_GetBases ──────────────────────────────────────────
+-- 11. SP_GetBases 
 CREATE OR ALTER PROCEDURE stock.SP_GetBases
 AS
 BEGIN
@@ -484,7 +484,7 @@ BEGIN
 END
 GO
 
--- 12. SP_GetFiltres ─────────────────────────────────────────
+-- 12. SP_GetFiltres 
 CREATE OR ALTER PROCEDURE stock.SP_GetFiltres
     @Base           NVARCHAR(128),
     @CL_No1         INT          = NULL,
@@ -535,7 +535,7 @@ BEGIN
 END
 GO
 
--- 13. SP_GetMouvements ──────────────────────────────────────
+-- 13. SP_GetMouvements 
 CREATE OR ALTER PROCEDURE stock.SP_GetMouvements
     @Base           NVARCHAR(128),
     @DateDebut      DATE          = NULL,
@@ -583,121 +583,207 @@ BEGIN
 END
 GO
 
--- 14. SP_GetStockJournalier ─────────────────────────────────
+-- 14. SP_GetStockJournalier 
+-- CREATE OR ALTER PROCEDURE stock.SP_GetStockJournalier
+--     @Base           NVARCHAR(128),
+--     @DateDebut      DATE,
+--     @DateFin        DATE,
+--     @Depot          INT           = NULL,
+--     @Article        NVARCHAR(50)  = NULL,
+--     @FA_CodeFamille NVARCHAR(10)  = NULL,
+--     @CL_No1         INT           = NULL,
+--     @CL_No2         INT           = NULL,
+--     @CL_No3         INT           = NULL,
+--     @CL_No4         INT           = NULL
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     SELECT DateJour, AR_Ref, AR_Design, FA_CodeFamille, FA_Intitule,
+--            CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
+--            CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
+--            DE_No, DE_Intitule,
+--            TotalEntree, TotalSortie, ValeurEntree, ValeurSortie,
+--            StockInitial, StockFinal, ValeurInitiale, ValeurFinale
+--     INTO #Base
+--     FROM stock.StockJournalierCache
+--     WHERE BaseName = @Base
+--       AND DateJour <= @DateFin
+--       AND (@Depot          IS NULL OR DE_No          = @Depot)
+--       AND (@Article        IS NULL OR AR_Ref         = @Article)
+--       AND (@FA_CodeFamille IS NULL OR FA_CodeFamille = @FA_CodeFamille)
+--       AND (@CL_No1         IS NULL OR CL_No1         = @CL_No1)
+--       AND (@CL_No2         IS NULL OR CL_No2         = @CL_No2)
+--       AND (@CL_No3         IS NULL OR CL_No3         = @CL_No3)
+--       AND (@CL_No4         IS NULL OR CL_No4         = @CL_No4);
+
+--     CREATE INDEX IX_tmp_Base ON #Base (AR_Ref, DE_No, DateJour DESC);
+
+--     WITH Calendrier AS
+--     (
+--         SELECT @DateDebut AS DateJour
+--         UNION ALL
+--         SELECT DATEADD(DAY, 1, DateJour)
+--         FROM Calendrier
+--         WHERE DateJour < @DateFin
+--     ),
+--     ArticlesDepots AS
+--     (
+--         SELECT DISTINCT
+--             AR_Ref, AR_Design, FA_CodeFamille, FA_Intitule,
+--             CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
+--             CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
+--             DE_No, DE_Intitule
+--         FROM #Base
+--     ),
+--     JoursSansMvt AS
+--     (
+--         SELECT
+--             c.DateJour,
+--             a.AR_Ref, a.AR_Design, a.FA_CodeFamille, a.FA_Intitule,
+--             a.CL_No1, a.CL_Intitule1, a.CL_No2, a.CL_Intitule2,
+--             a.CL_No3, a.CL_Intitule3, a.CL_No4, a.CL_Intitule4,
+--             a.DE_No, a.DE_Intitule,
+--             0 AS TotalEntree, 0 AS TotalSortie,
+--             CAST(0 AS DECIMAL(18,4)) AS ValeurEntree,
+--             CAST(0 AS DECIMAL(18,4)) AS ValeurSortie,
+--             ISNULL(ds.StockFinal,   0) AS StockInitial,
+--             ISNULL(ds.StockFinal,   0) AS StockFinal,
+--             ISNULL(ds.ValeurFinale, 0) AS ValeurInitiale,
+--             ISNULL(ds.ValeurFinale, 0) AS ValeurFinale
+--         FROM Calendrier c
+--         CROSS JOIN ArticlesDepots a
+--         OUTER APPLY (
+--             SELECT TOP 1 StockFinal, ValeurFinale
+--             FROM #Base b
+--             WHERE b.AR_Ref  = a.AR_Ref AND b.DE_No = a.DE_No
+--               AND b.DateJour < c.DateJour
+--             ORDER BY b.DateJour DESC
+--         ) ds
+--         WHERE NOT EXISTS (
+--             SELECT 1 FROM #Base b
+--             WHERE b.AR_Ref = a.AR_Ref AND b.DE_No = a.DE_No AND b.DateJour = c.DateJour
+--         )
+--         AND c.DateJour BETWEEN @DateDebut AND @DateFin
+--     )
+--     SELECT DateJour AS [Date], AR_Ref AS [Article], AR_Design AS [Designation],
+--            FA_CodeFamille AS [Code Famille], FA_Intitule AS [Intitule Famille],
+--            CL_No1 AS [Cat N1 No], CL_Intitule1 AS [Cat N1],
+--            CL_No2 AS [Cat N2 No], CL_Intitule2 AS [Cat N2],
+--            CL_No3 AS [Cat N3 No], CL_Intitule3 AS [Cat N3],
+--            CL_No4 AS [Cat N4 No], CL_Intitule4 AS [Cat N4],
+--            DE_No AS [Depot], DE_Intitule AS [Nom Depot],
+--            TotalEntree AS [Total Entrees], TotalSortie AS [Total Sorties],
+--            ValeurEntree AS [Valeur Entree], ValeurSortie AS [Valeur Sortie],
+--            StockInitial AS [Stock Initial], StockFinal AS [Stock Final],
+--            ValeurInitiale AS [Valeur Initiale], ValeurFinale AS [Valeur Finale (Permanente)]
+--     FROM #Base WHERE DateJour BETWEEN @DateDebut AND @DateFin
+
+--     UNION ALL
+
+--     SELECT DateJour, AR_Ref, AR_Design, FA_CodeFamille, FA_Intitule,
+--            CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
+--            CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
+--            DE_No, DE_Intitule,
+--            TotalEntree, TotalSortie, ValeurEntree, ValeurSortie,
+--            StockInitial, StockFinal, ValeurInitiale, ValeurFinale
+--     FROM JoursSansMvt
+
+--     ORDER BY [Article], [Depot], [Date]
+--     OPTION (MAXRECURSION 3660);
+
+--     DROP TABLE IF EXISTS #Base;
+-- END
+-- GO
 CREATE OR ALTER PROCEDURE stock.SP_GetStockJournalier
     @Base           NVARCHAR(128),
     @DateDebut      DATE,
     @DateFin        DATE,
-    @Depot          INT           = NULL,
-    @Article        NVARCHAR(50)  = NULL,
-    @FA_CodeFamille NVARCHAR(10)  = NULL,
-    @CL_No1         INT           = NULL,
-    @CL_No2         INT           = NULL,
-    @CL_No3         INT           = NULL,
-    @CL_No4         INT           = NULL
+    @Depot          INT          = NULL,
+    @Article        NVARCHAR(50) = NULL,
+    @FA_CodeFamille NVARCHAR(10) = NULL,
+    @CL_No1 INT = NULL, @CL_No2 INT = NULL, @CL_No3 INT = NULL, @CL_No4 INT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    SELECT DateJour, AR_Ref, AR_Design, FA_CodeFamille, FA_Intitule,
-           CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
-           CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
-           DE_No, DE_Intitule,
-           TotalEntree, TotalSortie, ValeurEntree, ValeurSortie,
-           StockInitial, StockFinal, ValeurInitiale, ValeurFinale
-    INTO #Base
+    -- 1) Solde d'ouverture : dernier StockFinal STRICTEMENT avant @DateDebut
+    --    (1 seule ligne par couple — plus de scan d'historique répété)
+    SELECT AR_Ref, DE_No, StockFinal AS StockOuv, ValeurFinale AS ValeurOuv
+    INTO #Ouv
+    FROM (
+        SELECT AR_Ref, DE_No, StockFinal, ValeurFinale,
+               ROW_NUMBER() OVER (PARTITION BY AR_Ref, DE_No ORDER BY DateJour DESC) rn
+        FROM stock.StockJournalierCache
+        WHERE BaseName = @Base AND DateJour < @DateDebut
+          AND (@Depot IS NULL OR DE_No=@Depot) AND (@Article IS NULL OR AR_Ref=@Article)
+          AND (@FA_CodeFamille IS NULL OR FA_CodeFamille=@FA_CodeFamille)
+          AND (@CL_No1 IS NULL OR CL_No1=@CL_No1) AND (@CL_No2 IS NULL OR CL_No2=@CL_No2)
+          AND (@CL_No3 IS NULL OR CL_No3=@CL_No3) AND (@CL_No4 IS NULL OR CL_No4=@CL_No4)
+    ) x WHERE rn = 1;
+
+    -- 2) Mouvements DANS la période seulement (borne basse incluse !)
+    SELECT * INTO #Mvt
     FROM stock.StockJournalierCache
-    WHERE BaseName = @Base
-      AND DateJour <= @DateFin
-      AND (@Depot          IS NULL OR DE_No          = @Depot)
-      AND (@Article        IS NULL OR AR_Ref         = @Article)
-      AND (@FA_CodeFamille IS NULL OR FA_CodeFamille = @FA_CodeFamille)
-      AND (@CL_No1         IS NULL OR CL_No1         = @CL_No1)
-      AND (@CL_No2         IS NULL OR CL_No2         = @CL_No2)
-      AND (@CL_No3         IS NULL OR CL_No3         = @CL_No3)
-      AND (@CL_No4         IS NULL OR CL_No4         = @CL_No4);
+    WHERE BaseName = @Base AND DateJour BETWEEN @DateDebut AND @DateFin
+      AND (@Depot IS NULL OR DE_No=@Depot) AND (@Article IS NULL OR AR_Ref=@Article)
+      AND (@FA_CodeFamille IS NULL OR FA_CodeFamille=@FA_CodeFamille)
+      AND (@CL_No1 IS NULL OR CL_No1=@CL_No1) AND (@CL_No2 IS NULL OR CL_No2=@CL_No2)
+      AND (@CL_No3 IS NULL OR CL_No3=@CL_No3) AND (@CL_No4 IS NULL OR CL_No4=@CL_No4);
+    CREATE INDEX IX_mvt ON #Mvt (AR_Ref, DE_No, DateJour);
 
-    CREATE INDEX IX_tmp_Base ON #Base (AR_Ref, DE_No, DateJour DESC);
+    -- 3) Référentiel article/dépôt + dimensions (1 ligne par couple)
+    SELECT AR_Ref, DE_No,
+           MAX(AR_Design) AR_Design, MAX(FA_CodeFamille) FA_CodeFamille, MAX(FA_Intitule) FA_Intitule,
+           MAX(CL_No1) CL_No1, MAX(CL_Intitule1) CL_Intitule1, MAX(CL_No2) CL_No2, MAX(CL_Intitule2) CL_Intitule2,
+           MAX(CL_No3) CL_No3, MAX(CL_Intitule3) CL_Intitule3, MAX(CL_No4) CL_No4, MAX(CL_Intitule4) CL_Intitule4,
+           MAX(DE_Intitule) DE_Intitule
+    INTO #Dim FROM #Mvt GROUP BY AR_Ref, DE_No;
 
-    WITH Calendrier AS
-    (
-        SELECT @DateDebut AS DateJour
-        UNION ALL
-        SELECT DATEADD(DAY, 1, DateJour)
-        FROM Calendrier
-        WHERE DateJour < @DateFin
+    -- 4) Calendrier sans CTE récursive + report par fenêtre (plus d'OUTER APPLY)
+    ;WITH Calendrier AS (
+        SELECT DATEADD(DAY, n, @DateDebut) AS DateJour
+        FROM (SELECT TOP (DATEDIFF(DAY,@DateDebut,@DateFin)+1)
+                     ROW_NUMBER() OVER (ORDER BY (SELECT NULL))-1 AS n
+              FROM sys.all_objects) z
     ),
-    ArticlesDepots AS
-    (
-        SELECT DISTINCT
-            AR_Ref, AR_Design, FA_CodeFamille, FA_Intitule,
-            CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
-            CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
-            DE_No, DE_Intitule
-        FROM #Base
-    ),
-    JoursSansMvt AS
-    (
-        SELECT
-            c.DateJour,
-            a.AR_Ref, a.AR_Design, a.FA_CodeFamille, a.FA_Intitule,
-            a.CL_No1, a.CL_Intitule1, a.CL_No2, a.CL_Intitule2,
-            a.CL_No3, a.CL_Intitule3, a.CL_No4, a.CL_Intitule4,
-            a.DE_No, a.DE_Intitule,
-            0 AS TotalEntree, 0 AS TotalSortie,
-            CAST(0 AS DECIMAL(18,4)) AS ValeurEntree,
-            CAST(0 AS DECIMAL(18,4)) AS ValeurSortie,
-            ISNULL(ds.StockFinal,   0) AS StockInitial,
-            ISNULL(ds.StockFinal,   0) AS StockFinal,
-            ISNULL(ds.ValeurFinale, 0) AS ValeurInitiale,
-            ISNULL(ds.ValeurFinale, 0) AS ValeurFinale
+    Joint AS (
+        SELECT c.DateJour, d.AR_Ref, d.DE_No, d.AR_Design, d.FA_CodeFamille, d.FA_Intitule,
+               d.CL_No1, d.CL_Intitule1, d.CL_No2, d.CL_Intitule2,
+               d.CL_No3, d.CL_Intitule3, d.CL_No4, d.CL_Intitule4, d.DE_Intitule,
+               m.TotalEntree, m.TotalSortie, m.ValeurEntree, m.ValeurSortie,
+               m.StockInitial, m.StockFinal, m.ValeurInitiale, m.ValeurFinale,
+               CASE WHEN m.AR_Ref IS NULL THEN 0 ELSE 1 END AS HasMvt,
+               MAX(CASE WHEN m.AR_Ref IS NOT NULL THEN c.DateJour END)
+                   OVER (PARTITION BY d.AR_Ref, d.DE_No ORDER BY c.DateJour
+                         ROWS UNBOUNDED PRECEDING) AS AnchorDay   -- dernier jour avec mvt
         FROM Calendrier c
-        CROSS JOIN ArticlesDepots a
-        OUTER APPLY (
-            SELECT TOP 1 StockFinal, ValeurFinale
-            FROM #Base b
-            WHERE b.AR_Ref  = a.AR_Ref AND b.DE_No = a.DE_No
-              AND b.DateJour < c.DateJour
-            ORDER BY b.DateJour DESC
-        ) ds
-        WHERE NOT EXISTS (
-            SELECT 1 FROM #Base b
-            WHERE b.AR_Ref = a.AR_Ref AND b.DE_No = a.DE_No AND b.DateJour = c.DateJour
-        )
-        AND c.DateJour BETWEEN @DateDebut AND @DateFin
+        CROSS JOIN #Dim d
+        LEFT JOIN #Mvt m ON m.AR_Ref=d.AR_Ref AND m.DE_No=d.DE_No AND m.DateJour=c.DateJour
     )
-    SELECT DateJour AS [Date], AR_Ref AS [Article], AR_Design AS [Designation],
-           FA_CodeFamille AS [Code Famille], FA_Intitule AS [Intitule Famille],
-           CL_No1 AS [Cat N1 No], CL_Intitule1 AS [Cat N1],
-           CL_No2 AS [Cat N2 No], CL_Intitule2 AS [Cat N2],
-           CL_No3 AS [Cat N3 No], CL_Intitule3 AS [Cat N3],
-           CL_No4 AS [Cat N4 No], CL_Intitule4 AS [Cat N4],
-           DE_No AS [Depot], DE_Intitule AS [Nom Depot],
-           TotalEntree AS [Total Entrees], TotalSortie AS [Total Sorties],
-           ValeurEntree AS [Valeur Entree], ValeurSortie AS [Valeur Sortie],
-           StockInitial AS [Stock Initial], StockFinal AS [Stock Final],
-           ValeurInitiale AS [Valeur Initiale], ValeurFinale AS [Valeur Finale (Permanente)]
-    FROM #Base WHERE DateJour BETWEEN @DateDebut AND @DateFin
-
-    UNION ALL
-
-    SELECT DateJour, AR_Ref, AR_Design, FA_CodeFamille, FA_Intitule,
-           CL_No1, CL_Intitule1, CL_No2, CL_Intitule2,
-           CL_No3, CL_Intitule3, CL_No4, CL_Intitule4,
-           DE_No, DE_Intitule,
-           TotalEntree, TotalSortie, ValeurEntree, ValeurSortie,
-           StockInitial, StockFinal, ValeurInitiale, ValeurFinale
-    FROM JoursSansMvt
-
+    SELECT j.DateJour [Date], j.AR_Ref [Article], j.AR_Design [Designation],
+           j.FA_CodeFamille [Code Famille], j.FA_Intitule [Intitule Famille],
+           j.CL_No1 [Cat N1 No], j.CL_Intitule1 [Cat N1], j.CL_No2 [Cat N2 No], j.CL_Intitule2 [Cat N2],
+           j.CL_No3 [Cat N3 No], j.CL_Intitule3 [Cat N3], j.CL_No4 [Cat N4 No], j.CL_Intitule4 [Cat N4],
+           j.DE_No [Depot], j.DE_Intitule [Nom Depot],
+           ISNULL(j.TotalEntree,0) [Total Entrees], ISNULL(j.TotalSortie,0) [Total Sorties],
+           ISNULL(j.ValeurEntree,0) [Valeur Entree], ISNULL(j.ValeurSortie,0) [Valeur Sortie],
+           CASE WHEN j.HasMvt=1 THEN j.StockInitial   ELSE COALESCE(a.StockFinal,o.StockOuv,0) END [Stock Initial],
+           CASE WHEN j.HasMvt=1 THEN j.StockFinal     ELSE COALESCE(a.StockFinal,o.StockOuv,0) END [Stock Final],
+           CASE WHEN j.HasMvt=1 THEN j.ValeurInitiale ELSE COALESCE(a.ValeurFinale,o.ValeurOuv,0) END [Valeur Initiale],
+           CASE WHEN j.HasMvt=1 THEN j.ValeurFinale   ELSE COALESCE(a.ValeurFinale,o.ValeurOuv,0) END [Valeur Finale (Permanente)]
+    FROM Joint j
+    LEFT JOIN #Mvt a ON a.AR_Ref=j.AR_Ref AND a.DE_No=j.DE_No AND a.DateJour=j.AnchorDay
+    LEFT JOIN #Ouv o ON o.AR_Ref=j.AR_Ref AND o.DE_No=j.DE_No
     ORDER BY [Article], [Depot], [Date]
-    OPTION (MAXRECURSION 3660);
+    OPTION (RECOMPILE);
 
-    DROP TABLE IF EXISTS #Base;
+    DROP TABLE IF EXISTS #Mvt, #Dim, #Ouv;
 END
 GO
 
 
--- 15. SP_RefreshStockCacheBase ─────────────────────────────
+-- 15. SP_RefreshStockCacheBase 
 CREATE OR ALTER PROCEDURE stock.SP_RefreshStockCacheBase
     @BaseName NVARCHAR(128)
 AS
@@ -709,7 +795,7 @@ BEGIN
 
     DECLARE @sql NVARCHAR(MAX);
 
-    -- ── Filtres : articles ────────────────────────────────────
+    -- ── Filtres : articles 
     SET @sql = N'INSERT INTO StockAnalytics .stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle, CL_No1_Parent, FA_Code_Parent)
     SELECT DISTINCT ''' + @BaseName + N''', ''article'', fa.AR_Ref, fa.AR_Design, fa.CL_No1, fa.FA_CodeFamille
     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
@@ -717,7 +803,7 @@ BEGIN
     WHERE dl.DL_MvtStock IN (1, 3);';
     EXEC sp_executesql @sql;
 
-    -- ── Filtres : dépôts ──────────────────────────────────────
+    -- ── Filtres : dépôts 
     SET @sql = N'INSERT INTO StockAnalytics .stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle)
     SELECT DISTINCT ''' + @BaseName + N''', ''depot'', CAST(dp.DE_No AS NVARCHAR(255)), dp.DE_Intitule
     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
@@ -725,7 +811,7 @@ BEGIN
     WHERE dl.DL_MvtStock IN (1, 3);';
     EXEC sp_executesql @sql;
 
-    -- ── Filtres : familles ────────────────────────────────────
+    -- ── Filtres : familles 
     SET @sql = N'INSERT INTO StockAnalytics .stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle)
     SELECT DISTINCT ''' + @BaseName + N''', ''famille'', fa.FA_CodeFamille, fam.FA_Intitule
     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
@@ -734,7 +820,7 @@ BEGIN
     WHERE dl.DL_MvtStock IN (1, 3) AND fa.FA_CodeFamille IS NOT NULL;';
     EXEC sp_executesql @sql;
 
-    -- ── Filtres : cat1 ────────────────────────────────────────
+    -- ── Filtres : cat1 
     SET @sql = N'INSERT INTO StockAnalytics .stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle)
     SELECT DISTINCT ''' + @BaseName + N''', ''cat1'', CAST(fa.CL_No1 AS NVARCHAR(255)), cl1.CL_Intitule
     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
@@ -743,7 +829,7 @@ BEGIN
     WHERE dl.DL_MvtStock IN (1, 3) AND fa.CL_No1 IS NOT NULL;';
     EXEC sp_executesql @sql;
 
-    -- ── Filtres : cat2 ────────────────────────────────────────
+    -- ── Filtres : cat2 
     SET @sql = N'INSERT INTO StockAnalytics .stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle, CL_No1_Parent)
     SELECT DISTINCT ''' + @BaseName + N''', ''cat2'', CAST(fa.CL_No2 AS NVARCHAR(255)), cl2.CL_Intitule, fa.CL_No1
     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
@@ -752,7 +838,7 @@ BEGIN
     WHERE dl.DL_MvtStock IN (1, 3) AND fa.CL_No2 IS NOT NULL;';
     EXEC sp_executesql @sql;
 
-    -- ── Filtres : cat3 ────────────────────────────────────────
+    -- ── Filtres : cat3 
     SET @sql = N'INSERT INTO StockAnalytics .stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle, CL_No1_Parent)
     SELECT DISTINCT ''' + @BaseName + N''', ''cat3'', CAST(fa.CL_No3 AS NVARCHAR(255)), cl3.CL_Intitule, fa.CL_No1
     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
@@ -761,7 +847,7 @@ BEGIN
     WHERE dl.DL_MvtStock IN (1, 3) AND fa.CL_No3 IS NOT NULL;';
     EXEC sp_executesql @sql;
 
-    -- ── Filtres : cat4 ────────────────────────────────────────
+    -- ── Filtres : cat4 
     SET @sql = N'INSERT INTO StockAnalytics .stock.CacheFiltres (BaseName, TypeFiltre, Code, Libelle, CL_No1_Parent)
     SELECT DISTINCT ''' + @BaseName + N''', ''cat4'', CAST(fa.CL_No4 AS NVARCHAR(255)), cl4.CL_Intitule, fa.CL_No1
     FROM [' + @BaseName + N'].dbo.F_DOCLIGNE dl
@@ -801,7 +887,7 @@ END
 GO
 
 
--- 16. SP_AddBase ────────────────────────────────────────────
+-- 16. SP_AddBase 
 CREATE OR ALTER PROCEDURE stock.SP_AddBase
     @BaseName   NVARCHAR(128),
     @BaseLabel  NVARCHAR(255)
@@ -833,7 +919,7 @@ BEGIN
     ELSE
         UPDATE stock.SAGE_Bases SET IsActive = 1, BaseLabel = @BaseLabel WHERE BaseName = @BaseName;
 
-    -- ── Vue VW_StockJoursAvecMvt dans la base SAGE ────────────
+    -- ── Vue VW_StockJoursAvecMvt dans la base SAGE 
     DECLARE @sql NVARCHAR(MAX);
     SET @sql = N'USE [' + @BaseName + N']; EXEC(''
     CREATE OR ALTER VIEW dbo.VW_StockJoursAvecMvt AS
@@ -895,7 +981,7 @@ BEGIN
     '')';
     EXEC sp_executesql @sql;
 
-    -- ── Index dans la base SAGE (création automatique) ────────
+    -- ── Index dans la base SAGE (création automatique) 
     SET @sql = N'USE [' + @BaseName + N'];
     IF EXISTS (SELECT 1 FROM sys.indexes WHERE name=''IX_DOCLIGNE_PERF'' AND object_id=OBJECT_ID(''dbo.F_DOCLIGNE''))
         DROP INDEX IX_DOCLIGNE_PERF ON dbo.F_DOCLIGNE;
@@ -923,7 +1009,7 @@ BEGIN
 END
 GO
 
--- 17. SP_RemoveBase ─────────────────────────────────────────
+-- 17. SP_RemoveBase 
 CREATE OR ALTER PROCEDURE stock.SP_RemoveBase
     @BaseName NVARCHAR(128)
 AS
@@ -934,7 +1020,7 @@ BEGIN
 END
 GO
 
--- 18. SP_RefreshSiNecessaire ────────────────────────────────
+-- 18. SP_RefreshSiNecessaire 
 CREATE OR ALTER PROCEDURE stock.SP_RefreshSiNecessaire
     @HeuresMax INT = 8
 AS
@@ -957,7 +1043,7 @@ BEGIN
 END
 GO
 
--- 19. SP_VW_Dimensions ──────────────────────────────────────
+-- 19. SP_VW_Dimensions 
 CREATE OR ALTER VIEW stock.VW_Dimensions
 AS
 SELECT
@@ -998,7 +1084,7 @@ GO
 --  - Rejouable sans erreur (IF NOT EXISTS pour les tables)
 -- ════════════════════════════════════════════════════════════
 
--- 23. Table Utilisateurs ────────────────────────────────────
+-- 23. Table Utilisateurs
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
@@ -1037,7 +1123,7 @@ ELSE
     PRINT 'Table Utilisateurs déjà existante — conservée.';
 GO
 
--- 24. Table UtilisateurBases ────────────────────────────────
+-- 24. Table UtilisateurBases 
 --  Enregistre quelle base chaque EMPLOYÉ a ajoutée.
 --  Les admins ont accès à toutes les bases via stock.SAGE_Bases
 --  directement (pas besoin de cette table pour eux).
@@ -1066,7 +1152,7 @@ ELSE
     PRINT 'Table UtilisateurBases déjà existante — conservée.';
 GO
 
--- 25. SP_CreerUtilisateur ────────────────────────────────────
+-- 25. SP_CreerUtilisateur 
 --  Utilisé pour : inscription employé (statut en_attente)
 --                 ET création admin par un admin (statut valide)
 -- ─────────────────────────────────────────────────────────────
@@ -1099,7 +1185,7 @@ BEGIN
 END
 GO
 
--- 26. SP_GetUtilisateurByEmail ───────────────────────────────
+-- 26. SP_GetUtilisateurByEmail 
 --  Utilisé pour le login — retourne le hash pour comparaison bcrypt
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateurByEmail
@@ -1115,7 +1201,7 @@ BEGIN
 END
 GO
 
--- 27. SP_GetUtilisateurById ──────────────────────────────────
+-- 27. SP_GetUtilisateurById 
 --  Utilisé pour le middleware JWT (vérification à chaque requête)
 --  NE retourne PAS le mot de passe
 -- ─────────────────────────────────────────────────────────────
@@ -1132,7 +1218,7 @@ BEGIN
 END
 GO
 
--- 28. SP_ListerUtilisateurs ──────────────────────────────────
+-- 28. SP_ListerUtilisateurs 
 --  Pour la page Admin — liste tous les comptes (sans mot de passe)
 --  Filtrable par statut (en_attente, valide, refuse, NULL = tous)
 -- ─────────────────────────────────────────────────────────────
@@ -1156,7 +1242,7 @@ BEGIN
 END
 GO
 
--- 29. SP_ValiderUtilisateur ──────────────────────────────────
+-- 29. SP_ValiderUtilisateur 
 CREATE OR ALTER PROCEDURE stock.SP_ValiderUtilisateur
     @UtilisateurId INT
 AS
@@ -1171,7 +1257,7 @@ BEGIN
 END
 GO
 
--- 30. SP_RefuserUtilisateur ──────────────────────────────────
+-- 30. SP_RefuserUtilisateur 
 CREATE OR ALTER PROCEDURE stock.SP_RefuserUtilisateur
     @UtilisateurId INT
 AS
@@ -1186,7 +1272,7 @@ BEGIN
 END
 GO
 
--- 31. SP_SetConnexionStatut ──────────────────────────────────
+-- 31. SP_SetConnexionStatut 
 --  Appelé au login (EstConnecte=1) et au logout (EstConnecte=0)
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_SetConnexionStatut
@@ -1250,7 +1336,7 @@ BEGIN
 END
 GO
 
--- 33. SP_AjouterBaseUtilisateur ──────────────────────────────
+-- 33. SP_AjouterBaseUtilisateur 
 --  Enregistre qu'un employé a ajouté une base
 --  Idempotente : ne plante pas si déjà ajoutée
 -- ─────────────────────────────────────────────────────────────
@@ -1277,7 +1363,7 @@ BEGIN
 END
 GO
 
--- 34. SP_GetBasesUtilisateur ─────────────────────────────────
+-- 34. SP_GetBasesUtilisateur 
 --  Bases ajoutées par UN employé donné
 --  Utilisé par : la page Alertes/Mouvements côté employé
 --               ET par l'admin pour voir les bases d'un employé
@@ -1295,7 +1381,7 @@ BEGIN
 END
 GO
 
--- 35. SP_GetToutesBasesParUtilisateur ────────────────────────
+-- 35. SP_GetToutesBasesParUtilisateur 
 --  Vue d'ensemble admin : quel employé a ajouté quelle base
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetToutesBasesParUtilisateur
@@ -1319,7 +1405,7 @@ BEGIN
 END
 GO
 
--- 36. SP_GetUtilisateursConnectes ────────────────────────────
+-- 36. SP_GetUtilisateursConnectes 
 --  Pour la page Admin — voir qui est connecté/déconnecté en temps réel
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateursConnectes
@@ -1349,7 +1435,7 @@ GO
 
 
 -- partie rapports 
--- 20. SP_RapportEtatStock ────────────────────────────────────
+-- 20. SP_RapportEtatStock 
 --      État de stock à une date donnée (par article + dépôt)
 -- ════════════════════════════════════════════════════════════
 CREATE OR ALTER PROCEDURE stock.SP_RapportEtatStock
@@ -1386,7 +1472,7 @@ BEGIN
 END
 GO
 
--- 21. SP_RapportBalanceStock ─────────────────────────────────
+-- 21. SP_RapportBalanceStock 
 --      Balance des stocks (début / mouvements / fin) par période
 --      Regroupement au choix : article ou famille
 -- ════════════════════════════════════════════════════════════
@@ -1440,7 +1526,7 @@ BEGIN
 END
 GO
 
--- 22. SP_RapportStockParDepot ────────────────────────────────
+-- 22. SP_RapportStockParDepot 
 --      État des stocks par dépôt (récap multi-dépôts)
 -- ════════════════════════════════════════════════════════════
 CREATE OR ALTER PROCEDURE stock.SP_RapportStockParDepot
@@ -1487,7 +1573,7 @@ GO
 --  - Inscription employé → statut 'en_attente' → validation admin obligatoire
 --  - Rejouable sans erreur (IF NOT EXISTS pour les tables)
 -- ════════════════════════════════════════════════════════════
---  23. Table Utilisateurs ────────────────────────────────────
+--  23. Table Utilisateurs 
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
@@ -1525,7 +1611,7 @@ ELSE
     PRINT 'Table Utilisateurs déjà existante — conservée.';
 GO
 
---  24. Table UtilisateurBases ────────────────────────────────
+--  24. Table UtilisateurBases
 --  Enregistre quelle base chaque EMPLOYÉ a ajoutée.
 --  Les admins ont accès à toutes les bases via stock.SAGE_Bases
 --  directement (pas besoin de cette table pour eux).
@@ -1554,7 +1640,7 @@ ELSE
     PRINT 'Table UtilisateurBases déjà existante — conservée.';
 GO
 
---  25. SP_CreerUtilisateur ────────────────────────────────────
+--  25. SP_CreerUtilisateur 
 --  Utilisé pour : inscription employé (statut en_attente)
 --                 ET création admin par un admin (statut valide)
 -- ─────────────────────────────────────────────────────────────
@@ -1587,7 +1673,7 @@ BEGIN
 END
 GO
 
--- 26. SP_GetUtilisateurByEmail ───────────────────────────────
+-- 26. SP_GetUtilisateurByEmail
 --  Utilisé pour le login — retourne le hash pour comparaison bcrypt
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateurByEmail
@@ -1620,7 +1706,7 @@ BEGIN
 END
 GO
 
--- 28. SP_ListerUtilisateurs ──────────────────────────────────
+-- 28. SP_ListerUtilisateurs 
 --  Pour la page Admin — liste tous les comptes (sans mot de passe)
 --  Filtrable par statut (en_attente, valide, refuse, NULL = tous)
 -- ─────────────────────────────────────────────────────────────
@@ -1644,7 +1730,7 @@ BEGIN
 END
 GO
 
--- 29. SP_ValiderUtilisateur ──────────────────────────────────
+-- 29. SP_ValiderUtilisateur 
 CREATE OR ALTER PROCEDURE stock.SP_ValiderUtilisateur
     @UtilisateurId INT
 AS
@@ -1659,7 +1745,7 @@ BEGIN
 END
 GO
 
--- 30. SP_RefuserUtilisateur ──────────────────────────────────
+-- 30. SP_RefuserUtilisateur 
 CREATE OR ALTER PROCEDURE stock.SP_RefuserUtilisateur
     @UtilisateurId INT
 AS
@@ -1674,7 +1760,7 @@ BEGIN
 END
 GO
 
--- 31. SP_SetConnexionStatut ──────────────────────────────────
+-- 31. SP_SetConnexionStatut 
 --  Appelé au login (EstConnecte=1) et au logout (EstConnecte=0)
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_SetConnexionStatut
@@ -1691,7 +1777,7 @@ BEGIN
 END
 GO
 
--- 32. SP_UpdateProfil ────────────────────────────────────────
+-- 32. SP_UpdateProfil 
 --  Chaque utilisateur (admin ou employé) modifie son propre profil
 --  Si @PhotoUrl est NULL → garde l'ancienne photo
 -- ─────────────────────────────────────────────────────────────
@@ -1716,7 +1802,7 @@ BEGIN
 END
 GO
 
--- 33. SP_AjouterBaseUtilisateur ──────────────────────────────
+-- 33. SP_AjouterBaseUtilisateur 
 --  Enregistre qu'un employé a ajouté une base
 --  Idempotente : ne plante pas si déjà ajoutée
 -- ─────────────────────────────────────────────────────────────
@@ -1743,7 +1829,7 @@ BEGIN
 END
 GO
 
--- 34. SP_GetBasesUtilisateur ─────────────────────────────────
+-- 34. SP_GetBasesUtilisateur 
 --  Bases ajoutées par UN employé donné
 --  Utilisé par : la page Alertes/Mouvements côté employé
 --               ET par l'admin pour voir les bases d'un employé
@@ -1761,7 +1847,7 @@ BEGIN
 END
 GO
 
--- 35. SP_GetToutesBasesParUtilisateur ────────────────────────
+-- 35. SP_GetToutesBasesParUtilisateur 
 --  Vue d'ensemble admin : quel employé a ajouté quelle base
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetToutesBasesParUtilisateur
@@ -1785,7 +1871,7 @@ BEGIN
 END
 GO
 
--- 36. SP_GetUtilisateursConnectes ────────────────────────────
+-- 36. SP_GetUtilisateursConnectes
 --  Pour la page Admin — voir qui est connecté/déconnecté en temps réel
 -- ─────────────────────────────────────────────────────────────
 CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateursConnectes
@@ -1817,7 +1903,7 @@ GO
 
 
 -- ici j'ai ajouter les données de la société pour user employées 
--- 37. Ajout colonne Societe dans Utilisateurs ───────────────
+-- 37. Ajout colonne Societe dans Utilisateurs
 IF NOT EXISTS (
     SELECT 1 FROM sys.columns 
     WHERE object_id = OBJECT_ID('stock.Utilisateurs') 
@@ -1832,7 +1918,7 @@ ELSE
     PRINT 'Colonne Societe déjà existante — conservée.';
 GO
 
--- Mettre à jour SP_CreerUtilisateur avec Societe ────────────
+-- Mettre à jour SP_CreerUtilisateur avec Societe 
 CREATE OR ALTER PROCEDURE stock.SP_CreerUtilisateur
     @Email          NVARCHAR(255),
     @MotDePasseHash NVARCHAR(255),
@@ -1860,7 +1946,7 @@ BEGIN
 END
 GO
 
---  Mettre à jour SP_GetUtilisateurByEmail avec Societe ───────
+--  Mettre à jour SP_GetUtilisateurByEmail avec Societe 
 CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateurByEmail
     @Email NVARCHAR(255)
 AS
@@ -1874,7 +1960,7 @@ BEGIN
 END
 GO
 
---  Mettre à jour SP_GetUtilisateurById avec Societe ─────────
+--  Mettre à jour SP_GetUtilisateurById avec Societe 
 CREATE OR ALTER PROCEDURE stock.SP_GetUtilisateurById
     @UtilisateurId INT
 AS
@@ -1888,7 +1974,7 @@ BEGIN
 END
 GO
 
--- Mettre à jour SP_ListerUtilisateurs avec Societe ─────────
+-- Mettre à jour SP_ListerUtilisateurs avec Societe 
 CREATE OR ALTER PROCEDURE stock.SP_ListerUtilisateurs
     @Statut NVARCHAR(20) = NULL
 AS

@@ -1,4 +1,4 @@
-BASE_NAME = "PHARMA"   # ← changer ici uniquement
+BASE_NAME = "STE_NGDM"  
 
 SQL_SERVER   = r"SALMAIKSOD\SAGE100"
 SQL_DATABASE = "StockAnalytics"
@@ -10,6 +10,7 @@ PARETO_SEUIL     = 0.80
 TEST_RATIO       = 0.20
 CONTAMINATION    = 0.05
 RF_ESTIMATORS    = 100
+GAP_JOURS        = 30 
 
 DATA_DIR  = f"../../output/{BASE_NAME}/data_clean/"
 MODEL_DIR = f"../../models/{BASE_NAME}/"
